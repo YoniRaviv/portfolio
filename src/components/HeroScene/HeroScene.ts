@@ -19,14 +19,14 @@ export function init(mount: HTMLElement): HeroSceneHandle {
   scene.fog = new THREE.FogExp2(0x0a0a0a, 0.04);
 
   const camera = new THREE.PerspectiveCamera(42, 1, 0.1, 100);
-  camera.position.set(0, 2.8, 5.5);
+  camera.position.set(0, 2.8, 6);
   camera.lookAt(0, 0, 0);
 
   const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 1.0;
+  renderer.toneMappingExposure = 1;
   renderer.domElement.style.opacity = '0';
   renderer.domElement.style.transition = 'opacity 0.8s cubic-bezier(.2,.7,.2,1)';
   mount.appendChild(renderer.domElement);
@@ -36,11 +36,15 @@ export function init(mount: HTMLElement): HeroSceneHandle {
     .trim() || '#FF6F59';
   const ACCENT = new THREE.Color(accentHex);
 
-  // Moody dark setup: low ambient for shadow detail, key for silhouette,
-  // strong accent lights from the left in two layers — a front-fill that catches
-  // the cheek/face, and a back-rim that carves the silhouette out of the dark.
-  const ambient = new THREE.AmbientLight(0xffffff, 0.25);
+  // Moody dark setup: ambient lifts the whole mask off pitch black, a soft
+  // desaturated key replaces the old white directional so we don't get a
+  // harsh white specular glare on the wet material.
+  const ambient = new THREE.AmbientLight(0xffffff, 0.75);
   scene.add(ambient);
+  // Hemisphere fill — adds gentle directional softness so the mask doesn't
+  // read as evenly flat-lit by the ambient bump.
+  const hemi = new THREE.HemisphereLight(0xfff0e0, 0x1a0e10, 0.55);
+  scene.add(hemi);
   const key = new THREE.DirectionalLight(0xffffff, 1.3);
   key.position.set(3, 4, 4);
   scene.add(key);
@@ -60,9 +64,15 @@ export function init(mount: HTMLElement): HeroSceneHandle {
   scene.add(accentFill);
 
   // Subtle cool counterpoint on the upper-right edge
-  const cool = new THREE.PointLight(0x4dd2ff, 2, 14, 2);
-  cool.position.set(2.5, 0.5, 2);
+  const cool = new THREE.PointLight(0x4dd2ff, 1.4, 14, 2);
+  cool.position.set(2.5, 1.5, 2);
   scene.add(cool);
+
+  // Backlight rim — sits above-and-behind the head so the camera sees its
+  // glow catch the top spikes and silhouette edge.
+  const rim = new THREE.PointLight(ACCENT, 8, 10, 1.4);
+  rim.position.set(0, 3.5, -2.5);
+  scene.add(rim);
 
   const root = new THREE.Group();
   scene.add(root);
@@ -92,6 +102,26 @@ export function init(mount: HTMLElement): HeroSceneHandle {
       model.position.sub(center).multiplyScalar(scale);
       model.scale.setScalar(scale);
 
+      // Glowing eyes: find any mesh named like an eye and push accent emissive
+      // onto its material. Logs all mesh names once so we can pick a different
+      // pattern if the model uses a different naming convention.
+      const meshNames: string[] = [];
+      model.traverse((obj) => {
+        const m = obj as THREE.Mesh;
+        if (!m.isMesh) return;
+        meshNames.push(m.name);
+        if (/eye|iris|pupil/i.test(m.name)) {
+          const mat = m.material as THREE.MeshStandardMaterial;
+          if (mat && 'emissive' in mat) {
+            mat.emissive = ACCENT.clone();
+            mat.emissiveIntensity = 1.8;
+            mat.toneMapped = false;
+            mat.needsUpdate = true;
+          }
+        }
+      });
+      console.log('[hero] mesh names:', meshNames);
+
       modelGroup.add(model);
       modelLoaded = true;
 
@@ -104,20 +134,6 @@ export function init(mount: HTMLElement): HeroSceneHandle {
       mount.setAttribute('data-load-error', 'true');
     }
   );
-
-  // Grid backdrop — forced behind everything via the canonical Three.js
-  // pattern: renderOrder pulls it to the front of the draw queue,
-  // depthWrite=false stops it from filling the depth buffer, and
-  // depthTest=false stops it from being occluded by anything else.
-  const grid = new THREE.GridHelper(40, 40, ACCENT, 0x222222);
-  grid.position.set(0, -2.2, -6);
-  const gridMat = grid.material as THREE.Material;
-  gridMat.transparent = true;
-  gridMat.opacity = 0.4;
-  gridMat.depthTest = false;
-  gridMat.depthWrite = false;
-  grid.renderOrder = -1;
-  scene.add(grid);
 
   // ── LAYER 3: particles — kept in front of the mask (positive Z) so they
   // read as the foreground layer floating between camera and the subject.
