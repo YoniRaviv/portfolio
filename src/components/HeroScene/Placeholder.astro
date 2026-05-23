@@ -13,7 +13,9 @@
     position: absolute; inset: 0;
     display: grid; place-items: center;
     pointer-events: none;
+    transition: opacity 0.6s cubic-bezier(.2,.7,.2,1);
   }
+  :global([data-loaded='true']) > .hero-placeholder { opacity: 0; }
   .hero-placeholder .core {
     width: 96px; height: 96px;
     background:
