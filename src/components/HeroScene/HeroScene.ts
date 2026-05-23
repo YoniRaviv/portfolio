@@ -11,7 +11,7 @@ export interface HeroSceneHandle {
 }
 
 const MODEL_URL = '/models/hero.compressed.glb';
-const TARGET_SIZE = 3.4; // world units along the largest bounding-box axis
+const TARGET_SIZE = 3.2; // world units along the largest bounding-box axis
 
 export function init(mount: HTMLElement): HeroSceneHandle {
   const scene = new THREE.Scene();
@@ -60,7 +60,7 @@ export function init(mount: HTMLElement): HeroSceneHandle {
   scene.add(accentFill);
 
   // Subtle cool counterpoint on the upper-right edge
-  const cool = new THREE.PointLight(0x4dd2ff, 1.5, 14, 2);
+  const cool = new THREE.PointLight(0x4dd2ff, 2, 14, 2);
   cool.position.set(2.5, 0.5, 2);
   scene.add(cool);
 
@@ -105,11 +105,18 @@ export function init(mount: HTMLElement): HeroSceneHandle {
     }
   );
 
-  // ── LAYER 1: grid backdrop — pushed back in Z so it sits behind the mask
+  // Grid backdrop — forced behind everything via the canonical Three.js
+  // pattern: renderOrder pulls it to the front of the draw queue,
+  // depthWrite=false stops it from filling the depth buffer, and
+  // depthTest=false stops it from being occluded by anything else.
   const grid = new THREE.GridHelper(40, 40, ACCENT, 0x222222);
   grid.position.set(0, -2.2, -6);
-  (grid.material as THREE.Material).transparent = true;
-  (grid.material as THREE.Material).opacity = 0.4;
+  const gridMat = grid.material as THREE.Material;
+  gridMat.transparent = true;
+  gridMat.opacity = 0.4;
+  gridMat.depthTest = false;
+  gridMat.depthWrite = false;
+  grid.renderOrder = -1;
   scene.add(grid);
 
   // ── LAYER 3: particles — kept in front of the mask (positive Z) so they
@@ -127,7 +134,7 @@ export function init(mount: HTMLElement): HeroSceneHandle {
     pGeo,
     new THREE.PointsMaterial({
       color: ACCENT,
-      size: 0.045,
+      size: 0.04,
       transparent: true,
       opacity: 0.8,
       sizeAttenuation: true,
