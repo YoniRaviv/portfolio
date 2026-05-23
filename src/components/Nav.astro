@@ -1,0 +1,75 @@
+---
+import { Image } from 'astro:assets';
+import logo from '@/assets/logo-yr.png';
+import { navLinks } from '@/content';
+---
+<nav class="top">
+  <a href="#hero" class="logo" aria-label="Home">
+    <Image src={logo} alt="YR monogram" class="logo-img" width={112} height={112} loading="eager" />
+    <span class="logo-text">Raviv.io</span>
+  </a>
+  <ul>
+    {navLinks.map((link) =>
+      link.external ? (
+        <li><a href={link.href} class="blog">{link.label}</a></li>
+      ) : (
+        <li><a href={link.href} data-anchor={link.anchor}>{link.label}</a></li>
+      )
+    )}
+  </ul>
+</nav>
+
+<style>
+  nav.top {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 50;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px var(--pad-x);
+    font-family: var(--mono); font-size: 14px; letter-spacing: .14em; text-transform: uppercase;
+    background: rgba(21, 21, 21, .55);
+    -webkit-backdrop-filter: blur(14px) saturate(140%);
+            backdrop-filter: blur(14px) saturate(140%);
+    border-bottom: 1px solid rgba(191, 178, 155, .08);
+    animation: navIn 1.2s cubic-bezier(.2,.7,.2,1) both;
+    animation-delay: .1s;
+  }
+  @keyframes navIn {
+    from { transform: translateY(-100%); opacity: 0; }
+    to   { transform: translateY(0);     opacity: 1; }
+  }
+  nav.top .logo {
+    color: #f4eee2; display: flex; align-items: center; gap: 12px;
+    font-weight: 500; white-space: nowrap; text-decoration: none;
+  }
+  nav.top .logo :global(.logo-img) {
+    height: 56px; width: auto; display: block;
+    filter: drop-shadow(0 0 6px rgba(0,0,0,.4));
+  }
+  nav.top .logo .logo-text {
+    font-family: var(--mono); font-size: 13px; letter-spacing: .14em; text-transform: uppercase;
+    color: #f4eee2; opacity: .85;
+  }
+  nav.top ul { list-style: none; display: flex; gap: 36px; align-items: center; }
+  nav.top ul a {
+    color: #f4eee2; text-decoration: none; opacity: .75; position: relative; padding: 6px 0;
+    transition: opacity .25s;
+  }
+  nav.top ul a:hover { opacity: 1; }
+  nav.top ul a::before {
+    content: "["; opacity: 0; margin-right: 4px; color: var(--accent); transition: opacity .25s;
+  }
+  nav.top ul a.active::before, nav.top ul a:hover::before { opacity: 1; }
+  nav.top ul a.blog { color: var(--accent); opacity: 1; }
+  nav.top ul a.blog::after { content: "↗"; margin-left: 4px; display: inline-block; }
+
+  @media (max-width: 1100px) { nav.top ul { gap: 24px; } }
+  @media (max-width: 720px) {
+    nav.top { padding: 10px var(--pad-x); }
+    nav.top .logo :global(.logo-img) { height: 40px; }
+    nav.top .logo .logo-text { display: none; }
+    nav.top ul { gap: 14px; font-size: 10px; letter-spacing: .1em; }
+    nav.top ul a::before { display: none; }
+  }
+  @media (max-width: 420px) {
+    nav.top ul li:nth-child(3) { display: none; }
+  }
+</style>

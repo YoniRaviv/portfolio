@@ -1,0 +1,11 @@
+:root {
+  --main: #151515;
+  --text: #BFB29B;
+  --text-dim: #5a544a;
+  --accent: #FF6F59;
+  --accent-soft: rgba(255, 111, 89, 0.18);
+  --pad-x: clamp(20px, 4vw, 80px);
+  --display: "Bebas Neue", "Anton", "Archivo Black", sans-serif;
+  --sans: "League Spartan Variable", "League Spartan", ui-sans-serif, system-ui, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, monospace;
+}

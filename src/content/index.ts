@@ -1,0 +1,10 @@
+export { site } from './site';
+export { navLinks } from './nav';
+export { hero } from './hero';
+export { who } from './who';
+export { what, projects } from './what';
+export { where, roles } from './where';
+export { how, skillGroups } from './how';
+export { contact, socials } from './contact';
+export { defaultSEO, personSchema, websiteSchema } from './seo';
+export type * from './_types';

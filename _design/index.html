@@ -1,0 +1,1229 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+<title>Yonathan Raviv — Fullstack / AI</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Anton&family=Archivo+Black&family=League+Spartan:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+
+<style>
+:root{
+  --main: #151515;
+  --text: #BFB29B;
+  --text-dim: #5a544a;
+  --accent: #FF6F59;
+  --accent-soft: rgba(255,111,89,.18);
+  --pad-x: clamp(20px, 4vw, 80px);
+  --display: "Bebas Neue", "Anton", "Archivo Black", sans-serif;
+  --sans: "League Spartan", ui-sans-serif, system-ui, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, monospace;
+}
+
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+html, body{background:var(--main);color:var(--text);font-family:var(--sans);}
+body{
+  font-weight:400;
+  line-height:1.5;
+  letter-spacing:-0.005em;
+  overflow-x:hidden;
+  min-height:100vh;
+  -webkit-font-smoothing:antialiased;
+  text-rendering:optimizeLegibility;
+}
+
+/* ─── canvas backdrop ─────────────────────────────────── */
+.grain{
+  position:fixed; inset:0; pointer-events:none; z-index:1; opacity:.5; mix-blend-mode:overlay;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='1.5' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 .55 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+}
+.scanlines{
+  position:fixed; inset:0; pointer-events:none; z-index:2; opacity:.06;
+  background-image:repeating-linear-gradient(to bottom, rgba(255,255,255,.6) 0 1px, transparent 1px 3px);
+  mix-blend-mode:overlay;
+}
+.vignette{
+  position:fixed; inset:0; pointer-events:none; z-index:3;
+  background:radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,.55) 100%);
+}
+.cursor-glow{
+  /* deprecated — kept for tweak compatibility */
+  display:none !important;
+}
+
+/* ─── custom cursor: dot + trailing ring ─────────────── */
+@media (hover: hover) and (pointer: fine){
+  html, body{ cursor:none; }
+  a, button, .proj, .chip, .twk-panel, .twk-panel *, input, select, textarea{ cursor:none; }
+}
+.cur-dot{
+  position:fixed; top:0; left:0; z-index:9998; pointer-events:none;
+  width:6px; height:6px; margin:-3px 0 0 -3px;
+  border-radius:50%;
+  background:var(--accent);
+  mix-blend-mode:normal;
+  transition: transform .15s ease, width .2s, height .2s;
+  will-change: transform;
+}
+.cur-ring{
+  position:fixed; top:0; left:0; z-index:9997; pointer-events:none;
+  width:36px; height:36px; margin:-18px 0 0 -18px;
+  border-radius:50%;
+  border:1px solid rgba(191,178,155,.45);
+  transition: width .25s, height .25s, margin .25s, border-color .25s, opacity .2s;
+  will-change: transform;
+  opacity:.9;
+}
+.cur-ring.hover{
+  width:56px; height:56px; margin:-28px 0 0 -28px;
+  border-color: var(--accent);
+}
+.cur-dot.hover{
+  background: var(--accent);
+  width:8px; height:8px; margin:-4px 0 0 -4px;
+}
+@media (hover: none), (pointer: coarse){
+  .cur-dot, .cur-ring{ display:none; }
+}
+
+/* ─── custom cursor: dot + trailing ring ────────── */
+@media (hover: hover) and (pointer: fine){
+  html, body{ cursor:none; }
+  a, button, .proj, .row, .cell, .role, .stack, [data-anchor]{ cursor:none; }
+}
+.cur-dot, .cur-ring{
+  position:fixed; top:0; left:0; pointer-events:none; z-index:9998;
+  border-radius:50%;
+  transform: translate3d(-100px,-100px,0);
+  will-change: transform, width, height, opacity;
+  mix-blend-mode: difference;
+}
+.cur-dot{
+  width:6px; height:6px;
+  background: var(--text);
+  margin:-3px 0 0 -3px;
+  transition: width .25s, height .25s, opacity .25s;
+}
+.cur-ring{
+  width:36px; height:36px;
+  margin:-18px 0 0 -18px;
+  border:1px solid var(--accent);
+  transition: width .35s cubic-bezier(.2,.7,.2,1), height .35s cubic-bezier(.2,.7,.2,1), opacity .25s, background-color .25s, border-color .25s;
+  mix-blend-mode: normal;
+}
+.cur-dot.hide, .cur-ring.hide{ opacity:0; }
+.cur-ring.hover{
+  width:56px; height:56px;
+  margin:-28px 0 0 -28px;
+  background: rgba(255,111,89,.08);
+  border-color: var(--accent);
+}
+.cur-dot.hover{
+  width:0; height:0;
+  margin:0;
+  opacity:0;
+}
+@media (hover: none) or (pointer: coarse){
+  .cur-dot, .cur-ring{ display:none; }
+}
+
+/* ─── load-in entrance animations ─────────────────────── */
+nav.top{ animation: navIn 1.2s cubic-bezier(.2,.7,.2,1) both; animation-delay: .1s; }
+@keyframes navIn{
+  from { transform: translateY(-100%); opacity: 0; }
+  to   { transform: translateY(0);     opacity: 1; }
+}
+
+.hero .stage{ animation: stageIn 1.8s cubic-bezier(.2,.7,.2,1) both; animation-delay: .4s; }
+@keyframes stageIn{
+  from { opacity: 0; transform: scale(1.08); filter: blur(20px); }
+  to   { opacity: 1; transform: none;        filter: none; }
+}
+
+.hero .backname{ animation: backIn 2s cubic-bezier(.2,.7,.2,1) both; animation-delay: .2s; }
+@keyframes backIn{
+  from { opacity: 0; transform: translateX(-50%) translateY(40px); }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+.hero .scroll-cue{ animation: cueIn .8s ease both; animation-delay: 1.6s; }
+@keyframes cueIn{
+  from { opacity: 0; transform: translate(-50%, 20px); }
+  to   { opacity: 1; transform: translate(-50%, 0); }
+}
+
+.grain, .scanlines, .vignette, .crt-pulse{
+  animation: ambientIn 1.5s ease both;
+  animation-delay: .3s;
+}
+@keyframes ambientIn{
+  from { opacity: 0; }
+}
+
+.hero .top-meta .col{ animation: metaIn .9s cubic-bezier(.2,.7,.2,1) both; }
+.hero .top-meta .col:nth-child(1){ animation-delay: .5s; }
+.hero .top-meta .col:nth-child(2){ animation-delay: .65s; }
+@keyframes metaIn{
+  from { opacity: 0; transform: translateY(-10px); filter: blur(6px); }
+  to   { opacity: 1; transform: none;              filter: none; }
+}
+
+.hero .role-line{ animation: roleIn 1s cubic-bezier(.2,.7,.2,1) both; animation-delay: 1.1s; }
+@keyframes roleIn{
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* ─── ambient: subtle CRT pulse ────────────── */
+.crt-pulse{
+  position:fixed; inset:0; pointer-events:none; z-index:4;
+  background: linear-gradient(to bottom, transparent 0%, transparent 49%, rgba(191,178,155,.05) 50%, transparent 51%, transparent 100%);
+  background-size: 100% 200vh;
+  mix-blend-mode: overlay;
+  animation: crtSweep 14s linear infinite;
+  opacity:.5;
+}
+@keyframes crtSweep{
+  0%   { background-position: 0 -100vh; }
+  100% { background-position: 0  100vh; }
+}
+
+/* ─── nav ─────────────────────────────────────────────── */
+nav.top{
+  position:fixed; top:0; left:0; right:0; z-index:50;
+  display:flex; align-items:center; justify-content:space-between;
+  padding:14px var(--pad-x);
+  font-family:var(--mono); font-size:14px; letter-spacing:.14em; text-transform:uppercase;
+  background: rgba(21,21,21,.55);
+  -webkit-backdrop-filter: blur(14px) saturate(140%);
+          backdrop-filter: blur(14px) saturate(140%);
+  border-bottom: 1px solid rgba(191,178,155,.08);
+}
+nav.top .logo{color:#f4eee2; display:flex; align-items:center; gap:12px; font-weight:500; white-space:nowrap; text-decoration:none;}
+nav.top .logo .logo-img{
+  height: 56px; width: auto; display:block;
+  filter: drop-shadow(0 0 6px rgba(0,0,0,.4));
+}
+nav.top .logo .logo-text{
+  font-family:var(--mono); font-size:13px; letter-spacing:.14em; text-transform:uppercase;
+  color:#f4eee2; opacity:.85;
+}
+nav.top .logo .dot{
+  width:8px; height:8px; background:var(--accent); border-radius:50%;
+  box-shadow:0 0 12px var(--accent);
+  animation:pulse 1.8s ease-in-out infinite;
+}
+@keyframes pulse{0%,100%{opacity:.4}50%{opacity:1}}
+nav.top ul{list-style:none; display:flex; gap:36px; align-items:center}
+nav.top ul a{
+  color:#f4eee2; text-decoration:none; opacity:.75; position:relative; padding:6px 0;
+  transition:opacity .25s;
+}
+nav.top ul a:hover{opacity:1}
+nav.top ul a::before{
+  content:"["; opacity:0; margin-right:4px; color:var(--accent); transition:opacity .25s;
+}
+nav.top ul a.active::before, nav.top ul a:hover::before{opacity:1}
+nav.top ul a.blog{color:var(--accent); opacity:1}
+nav.top ul a.blog::after{
+  content:"↗"; margin-left:4px; display:inline-block;
+}
+
+/* ─── shared section primitives ───────────────────────── */
+section.sec{
+  position:relative; z-index:10;
+  padding:160px var(--pad-x) 160px;
+  min-height:100vh;
+}
+.sec-label{
+  font-family:var(--mono); font-size:11px; letter-spacing:.18em; text-transform:uppercase;
+  color:var(--text-dim);
+  display:flex; align-items:center; gap:14px;
+  margin-bottom:48px;
+}
+.sec-label::before{
+  content:""; width:60px; height:1px; background:var(--text-dim); display:inline-block;
+}
+.sec-label .num{ color:var(--accent); }
+.sec-label .lbl{color:var(--text)}
+
+/* Word reveal */
+.reveal-words .word{
+  display:inline-block;
+  margin-right:.32em;
+  opacity:0;
+  transform:translateY(28px);
+  filter:blur(8px);
+  will-change: opacity, transform, filter;
+}
+@keyframes wordIn {
+  0%   { opacity:0; transform:translateY(28px); filter:blur(8px); }
+  100% { opacity:1; transform:translateY(0);    filter:blur(0); }
+}
+.reveal-words.in .word{
+  animation: wordIn .9s cubic-bezier(.2,.7,.2,1) forwards;
+  animation-delay: calc(var(--i,0) * 40ms);
+}
+
+.fade-up{ opacity:0; transform:translateY(28px); }
+@keyframes fadeUpIn {
+  0%   { opacity:0; transform:translateY(28px); }
+  100% { opacity:1; transform:translateY(0); }
+}
+.fade-up.in{ animation: fadeUpIn .8s cubic-bezier(.2,.7,.2,1) forwards; }
+
+/* ─── HERO ────────────────────────────────────────────── */
+.hero{
+  position:relative; height:100vh; min-height:620px;
+  padding:0 var(--pad-x);
+  display:flex; flex-direction:column; justify-content:flex-end;
+  overflow:hidden;
+  z-index:10;
+}
+.hero .stage{
+  position:absolute; top:0; right:0; bottom:0; left:30%; z-index:1;
+}
+.hero canvas{ display:block; width:100%; height:100%; }
+.hero .scrim{
+  position:absolute; inset:0; z-index:2; pointer-events:none;
+  background:
+    radial-gradient(ellipse 50% 50% at 70% 45%, transparent 0%, rgba(21,21,21,.15) 60%, rgba(21,21,21,.45) 100%),
+    linear-gradient(to right, rgba(21,21,21,.7) 0%, rgba(21,21,21,0) 40%),
+    linear-gradient(to bottom, transparent 40%, rgba(21,21,21,.6) 95%);
+}
+
+.hero .top-meta{
+  position:absolute; top:200px; left:var(--pad-x); right:var(--pad-x); z-index:3;
+  display:grid; grid-template-columns: 1fr 1fr; gap:40px;
+  font-family:var(--mono); font-size:11px; letter-spacing:.16em; text-transform:uppercase;
+  color:var(--text-dim);
+}
+.hero .top-meta .col{display:flex; flex-direction:column; gap:4px; max-width:280px}
+.hero .top-meta .col .v{color:var(--text)}
+.hero .top-meta .col.r{text-align:right; align-items:flex-end; justify-self:end}
+
+.hero .title-block{
+  position:relative; z-index:3;
+  padding-bottom:80px;
+}
+.hero .title-block .above{
+  font-family:var(--mono); font-size:12px; letter-spacing:.2em; text-transform:uppercase;
+  color:var(--text-dim); margin-bottom:24px;
+  display:flex; align-items:center; gap:14px;
+}
+.hero .title-block .above .live{
+  width:8px; height:8px; background:#4ade80; border-radius:50%;
+  box-shadow:0 0 8px #4ade80; animation:pulse 1.8s infinite;
+}
+.hero h1{
+  font-family:var(--display);
+  font-weight:400;
+  font-size: clamp(72px, 13vw, 220px);
+  line-height: .92;
+  letter-spacing: .01em;
+  color:#f4eee2;
+  text-transform:uppercase;
+}
+.hero h1 .swap{
+  color:var(--accent);
+  position:relative;
+  display:inline-block;
+}
+/* hover scramble target — just visual styling; the swap text is animated by JS */
+.hero h1 .swap{
+  color:var(--accent);
+  position:relative;
+  display:inline-block;
+  font-variant-numeric: tabular-nums;
+}
+.hero h1 .ko{ display:none; }
+.hero h1 .br{ display:block; }
+.hero h1 .ko{
+  display:none;
+}
+.hero h1 .br{ display:block; }
+.hero .role-line{
+  display:flex; align-items:flex-end; justify-content:space-between; gap:40px;
+  margin-top:28px; padding-top:28px; border-top:1px solid rgba(191,178,155,.16);
+}
+.hero .role-line .role{
+  font-family:var(--sans); font-size:clamp(16px, 1.4vw, 22px);
+  color:var(--text); max-width:520px; line-height:1.5;
+  font-weight:400;
+  letter-spacing:.01em;
+}
+.hero .role-line .signature{
+  font-family:var(--mono); font-size:11px; letter-spacing:.14em; text-transform:uppercase;
+  color:var(--text-dim); text-align:right; display:flex; flex-direction:column; gap:4px;
+}
+.hero .role-line .signature .a{color:var(--accent)}
+
+.hero .scroll-cue{
+  position:absolute; bottom:30px; left:50%; transform:translateX(-50%); z-index:4;
+  font-family:var(--mono); font-size:10px; letter-spacing:.2em; text-transform:uppercase;
+  color:var(--text-dim); display:flex; flex-direction:column; align-items:center; gap:10px;
+}
+.hero .scroll-cue .line{
+  width:1px; height:48px; background:linear-gradient(to bottom, transparent, var(--accent));
+  animation: scrollLine 2s ease-in-out infinite;
+}
+@keyframes scrollLine{
+  0%{transform:scaleY(0); transform-origin:top}
+  50%{transform:scaleY(1); transform-origin:top}
+  51%{transform:scaleY(1); transform-origin:bottom}
+  100%{transform:scaleY(0); transform-origin:bottom}
+}
+
+/* huge background type "RAVIV" */
+.hero .backname{
+  position:absolute; bottom:-14px; left:50%; transform:translateX(-50%); z-index:1;
+  font-family:var(--display); font-weight:400;
+  font-size:clamp(220px, 38vw, 600px);
+  line-height:.8;
+  color:transparent;
+  -webkit-text-stroke:1px rgba(191,178,155,.08);
+  letter-spacing:-0.04em;
+  white-space:nowrap;
+  pointer-events:none;
+  user-select:none;
+}
+
+/* ─── WHO ─────────────────────────────────────────────── */
+.who{
+  padding-top:200px; padding-bottom:200px;
+  position:relative;
+}
+.who .quote{
+  font-family:var(--display); font-weight:400;
+  font-size: clamp(40px, 5.5vw, 90px);
+  line-height: 1.15;
+  letter-spacing:.01em;
+  color:#f4eee2;
+  max-width:1400px;
+  text-transform:uppercase;
+}
+.who .quote em{
+  color:var(--accent); font-style:normal;
+}
+.who .meta-grid{
+  margin-top:120px;
+  display:grid; grid-template-columns: repeat(4, 1fr); gap:1px; background:rgba(191,178,155,.12);
+  border-top:1px solid rgba(191,178,155,.12);
+  border-bottom:1px solid rgba(191,178,155,.12);
+}
+.who .meta-grid .cell{
+  background:var(--main); padding:32px 28px;
+  display:flex; flex-direction:column; gap:12px;
+  min-height: 180px;
+}
+.who .meta-grid .cell .k{
+  font-family:var(--mono); font-size:10px; letter-spacing:.2em; text-transform:uppercase;
+  color:var(--text-dim);
+}
+.who .meta-grid .cell .v{
+  font-family:var(--display); font-weight:400; font-size:48px; color:#f4eee2; line-height:1; text-transform:uppercase; letter-spacing:.01em;
+  display:inline-block;
+  min-width: 4ch;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  overflow: hidden;
+}
+.who .meta-grid .cell .vs{
+  font-family:var(--sans); font-size:14px; color:var(--text); line-height:1.5;
+}
+
+/* ─── WHAT (projects) ─────────────────────────────────── */
+.what{
+  padding-top:180px;
+}
+.what .projects{
+  display:flex; flex-direction:column;
+  border-top:1px solid rgba(191,178,155,.16);
+}
+.what .proj{
+  position:relative;
+  border-bottom:1px solid rgba(191,178,155,.16);
+  padding:64px 0;
+  display:grid; grid-template-columns: 120px 1fr 420px 80px;
+  gap:48px; align-items:center;
+  cursor:pointer;
+  text-decoration:none;
+  color:inherit;
+  transition:padding .5s cubic-bezier(.2,.7,.2,1);
+}
+.what .proj:hover{
+  padding:90px 0;
+}
+.what .proj .idx{
+  font-family:var(--mono); font-size:11px; letter-spacing:.18em; color:var(--text-dim);
+}
+.what .proj .name{
+  font-family:var(--display); font-weight:400;
+  font-size: clamp(72px, 11vw, 200px);
+  line-height:1.0; letter-spacing:.005em; color:#f4eee2;
+  position:relative;
+  text-transform:uppercase;
+  transition: color .4s, transform .5s cubic-bezier(.2,.7,.2,1);
+}
+.what .proj:hover .name{
+  color: var(--accent);
+  transform: translateX(20px);
+}
+.what .proj .desc{
+  font-family:var(--sans); font-size:14px; line-height:1.6; color:var(--text);
+  max-width:380px;
+}
+.what .proj .desc .tag{
+  display:inline-block; font-family:var(--mono); font-size:10px; letter-spacing:.16em;
+  text-transform:uppercase; color:var(--accent);
+  border:1px solid var(--accent); padding:3px 8px; border-radius:2px;
+  margin-right:6px; margin-bottom:8px;
+}
+.what .proj .arrow{
+  font-family:var(--mono); font-size:32px; color:var(--text-dim);
+  text-align:right;
+  transition: color .4s, transform .4s;
+}
+.what .proj:hover .arrow{
+  color: var(--accent); transform: translate(8px, -8px);
+}
+
+.what .proj .thumb{
+  position:absolute; top:50%; right:25%; transform:translate(0, -50%) scale(.85);
+  width:280px; height:180px; pointer-events:none;
+  opacity:0; transition: opacity .5s, transform .6s cubic-bezier(.2,.7,.2,1);
+  z-index:1;
+  background:#0b0b0b;
+  border:1px solid rgba(191,178,155,.2);
+  display:flex; align-items:center; justify-content:center;
+  overflow:hidden;
+}
+.what .proj:hover .thumb{
+  opacity:1; transform:translate(0, -50%) scale(1);
+}
+.what .proj .thumb .placeholder{
+  font-family:var(--mono); font-size:11px; color:var(--text-dim); letter-spacing:.16em; text-transform:uppercase;
+}
+.what .proj .thumb::before{
+  content:""; position:absolute; inset:0;
+  background:
+    linear-gradient(45deg, transparent 49%, rgba(191,178,155,.05) 49.5%, rgba(191,178,155,.05) 50.5%, transparent 51%),
+    linear-gradient(-45deg, transparent 49%, rgba(191,178,155,.05) 49.5%, rgba(191,178,155,.05) 50.5%, transparent 51%);
+  background-size: 8px 8px;
+}
+
+/* ─── WHERE (resume) ──────────────────────────────────── */
+.where{
+  background:#0e0e0e;
+  padding-top:200px; padding-bottom:200px;
+  position:relative;
+}
+.where::before{
+  content:""; position:absolute; top:0; left:0; right:0; height:1px;
+  background:linear-gradient(to right, transparent, var(--accent), transparent);
+  opacity:.35;
+}
+.where .header{
+  display:grid; grid-template-columns: 1fr 340px; gap:60px; align-items:end;
+  margin-bottom:80px;
+}
+.where .header h2{ max-width: 900px; }
+.where h2{
+  font-family:var(--display); font-weight:400;
+  font-size: clamp(64px, 9vw, 150px); line-height:1.0; letter-spacing:.005em;
+  color:#f4eee2; text-transform:uppercase;
+}
+.where h2 em{ color:var(--accent); font-style:normal; }
+.where .header .blurb{
+  font-family:var(--sans); font-size:16px; line-height:1.5; color:var(--text);
+  max-width:340px;
+}
+.where .timeline{
+  display:flex; flex-direction:column;
+}
+.where .role{
+  display:grid; grid-template-columns: 180px 1fr 240px 80px;
+  gap:48px; align-items:baseline;
+  padding:36px var(--pad-x);
+  margin: 0 calc(var(--pad-x) * -1);
+  border-top:1px solid rgba(191,178,155,.16);
+  position:relative;
+  overflow:hidden;
+  isolation:isolate;
+  transition: color .35s;
+}
+.where .role:last-child{ border-bottom:1px solid rgba(191,178,155,.16); }
+.where .role::before{
+  content:"";
+  position:absolute; inset:0;
+  background: var(--accent);
+  transform: scaleY(0);
+  transform-origin: center;
+  transition: transform .6s cubic-bezier(.65,.05,.36,1);
+  z-index:-1;
+}
+.where .role:hover::before{ transform: scaleY(1); }
+.where .role > *{ transition: color .35s ease; }
+.where .role:hover .date,
+.where .role:hover .company,
+.where .role:hover .title,
+.where .role:hover .city{
+  color: #151515;
+}
+.where .role:hover .current{ color: #151515; }
+.where .role:hover .current::before{ background:#151515; box-shadow:none; }
+.where .role .date{
+  font-family:var(--mono); font-size:12px; letter-spacing:.14em; color:var(--text-dim);
+  text-transform:uppercase;
+}
+.where .role .company{
+  font-family:var(--display); font-weight:400;
+  font-size: clamp(34px, 4.2vw, 64px); line-height:1; color:#f4eee2;
+  text-transform:uppercase; letter-spacing:.01em;
+}
+.where .role .title{
+  font-family:var(--mono); font-size:12px; letter-spacing:.12em; text-transform:uppercase;
+  color:var(--text);
+}
+.where .role .city{
+  text-align:right; font-family:var(--mono); font-size:11px; letter-spacing:.14em;
+  text-transform:uppercase; color:var(--text-dim);
+}
+.where .role .current{
+  display:inline-flex; align-items:center; gap:6px;
+  color:var(--accent); font-family:var(--mono); font-size:10px; letter-spacing:.18em;
+  text-transform:uppercase; margin-left:10px;
+}
+.where .role .current::before{
+  content:""; width:6px; height:6px; background:var(--accent); border-radius:50%;
+  box-shadow:0 0 8px var(--accent); animation:pulse 1.8s infinite;
+}
+
+/* ─── HOW (skills) ────────────────────────────────────── */
+.how{
+  padding-top:160px; padding-bottom:200px;
+  position:relative;
+}
+.how h2{
+  font-family:var(--display); font-weight:400;
+  font-size: clamp(56px, 8.5vw, 140px); line-height:1.0; letter-spacing:.005em;
+  color:#f4eee2;
+  max-width:1400px;
+  text-transform:uppercase;
+}
+.how h2 em{ color:var(--accent); font-style:normal; }
+
+/* skill matrix — two-column rows of categories with chip strip */
+.how .matrix{
+  margin-top:100px;
+  display:flex; flex-direction:column;
+}
+.how .row{
+  display:grid; grid-template-columns: 280px 1fr; gap:60px;
+  padding:48px 0;
+  border-top:1px solid rgba(191,178,155,.14);
+  align-items:start;
+  transition: background .4s;
+}
+.how .row:last-child{ border-bottom:1px solid rgba(191,178,155,.14); }
+.how .row:hover{ background: linear-gradient(to right, rgba(255,111,89,.04), transparent 60%); }
+
+.how .row .cat{
+  display:flex; flex-direction:column; gap:10px;
+  position:sticky; top:120px;
+}
+.how .row .cat .idx{
+  font-family:var(--mono); font-size:11px; letter-spacing:.2em; color:var(--accent);
+  text-transform:uppercase;
+}
+.how .row .cat .label{
+  font-family:var(--display); font-weight:400;
+  font-size: clamp(32px, 4vw, 56px); line-height:1; color:#f4eee2;
+  text-transform:uppercase; letter-spacing:.01em;
+}
+.how .row .cat .blurb{
+  font-family:var(--sans); font-size:13px; color:var(--text-dim); line-height:1.55;
+  max-width:240px; margin-top:8px;
+}
+
+.how .chips{
+  display:flex; flex-wrap:wrap; gap:10px;
+  padding-top:8px;
+}
+.how .chip{
+  font-family:var(--mono); font-size:12px; letter-spacing:.04em;
+  padding:10px 16px; border:1px solid rgba(191,178,155,.2);
+  background: transparent; color:var(--text);
+  display:inline-flex; align-items:center; gap:10px;
+  border-radius:2px;
+  position:relative; overflow:hidden;
+  transition: border-color .3s, color .3s, transform .3s;
+  cursor:default;
+}
+.how .chip::before{
+  content:""; position:absolute; inset:0; background:var(--accent);
+  transform: translateY(100%); transition: transform .35s cubic-bezier(.2,.7,.2,1);
+  z-index:-1;
+}
+.how .chip:hover{ border-color:var(--accent); color:#151515; transform:translateY(-2px); }
+.how .chip:hover::before{ transform:translateY(0); }
+.how .chip .lvl{
+  font-size:10px; color:var(--text-dim); letter-spacing:.12em;
+  padding-left:10px; border-left:1px solid rgba(191,178,155,.25);
+  transition: color .3s, border-color .3s;
+}
+.how .chip:hover .lvl{ color:rgba(21,21,21,.7); border-left-color:rgba(21,21,21,.3); }
+.how .chip.hero-skill{
+  background:var(--accent); color:#151515; border-color:var(--accent);
+}
+.how .chip.hero-skill .lvl{ color:rgba(21,21,21,.7); border-left-color:rgba(21,21,21,.3); }
+
+/* ─── CONTACT ─────────────────────────────────────────── */
+.contact{
+  padding-top:180px; padding-bottom:140px;
+  position:relative;
+  overflow:hidden;
+}
+.contact .lead{
+  font-family:var(--display); font-weight:400;
+  font-size: clamp(64px, 10vw, 200px); line-height:1.0; letter-spacing:.005em;
+  color:#f4eee2;
+  max-width: 1300px;
+  text-transform:uppercase;
+}
+.contact .lead em{ color:var(--accent); font-style:normal; }
+.contact .mail{
+  display:inline-block; margin-top:48px;
+  font-family:var(--display);
+  font-size: clamp(36px, 5vw, 80px); line-height:1;
+  color:#f4eee2; text-decoration:none;
+  position:relative;
+  letter-spacing:.005em;
+  text-transform:lowercase;
+  transition: color .3s;
+}
+.contact .mail::after{
+  content:""; position:absolute; left:0; right:0; bottom:.1em; height:2px;
+  background:var(--accent); transform:scaleX(0); transform-origin:left;
+  transition:transform .5s cubic-bezier(.2,.7,.2,1);
+}
+.contact .mail:hover{ color:var(--accent); }
+.contact .mail:hover::after{ transform:scaleX(1); }
+
+.contact .socials{
+  margin-top:100px;
+  display:grid; grid-template-columns:repeat(3, 1fr); gap:1px;
+  background:rgba(191,178,155,.12);
+  border-top:1px solid rgba(191,178,155,.12);
+  border-bottom:1px solid rgba(191,178,155,.12);
+}
+.contact .socials a{
+  background:var(--main);
+  padding:36px 28px;
+  display:flex; flex-direction:column; gap:12px;
+  text-decoration:none;
+  position:relative; overflow:hidden;
+  transition: background .4s;
+}
+.contact .socials a:hover{ background:#1a1a1a; }
+.contact .socials a .k{
+  font-family:var(--mono); font-size:10px; letter-spacing:.18em; text-transform:uppercase; color:var(--text-dim);
+}
+.contact .socials a .v{
+  font-family:var(--display); font-size:42px; color:#f4eee2; line-height:1;
+  text-transform:uppercase; letter-spacing:.01em;
+  display:flex; align-items:center; gap:14px;
+}
+.contact .socials a .v .arrow{
+  color:var(--accent); font-size:24px; transition: transform .4s;
+}
+.contact .socials a:hover .v .arrow{ transform:translate(6px, -6px); }
+.contact .socials a .handle{
+  font-family:var(--mono); font-size:11px; color:var(--text); letter-spacing:.04em; margin-top:4px;
+}
+
+/* ─── FOOTER ──────────────────────────────────────────── */
+footer{
+  padding:40px var(--pad-x) 32px;
+  border-top:1px solid rgba(191,178,155,.12);
+  font-family:var(--mono); font-size:11px; letter-spacing:.16em; text-transform:uppercase;
+  color:var(--text-dim); position:relative; z-index:10;
+}
+footer .footer-row{
+  display:flex; align-items:center; justify-content:space-between;
+  gap:40px;
+}
+footer .footer-logo{
+  display:flex; align-items:center;
+  text-decoration:none;
+  transition: opacity .25s;
+}
+footer .footer-logo:hover{ opacity:.7; }
+footer .footer-logo img{
+  height: 56px; width: auto;
+  opacity:.95;
+}
+footer .footer-meta{
+  display:flex; align-items:center; gap:14px;
+  color:var(--text-dim);
+}
+footer .footer-meta .copy{ color:var(--text); }
+footer .footer-meta .dot{ opacity:.4; }
+footer .footer-top{
+  text-decoration:none; color:var(--text);
+  display:inline-flex; align-items:center; gap:8px;
+  padding:10px 0;
+  position:relative;
+  transition: color .25s;
+}
+footer .footer-top::after{
+  content:""; position:absolute; left:0; right:0; bottom:6px; height:1px;
+  background:var(--accent); transform: scaleX(0); transform-origin: right;
+  transition: transform .35s cubic-bezier(.2,.7,.2,1);
+}
+footer .footer-top:hover{ color: var(--accent); }
+footer .footer-top:hover::after{ transform: scaleX(1); transform-origin: left; }
+
+footer .big{
+  width:100%;
+  font-family:var(--display); font-weight:400;
+  font-size: clamp(80px, 18vw, 280px);
+  line-height:.85; letter-spacing:.005em;
+  color:transparent;
+  -webkit-text-stroke:1px rgba(191,178,155,.14);
+  text-transform:uppercase; text-align:center;
+  margin-top:48px; user-select:none;
+  background-image: linear-gradient(to top, var(--accent), var(--accent));
+  background-repeat: no-repeat;
+  background-size: 100% 0%;
+  background-position: bottom center;
+  -webkit-background-clip: text;
+          background-clip: text;
+  transition: background-size .8s cubic-bezier(.65,.05,.36,1), -webkit-text-stroke-color .4s;
+  cursor: pointer;
+}
+footer .big:hover{
+  background-size: 100% 100%;
+  -webkit-text-stroke-color: var(--accent);
+}
+
+/* responsive */
+@media (max-width: 1100px){
+  :root{ --pad-x: clamp(20px, 5vw, 60px); }
+  nav.top ul{ gap:24px; }
+  .who .meta-grid{ grid-template-columns:repeat(2, 1fr); }
+  .how .stacks{ grid-template-columns:repeat(2, 1fr); }
+  .how .row{ grid-template-columns: 1fr; gap:24px; }
+  .how .row .cat{ position:static; }
+  .what .proj{ grid-template-columns: 80px 1fr 100px; gap:24px; }
+  .what .proj .desc{ grid-column: 2 / span 2; }
+  .what .proj .thumb{ display:none; }
+  .where .header{ grid-template-columns: 1fr; gap:24px; }
+  .where .role{ grid-template-columns: 160px 1fr 200px; gap:24px; }
+  .where .role .city{ grid-column: 1 / -1; text-align:left; }
+  .contact .socials{ grid-template-columns:1fr; }
+}
+
+@media (max-width: 720px){
+  :root{ --pad-x: 20px; }
+  nav.top{ padding:10px var(--pad-x); }
+  nav.top .logo .logo-img{ height: 40px; }
+  nav.top .logo .logo-text{ display:none; }
+  nav.top ul{ gap:14px; font-size:10px; letter-spacing:.1em; }
+  nav.top ul a::before{ display:none; }
+
+  .sec, section.sec{ padding: 120px var(--pad-x) 100px; }
+  .hero{ min-height: auto; height: auto; padding-bottom: 60px; padding-top: 100px; }
+  .hero .stage{ position:relative; left:0; right:0; top:0; height:55vh; min-height:380px; }
+  .hero .scrim{
+    background:
+      linear-gradient(to bottom, transparent 30%, rgba(21,21,21,.9) 95%);
+  }
+  .hero .top-meta{ display:none; }
+  .hero .title-block{ padding: 40px 0 0; position:relative; }
+  .hero h1{ font-size: clamp(56px, 16vw, 100px); line-height:.95; }
+  .hero .role-line{
+    display:flex; flex-direction:column; align-items:flex-start; gap:20px;
+    margin-top:24px; padding-top:24px;
+  }
+  .hero .role-line .role{ font-size: 15px; max-width:none; }
+  .hero .role-line .signature{ text-align:left; align-items:flex-start; }
+  .hero .scroll-cue{ display:none; }
+  .hero .backname{ font-size: 36vw; }
+
+  .who .meta-grid{ grid-template-columns: 1fr; }
+  .who .meta-grid .cell{ min-height: 140px; padding: 24px 20px; }
+  .who .meta-grid .cell .v{ font-size: 40px; }
+  .who .quote{ font-size: clamp(32px, 8vw, 52px); line-height: 1.1; }
+
+  .what .proj{ grid-template-columns: 1fr; gap:12px; padding: 40px 0; }
+  .what .proj:hover{ padding: 50px 0; }
+  .what .proj .idx, .what .proj .arrow{ display:none; }
+  .what .proj .name{ font-size: clamp(56px, 16vw, 88px); line-height:1; }
+  .what .proj .desc{ max-width:none; font-size:13px; }
+
+  .where .header h2{ font-size: clamp(48px, 13vw, 80px); }
+  .where .role{ grid-template-columns: 1fr; gap:8px; padding: 24px var(--pad-x); }
+  .where .role .company{ font-size: clamp(28px, 8vw, 44px); }
+  .where .role .city{ text-align:left; grid-column: auto; }
+
+  .how h2{ font-size: clamp(48px, 12vw, 72px); }
+  .how .row{ padding: 32px 0; }
+  .how .row .cat .label{ font-size: clamp(28px, 8vw, 40px); }
+  .how .stacks{ grid-template-columns:1fr; }
+
+  .contact .lead{ font-size: clamp(56px, 16vw, 96px); }
+  .contact .mail{ font-size: clamp(28px, 7vw, 44px); margin-top: 32px; }
+  .contact .socials a .v{ font-size: 32px; }
+
+  footer{ padding: 40px var(--pad-x) 32px; gap: 20px; }
+  footer .footer-row{ flex-direction:column; align-items:flex-start; gap:24px; }
+  footer .footer-logo img{ height: 56px; }
+  footer .big{ font-size: clamp(80px, 32vw, 200px); margin-top: 32px; }
+
+  /* hover-only effects don't make sense on touch — disable cursor system */
+  .cur-dot, .cur-ring{ display:none !important; }
+  html, body{ cursor: auto !important; }
+}
+
+@media (max-width: 420px){
+  nav.top ul li:nth-child(3){ display:none; }  /* hide "Where" to save room */
+  .hero h1{ font-size: clamp(48px, 17vw, 84px); }
+}
+</style>
+
+</head>
+<body>
+
+<div class="grain" aria-hidden="true"></div>
+<div class="scanlines" aria-hidden="true"></div>
+<div class="vignette" aria-hidden="true"></div>
+<div class="crt-pulse" id="crtPulse" aria-hidden="true"></div>
+<div class="cur-ring" id="curRing" aria-hidden="true"></div>
+<div class="cur-dot" id="curDot" aria-hidden="true"></div>
+<div class="cursor-glow" id="cursorGlow" aria-hidden="true"></div>
+
+<!-- NAV -->
+<nav class="top">
+  <a href="#hero" class="logo">
+    <img src="assets/logo-yr.png" alt="YR" class="logo-img" />
+    <span class="logo-text">Raviv.io</span>
+  </a>
+  <ul>
+    <li><a href="#who" data-anchor="who">Who</a></li>
+    <li><a href="#what" data-anchor="what">What</a></li>
+    <li><a href="#where" data-anchor="where">Where</a></li>
+    <li><a href="#how" data-anchor="how">How</a></li>
+    <li><a href="#contact" data-anchor="contact">Contact</a></li>
+    <li><a href="#blog" class="blog">Blog</a></li>
+  </ul>
+</nav>
+
+<!-- HERO -->
+<section class="hero" id="hero" data-screen-label="01 Hero">
+  <div class="stage" id="stage"><!-- three.js canvas mounts here --></div>
+  <div class="scrim"></div>
+
+  <div class="top-meta">
+    <div class="col">
+      <span>// Index</span>
+      <span class="v">N° 0001 — Portfolio v3</span>
+      <span>Reactivated · Mar 2026</span>
+    </div>
+    <div class="col r">
+      <span>// Coordinates</span>
+      <span class="v">32.0853° N · 34.7818° E</span>
+      <span>Tel Aviv — Remote</span>
+    </div>
+  </div>
+
+  <div class="backname" aria-hidden="true">Raviv</div>
+
+  <div class="title-block">
+    <h1 class="reveal-words" data-words>
+      <span>Yonathan</span><br><span class="swap" data-text="Raviv">Raviv</span>
+    </h1>
+    <div class="role-line">
+      <div class="role reveal-words" data-words>
+        Fullstack engineer and AI engineer. Six years building systems where design meets logic.
+      </div>
+      <div class="signature">
+        <span>CS · class of '19</span>
+        <span class="a">Currently @ [placeholder co.]</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="scroll-cue">
+    <span>Scroll</span>
+    <span class="line"></span>
+  </div>
+</section>
+
+<!-- WHO -->
+<section class="sec who" id="who" data-screen-label="02 Who">
+  <div class="sec-label"><span class="num">01 / </span><span class="lbl">Who</span></div>
+  <p class="quote reveal-words" data-words>
+    I write code with intent. <em>Six years</em> at the bench, a CS degree in the drawer, and a recent focus on the <em>thinking</em> half of the machine.
+  </p>
+
+  <div class="meta-grid">
+    <div class="cell fade-up">
+      <span class="k">Years</span>
+      <span class="v">06</span>
+      <span class="vs">Shipping production code since 2020.</span>
+    </div>
+    <div class="cell fade-up">
+      <span class="k">Education</span>
+      <span class="v">B.Sc.</span>
+      <span class="vs">Computer Science — graduated [placeholder].</span>
+    </div>
+    <div class="cell fade-up">
+      <span class="k">Discipline</span>
+      <span class="v">Full-stack</span>
+      <span class="vs">From cursor blink to inference latency.</span>
+    </div>
+    <div class="cell fade-up">
+      <span class="k">Now</span>
+      <span class="v">AI</span>
+      <span class="vs">Agents, RAG, eval. Specs over guesses.</span>
+    </div>
+  </div>
+</section>
+
+<!-- WHAT -->
+<section class="sec what" id="what" data-screen-label="03 What">
+  <div class="sec-label"><span class="num">02 / </span><span class="lbl">What I've built</span></div>
+
+  <div class="projects">
+    <a class="proj" href="#" data-proj="relay">
+      <span class="idx">01 — 2025</span>
+      <span class="name reveal-words" data-words>Relay</span>
+      <span class="desc">
+        <span class="tag">Active</span><span class="tag">AI</span>
+        Specs-driven development app. A bridge between intent and implementation — write what, ship how.
+      </span>
+      <span class="arrow">→</span>
+      <span class="thumb"><span class="placeholder">Drop hero shot ↗</span></span>
+    </a>
+    <a class="proj" href="#" data-proj="shishi">
+      <span class="idx">02 — 2024</span>
+      <span class="name reveal-words" data-words>Shi-Shi</span>
+      <span class="desc">
+        <span class="tag">Web</span><span class="tag">Brand</span>
+        A restaurant identity rendered in code. Type, motion, and a menu that breathes.
+      </span>
+      <span class="arrow">→</span>
+      <span class="thumb"><span class="placeholder">Drop hero shot ↗</span></span>
+    </a>
+    <a class="proj" href="#" data-proj="placeholder">
+      <span class="idx">03 — ____</span>
+      <span class="name reveal-words" data-words>[ next ]</span>
+      <span class="desc">
+        <span class="tag">Soon</span>
+        Reserved for the project I haven't shipped yet. Watch this space.
+      </span>
+      <span class="arrow">→</span>
+      <span class="thumb"><span class="placeholder">Drop hero shot ↗</span></span>
+    </a>
+  </div>
+</section>
+
+<!-- WHERE -->
+<section class="sec where" id="where" data-screen-label="04 Where">
+  <div class="sec-label"><span class="num">03 / </span><span class="lbl">Where I've been</span></div>
+  <div class="header">
+    <h2 class="reveal-words" data-words>Where <em>I've</em> been.</h2>
+    <p class="blurb fade-up">Six years across product, platform, and lately, intelligence.</p>
+  </div>
+
+  <div class="timeline">
+    <div class="role fade-up">
+      <span class="date">2024 — Present</span>
+      <span class="company">[Company A] <span class="current">Now</span></span>
+      <span class="title">Senior AI Engineer · [Placeholder]</span>
+      <span class="city">Tel Aviv · IL</span>
+    </div>
+    <div class="role fade-up">
+      <span class="date">2022 — 2024</span>
+      <span class="company">[Company B]</span>
+      <span class="title">Fullstack · Platform</span>
+      <span class="city">Remote · EU</span>
+    </div>
+    <div class="role fade-up">
+      <span class="date">2020 — 2022</span>
+      <span class="company">[Company C]</span>
+      <span class="title">Software Engineer</span>
+      <span class="city">Tel Aviv · IL</span>
+    </div>
+    <div class="role fade-up">
+      <span class="date">2019 — 2020</span>
+      <span class="company">[First gig]</span>
+      <span class="title">Engineering Intern → Junior</span>
+      <span class="city">Tel Aviv · IL</span>
+    </div>
+  </div>
+</section>
+
+<!-- HOW -->
+<section class="sec how" id="how" data-screen-label="05 How">
+  <div class="sec-label"><span class="num">04 / </span><span class="lbl">How I build</span></div>
+  <h2 class="reveal-words" data-words>Small <em>sharp</em> stack.</h2>
+
+  <div class="matrix">
+    <div class="row">
+      <div class="cat fade-up">
+        <span class="idx">i.</span>
+        <span class="label">Languages</span>
+        <span class="blurb">The grammar layer. Strong typing and fast feedback.</span>
+      </div>
+      <div class="chips">
+        <span class="chip hero-skill">TypeScript<span class="lvl">daily</span></span>
+        <span class="chip hero-skill">Python<span class="lvl">daily</span></span>
+        <span class="chip">SQL<span class="lvl">fluent</span></span>
+        <span class="chip">Go<span class="lvl">occasional</span></span>
+        <span class="chip">Bash<span class="lvl">occasional</span></span>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="cat fade-up">
+        <span class="idx">ii.</span>
+        <span class="label">Frontend</span>
+        <span class="blurb">Pixels, motion, state. The half users actually touch.</span>
+      </div>
+      <div class="chips">
+        <span class="chip hero-skill">React<span class="lvl">5 yr</span></span>
+        <span class="chip hero-skill">Next.js<span class="lvl">4 yr</span></span>
+        <span class="chip">Tailwind<span class="lvl">4 yr</span></span>
+        <span class="chip">Three.js<span class="lvl">2 yr</span></span>
+        <span class="chip">Framer Motion<span class="lvl">3 yr</span></span>
+        <span class="chip">Zustand<span class="lvl">2 yr</span></span>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="cat fade-up">
+        <span class="idx">iii.</span>
+        <span class="label">Backend &amp; Data</span>
+        <span class="blurb">APIs, stores, queues. Where the work actually happens.</span>
+      </div>
+      <div class="chips">
+        <span class="chip hero-skill">Node.js<span class="lvl">core</span></span>
+        <span class="chip hero-skill">FastAPI<span class="lvl">core</span></span>
+        <span class="chip">PostgreSQL<span class="lvl">core</span></span>
+        <span class="chip">Redis<span class="lvl">core</span></span>
+        <span class="chip">tRPC<span class="lvl">fluent</span></span>
+        <span class="chip">GraphQL<span class="lvl">fluent</span></span>
+        <span class="chip">Kafka<span class="lvl">shipped</span></span>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="cat fade-up">
+        <span class="idx">iv.</span>
+        <span class="label">AI &amp; ML</span>
+        <span class="blurb">Agents, retrieval, eval. Specs over guesses.</span>
+      </div>
+      <div class="chips">
+        <span class="chip hero-skill">LLM agents<span class="lvl">2 yr</span></span>
+        <span class="chip hero-skill">RAG<span class="lvl">shipped</span></span>
+        <span class="chip">Embeddings<span class="lvl">shipped</span></span>
+        <span class="chip">Eval &amp; guardrails<span class="lvl">shipped</span></span>
+        <span class="chip">PyTorch<span class="lvl">working</span></span>
+        <span class="chip">LangChain<span class="lvl">working</span></span>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="cat fade-up">
+        <span class="idx">v.</span>
+        <span class="label">Infra</span>
+        <span class="blurb">Ship it, watch it, scale it, page on it.</span>
+      </div>
+      <div class="chips">
+        <span class="chip hero-skill">Docker<span class="lvl">daily</span></span>
+        <span class="chip">AWS<span class="lvl">shipped</span></span>
+        <span class="chip">GCP<span class="lvl">shipped</span></span>
+        <span class="chip">GitHub Actions<span class="lvl">daily</span></span>
+        <span class="chip">Terraform<span class="lvl">working</span></span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CONTACT -->
+<section class="sec contact" id="contact" data-screen-label="06 Contact">
+  <div class="sec-label"><span class="num">05 / </span><span class="lbl">Contact</span></div>
+  <h2 class="lead reveal-words" data-words>
+    Let's <em>build</em> something.
+  </h2>
+  <a class="mail" href="mailto:hello@yonathanraviv.com">hello@yonathanraviv.com ↗</a>
+
+  <div class="socials">
+    <a href="https://github.com/YoniRaviv" target="_blank" rel="noopener">
+      <span class="k">// Code</span>
+      <span class="v">GitHub <span class="arrow">↗</span></span>
+      <span class="handle">@YoniRaviv</span>
+    </a>
+    <a href="https://www.linkedin.com/in/yonathan-raviv/" target="_blank" rel="noopener">
+      <span class="k">// Professional</span>
+      <span class="v">LinkedIn <span class="arrow">↗</span></span>
+      <span class="handle">/in/yonathan-raviv</span>
+    </a>
+    <a href="https://x.com/yonathan_raviv" target="_blank" rel="noopener">
+      <span class="k">// Thoughts</span>
+      <span class="v">X / Twitter <span class="arrow">↗</span></span>
+      <span class="handle">@yonathan_raviv</span>
+    </a>
+  </div>
+</section>
+
+<footer>
+  <div class="footer-row">
+    <a href="#hero" class="footer-logo">
+      <img src="assets/logo-yr.png" alt="YR" />
+    </a>
+    <div class="footer-meta">
+      <span class="copy">© Yonathan Raviv · 2026</span>
+      <span class="dot">·</span>
+      <span>Built with HTML &amp; Three.js</span>
+    </div>
+    <a href="#hero" class="footer-top">Back to top ↑</a>
+  </div>
+  <div class="big" aria-hidden="true">Raviv</div>
+</footer>
+
+<!-- Three.js (pinned to 0.147 — last version that ships examples/js/ globals on unpkg) -->
+<script src="https://unpkg.com/three@0.147.0/build/three.min.js"></script>
+<script src="https://unpkg.com/three@0.147.0/examples/js/loaders/GLTFLoader.js"></script>
+
+<!-- React (for Tweaks panel only) -->
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+<!-- Tweaks defaults (host-editable) -->
+<script>
+const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
+  "accent": "#FF6F59",
+  "heroObject": "chip",
+  "background": "noise",
+  "cursorGlow": true,
+  "displayFont": "Bebas Neue",
+  "scanlines": true,
+  "spinSpeed": 1.4
+}/*EDITMODE-END*/;
+</script>
+
+<!-- our scripts -->
+<script src="js/hero-scene.js"></script>
+<script src="js/scroll-fx.js"></script>
+<script type="text/babel" src="tweaks-panel.jsx"></script>
+<script type="text/babel" src="js/tweaks-app.jsx"></script>
+
+</body>
+</html>

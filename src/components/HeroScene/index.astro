@@ -1,0 +1,29 @@
+---
+import Placeholder from './Placeholder.astro';
+---
+<div class="stage" id="stage">
+  <Placeholder />
+</div>
+
+<script>
+  // Lazy-load Three.js hero scene only when the stage is in viewport and
+  // the user hasn't requested reduced motion. Three.js code-splits into its
+  // own chunk via dynamic import.
+  const mount = document.getElementById('stage');
+  if (mount && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    const start = () => import('./HeroScene').then(({ init }) => init(mount));
+    if ('IntersectionObserver' in window) {
+      const io = new IntersectionObserver((entries) => {
+        entries.forEach((e) => {
+          if (e.isIntersecting) {
+            io.disconnect();
+            start();
+          }
+        });
+      }, { rootMargin: '200px' });
+      io.observe(mount);
+    } else {
+      start();
+    }
+  }
+</script>

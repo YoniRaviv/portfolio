@@ -1,0 +1,12 @@
+import type { MetaCell } from './_types';
+
+export const who = {
+  label: { num: '01 / ', text: 'Who' },
+  quote: 'I write code with intent. <em>Six years</em> at the bench, a CS degree in the drawer, and a recent focus on the <em>thinking</em> half of the machine.',
+  cells: <MetaCell[]>[
+    { k: 'Years',      v: '06',         vs: 'Shipping production code since 2020.' },
+    { k: 'Education',  v: 'B.Sc.',      vs: 'Computer Science — graduated [placeholder].' },
+    { k: 'Discipline', v: 'Full-stack', vs: 'From cursor blink to inference latency.' },
+    { k: 'Now',        v: 'AI',         vs: 'Agents, RAG, eval. Specs over guesses.' },
+  ],
+};
