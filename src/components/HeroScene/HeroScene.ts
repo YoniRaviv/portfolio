@@ -39,14 +39,14 @@ export function init(mount: HTMLElement): HeroSceneHandle {
   // Moody dark setup: ambient lifts the whole mask off pitch black, a soft
   // desaturated key replaces the old white directional so we don't get a
   // harsh white specular glare on the wet material.
-  const ambient = new THREE.AmbientLight(0xffffff, 0.75);
+  const ambient = new THREE.AmbientLight(0xffffff, 0.8);
   scene.add(ambient);
   const hemi = new THREE.HemisphereLight(0xfff0e0, 0x1a0e10, 0.55);
   scene.add(hemi);
-  const key = new THREE.DirectionalLight(0xffffff, 1.3);
+  const key = new THREE.DirectionalLight(0xffffff, 1.6);
   key.position.set(3, 4, 4);
   scene.add(key);
-  const accentBeam = new THREE.SpotLight(ACCENT, 9.0, 16, Math.PI / 4.5, 0.55, 1.5);
+  const accentBeam = new THREE.SpotLight(ACCENT, 9.0, 16, Math.PI / 4.5, 0.55, 1.2);
   accentBeam.position.set(-3.5, -3, 2.5);
   accentBeam.target.position.set(1.5, 1.8, -0.5);
   scene.add(accentBeam);
@@ -60,7 +60,7 @@ export function init(mount: HTMLElement): HeroSceneHandle {
   cool.position.set(2.5, 1.5, 2);
   scene.add(cool);
 
-  const rim = new THREE.PointLight(ACCENT, 8, 10, 1.4);
+  const rim = new THREE.PointLight(ACCENT, 4, 12, 0.6);
   rim.position.set(0, 3.5, -2.5);
   scene.add(rim);
 
