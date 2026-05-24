@@ -4,7 +4,10 @@ import { who } from '@/content';
 <section class="sec who" id="who" aria-labelledby="who-title" tabindex="-1">
   <div class="sec-label"><span class="num">{who.label.num}</span><span class="lbl">{who.label.text}</span></div>
   <h2 id="who-title" class="visually-hidden">{who.label.text}</h2>
-  <p class="quote reveal-words" data-words set:html={who.quote}></p>
+  <div class="quote-stack" data-quote-reveal data-cursor="reveal">
+    <p class="quote reveal-words" data-words set:html={who.quote}></p>
+    <p class="quote-stroke" aria-hidden="true" data-words set:html={who.quote}></p>
+  </div>
 
   <div class="meta-grid">
     {who.cells.map((cell) => (
@@ -23,21 +26,75 @@ import { who } from '@/content';
     overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0;
   }
   .who { padding-top: 200px; padding-bottom: 200px; position: relative; }
-  .who .quote {
+  /* Both .quote and the overlay share the same type metrics so the stroked
+     overlay aligns letter-for-letter with the cream original. The overlay
+     is only visible within a soft radial mask centred on the cursor, while
+     the original is punched out by the inverse mask — giving the impression
+     that the cursor's expanded ring is "revealing" the mask + accent stroke
+     through the type. */
+  .who .quote-stack {
+    position: relative;
+    max-width: 1400px;
+    --qx: -1000px;
+    --qy: -1000px;
+    --reveal-radius: 100px;
+  }
+  .who .quote,
+  .who .quote-stroke {
     font-family: var(--display); font-weight: 400;
     font-size: clamp(40px, 5.5vw, 90px);
     line-height: 1.15;
     letter-spacing: .01em;
-    color: #f4eee2;
-    max-width: 1400px;
     text-transform: uppercase;
+    max-width: 1400px;
   }
+  .who .quote { color: #f4eee2; }
   .who .quote :global(em) {
     color: var(--accent);
     font-style: normal;
     display: inline-block;
     font-variant-numeric: tabular-nums;
-    cursor: pointer;
+  }
+  .who .quote-stroke {
+    position: absolute; inset: 0;
+    color: transparent;
+    -webkit-text-stroke: 1px var(--accent);
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity .25s ease;
+    -webkit-mask-image: radial-gradient(
+      circle var(--reveal-radius) at var(--qx) var(--qy),
+      black 0%, black 98%, transparent 100%
+    );
+            mask-image: radial-gradient(
+      circle var(--reveal-radius) at var(--qx) var(--qy),
+      black 0%, black 98%, transparent 100%
+    );
+  }
+  .who .quote-stroke :global(em) {
+    color: transparent;
+    font-style: normal;
+    display: inline-block;
+    font-variant-numeric: tabular-nums;
+    -webkit-text-stroke: 1px var(--accent);
+  }
+  /* Inherit the same inline-block + spacing the original .word gets from the
+     global .reveal-words .word rule, so the overlay's words line-break in
+     lock-step with the cream original. */
+  .who .quote-stroke :global(.word) {
+    display: inline-block;
+    margin-right: .32em;
+  }
+  .who .quote-stack:hover .quote-stroke { opacity: 1; }
+  .who .quote-stack:hover .quote {
+    -webkit-mask-image: radial-gradient(
+      circle var(--reveal-radius) at var(--qx) var(--qy),
+      transparent 0%, transparent 98%, black 100%
+    );
+            mask-image: radial-gradient(
+      circle var(--reveal-radius) at var(--qx) var(--qy),
+      transparent 0%, transparent 98%, black 100%
+    );
   }
   .who .meta-grid {
     margin-top: 120px;

@@ -1,10 +1,8 @@
 ---
-import HeroScene from './HeroScene/index.astro';
 import HeroHud from './HeroScene/HeroHud.astro';
 import { hero } from '@/content';
 ---
 <section class="hero" id="hero" aria-labelledby="hero-title" tabindex="-1">
-  <HeroScene />
   <div class="scrim"></div>
   <HeroHud />
 
@@ -52,25 +50,6 @@ import { hero } from '@/content';
     position: absolute; width: 0; height: 0;
     pointer-events: none;
   }
-  .hero::before {
-    content: '';
-    position: absolute; inset: 0; z-index: 0;
-    pointer-events: none;
-    background-image: radial-gradient(rgba(191, 178, 155, .18) 1px, transparent 1.5px);
-    background-size: 20px 20px;
-    background-position: 0 0;
-  }
-  .hero :global(.stage) {
-    position: absolute; top: 0; right: 0; bottom: 0; left: 30%; z-index: 1;
-    animation: stageIn 1.8s cubic-bezier(.2,.7,.2,1) both;
-    animation-delay: .4s;
-  }
-  @keyframes stageIn {
-    from { opacity: 0; transform: scale(1.08); filter: blur(20px); }
-    to   { opacity: 1; transform: none;        filter: none; }
-  }
-  .hero :global(canvas) { display: block; width: 100%; height: 100%; }
-
   .hero .scrim {
     position: absolute; inset: 0; z-index: 2; pointer-events: none;
     background:
@@ -160,7 +139,6 @@ import { hero } from '@/content';
 
   @media (max-width: 720px) {
     .hero { min-height: auto; height: auto; padding-bottom: 60px; padding-top: 100px; }
-    .hero :global(.stage) { position: relative; left: 0; right: 0; top: 0; height: 50vh; min-height: 380px; }
     .hero .scrim { background: linear-gradient(to bottom, transparent 30%, rgba(21,21,21,.9) 95%); }
     .hero .top-meta { display: none; }
     .hero .title-block { padding: 20px 0 0; position: relative; }

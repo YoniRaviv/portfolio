@@ -26,10 +26,4 @@ export const roles: Role[] = [
     title: 'Software Engineer',
     city: 'Tel Aviv · IL',
   },
-  {
-    range: '2019 — 2020',
-    company: '[First gig]',
-    title: 'Engineering Intern → Junior',
-    city: 'Tel Aviv · IL',
-  },
 ];

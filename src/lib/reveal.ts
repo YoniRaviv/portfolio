@@ -96,10 +96,6 @@ function mountScrambles(): void {
     bindHoverScramble(cell, v, 900);
   });
 
-  document.querySelectorAll<HTMLElement>('.who .quote em').forEach((em) => {
-    bindHoverScramble(em, em, 900);
-  });
-
   document.querySelectorAll<HTMLElement>('.where .role').forEach((role) => {
     const company = role.querySelector<HTMLElement>('.company');
     if (company && !company.querySelector('.cname')) {
@@ -115,6 +111,31 @@ function mountScrambles(): void {
     }
     const cname = company?.querySelector<HTMLElement>('.cname');
     bindHoverScramble(role, cname ?? null, 900);
+  });
+}
+
+function mountQuoteReveal(): void {
+  // Track pointer position relative to each [data-quote-reveal] element and
+  // expose it as --qx / --qy CSS variables. Used by the Who section's
+  // spotlight mask that punches the cream fill out within a circle around the
+  // cursor (revealing the mask + accent stroke beneath).
+  const stacks = document.querySelectorAll<HTMLElement>('[data-quote-reveal]');
+  stacks.forEach((stack) => {
+    const reset = (): void => {
+      stack.style.setProperty('--qx', '-1000px');
+      stack.style.setProperty('--qy', '-1000px');
+    };
+    reset();
+    stack.addEventListener(
+      'pointermove',
+      (e) => {
+        const r = stack.getBoundingClientRect();
+        stack.style.setProperty('--qx', `${e.clientX - r.left}px`);
+        stack.style.setProperty('--qy', `${e.clientY - r.top}px`);
+      },
+      { passive: true }
+    );
+    stack.addEventListener('pointerleave', reset);
   });
 }
 
@@ -148,4 +169,5 @@ export function mountReveal(): void {
   }
 
   mountScrambles();
+  mountQuoteReveal();
 }

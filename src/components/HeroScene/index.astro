@@ -5,6 +5,38 @@ import Placeholder from './Placeholder.astro';
   <Placeholder />
 </div>
 
+<style>
+  /* Persistent canvas: now full-viewport so particles aren't clipped to a
+     visible right-side frame. The mask itself sits in the right portion of
+     the scene via stageGroup.position.x (HERO_RIG), so the visual is the
+     same as the old right-70% framing — just without the hard edge. */
+  .stage {
+    position: fixed; inset: 0;
+    z-index: 6;
+    pointer-events: none;
+    animation: stageIn 1.8s cubic-bezier(.2,.7,.2,1) both;
+    animation-delay: .4s;
+  }
+  /* --anchor-y is driven by JS once the scroll probe reaches Contact, so the
+     canvas stops following the viewport and scrolls with the page. It lives in
+     the keyframes (not just on .stage) because animation fill states sit above
+     inline styles in the cascade — without var() inside the keyframes, the JS
+     transform write would be clobbered by `transform: none` from the `to`
+     state. */
+  @keyframes stageIn {
+    from { opacity: 0; transform: translate3d(0, var(--anchor-y, 0px), 0) scale(1.08); filter: blur(20px); }
+    to   { opacity: 1; transform: translate3d(0, var(--anchor-y, 0px), 0) scale(1);    filter: none; }
+  }
+  .stage :global(canvas) { display: block; width: 100%; height: 100%; }
+
+  @media (max-width: 720px) {
+    /* Mobile: a more refined choreography lands in Step 8 of the plan.
+       For now keep the canvas pinned to the upper half so hero content
+       below remains readable, matching the prior mobile behaviour. */
+    .stage { top: 0; right: 0; left: 0; bottom: auto; height: 50vh; min-height: 380px; }
+  }
+</style>
+
 <script>
   // Lazy-load Three.js hero scene only when the stage is in viewport and
   // the user hasn't requested reduced motion. Three.js code-splits into its

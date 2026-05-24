@@ -17,6 +17,23 @@ body {
   min-height: 100svh;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
+  /* Establish a containing block so .hero-dots can sit absolutely at the
+     top of the document (scrolling away with the page) rather than sticking
+     to the viewport. No z-index, so no new stacking context is created. */
+  position: relative;
+}
+
+/* Hero dotted backdrop — promoted out of .hero (which sits at z-index 10 and
+   was painting these on top of the mask) to a body-level absolute layer at
+   z-index 5, just under the canvas (z-index 6). Spans the first 100vh of the
+   document so it disappears as you scroll past hero. */
+.hero-dots {
+  position: absolute; top: 0; left: 0; right: 0; height: 100vh;
+  z-index: 5;
+  pointer-events: none;
+  background-image: radial-gradient(rgba(191, 178, 155, .18) 1px, transparent 1.5px);
+  background-size: 20px 20px;
+  background-position: 0 0;
 }
 
 /* ─── ambient: noise grain ─── */
@@ -64,14 +81,21 @@ body {
   width: 6px; height: 6px;
   background: var(--text);
   margin: -3px 0 0 -3px;
-  transition: width .25s, height .25s, opacity .25s;
+  transition: width .4s ease, height .4s ease, margin .4s ease, opacity .4s ease;
 }
 .cur-ring {
   width: 36px; height: 36px;
   margin: -18px 0 0 -18px;
   border: 1px solid var(--accent);
-  transition: width .35s cubic-bezier(.2,.7,.2,1), height .35s cubic-bezier(.2,.7,.2,1),
-              opacity .25s, background-color .25s, border-color .25s;
+  /* Include margin in the easing — without it the ring snaps to its new
+     centre offset while width/height ramp, producing a harsh jump. */
+  transition:
+    width .5s cubic-bezier(.2,.7,.2,1),
+    height .5s cubic-bezier(.2,.7,.2,1),
+    margin .5s cubic-bezier(.2,.7,.2,1),
+    opacity .4s ease,
+    background-color .4s ease,
+    border-color .4s ease;
   mix-blend-mode: normal;
 }
 .cur-dot.hide, .cur-ring.hide { opacity: 0; }
@@ -79,6 +103,15 @@ body {
   width: 56px; height: 56px;
   margin: -28px 0 0 -28px;
   background: rgba(255, 111, 89, .08);
+  border-color: var(--accent);
+}
+/* Reveal cursor: matches the spotlight mask radius (100px) on the Who quote
+   so the expanded ring traces exactly where the cream text gives way to mask
+   + accent stroke. Diameter = 2 × --reveal-radius. */
+.cur-ring.reveal {
+  width: 200px; height: 200px;
+  margin: -100px 0 0 -100px;
+  background: rgba(255, 111, 89, .05);
   border-color: var(--accent);
 }
 .cur-dot.hover {

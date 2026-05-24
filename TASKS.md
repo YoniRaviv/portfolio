@@ -1,7 +1,12 @@
 # TODOS
 ## Hero
 1. lights behind the mask to lit up eyes with pulse
-3. credit creator - check licence
+2. make something cool with the mask when scrolling down - transfer to another section 
+3. mask transitions. 
+
+## WHO
+1. stroke mask storkes in color text not orange keep the orange text with no strokes
+
 
 ## global
 1. full page scroll with each section enter animations
