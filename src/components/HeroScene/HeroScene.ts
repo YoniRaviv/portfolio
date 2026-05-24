@@ -11,7 +11,7 @@ export interface HeroSceneHandle {
 }
 
 const MODEL_URL = '/models/hero.compressed.glb';
-const TARGET_SIZE = 3.2; // world units along the largest bounding-box axis
+const TARGET_SIZE = 3.5; // world units along the largest bounding-box axis
 
 export function init(mount: HTMLElement): HeroSceneHandle {
   const scene = new THREE.Scene();
@@ -41,35 +41,25 @@ export function init(mount: HTMLElement): HeroSceneHandle {
   // harsh white specular glare on the wet material.
   const ambient = new THREE.AmbientLight(0xffffff, 0.75);
   scene.add(ambient);
-  // Hemisphere fill — adds gentle directional softness so the mask doesn't
-  // read as evenly flat-lit by the ambient bump.
   const hemi = new THREE.HemisphereLight(0xfff0e0, 0x1a0e10, 0.55);
   scene.add(hemi);
   const key = new THREE.DirectionalLight(0xffffff, 1.3);
   key.position.set(3, 4, 4);
   scene.add(key);
-  // Directional accent beam: aimed from where RAVIV sits in screen space
-  // diagonally up toward the upper-right of the mask, so the orange streaks
-  // across the face like the title is throwing the light.
   const accentBeam = new THREE.SpotLight(ACCENT, 9.0, 16, Math.PI / 4.5, 0.55, 1.5);
   accentBeam.position.set(-3.5, -3, 2.5);
   accentBeam.target.position.set(1.5, 1.8, -0.5);
   scene.add(accentBeam);
   scene.add(accentBeam.target);
 
-  // Soft warm fill on the mask itself so the shadowed side still reads —
-  // moody, not pitch black.
   const accentFill = new THREE.PointLight(ACCENT, 1.6, 12, 1.2);
   accentFill.position.set(0, 0.5, 2);
   scene.add(accentFill);
 
-  // Subtle cool counterpoint on the upper-right edge
   const cool = new THREE.PointLight(0x4dd2ff, 1.4, 14, 2);
   cool.position.set(2.5, 1.5, 2);
   scene.add(cool);
 
-  // Backlight rim — sits above-and-behind the head so the camera sees its
-  // glow catch the top spikes and silhouette edge.
   const rim = new THREE.PointLight(ACCENT, 8, 10, 1.4);
   rim.position.set(0, 3.5, -2.5);
   scene.add(rim);
