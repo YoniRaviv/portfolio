@@ -92,26 +92,6 @@ export function init(mount: HTMLElement): HeroSceneHandle {
       model.position.sub(center).multiplyScalar(scale);
       model.scale.setScalar(scale);
 
-      // Glowing eyes: find any mesh named like an eye and push accent emissive
-      // onto its material. Logs all mesh names once so we can pick a different
-      // pattern if the model uses a different naming convention.
-      const meshNames: string[] = [];
-      model.traverse((obj) => {
-        const m = obj as THREE.Mesh;
-        if (!m.isMesh) return;
-        meshNames.push(m.name);
-        if (/eye|iris|pupil/i.test(m.name)) {
-          const mat = m.material as THREE.MeshStandardMaterial;
-          if (mat && 'emissive' in mat) {
-            mat.emissive = ACCENT.clone();
-            mat.emissiveIntensity = 1.8;
-            mat.toneMapped = false;
-            mat.needsUpdate = true;
-          }
-        }
-      });
-      console.log('[hero] mesh names:', meshNames);
-
       modelGroup.add(model);
       modelLoaded = true;
 
@@ -125,8 +105,7 @@ export function init(mount: HTMLElement): HeroSceneHandle {
     }
   );
 
-  // ── LAYER 3: particles — kept in front of the mask (positive Z) so they
-  // read as the foreground layer floating between camera and the subject.
+  // Foreground particles — z stays positive so they sit between camera and mask.
   const PARTICLES = 380;
   const pPositions = new Float32Array(PARTICLES * 3);
   for (let i = 0; i < PARTICLES; i++) {

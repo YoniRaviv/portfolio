@@ -11,9 +11,12 @@
   <span class="scanline"></span>
 
   <svg class="leaders" viewBox="0 0 100 100" preserveAspectRatio="none">
-    <line class="lead-scan" x1="14" y1="35" x2="50" y2="20" />
-    <line class="lead-eye"  x1="69" y1="48" x2="86" y2="55" />
-    <line class="lead-jaw"  x1="51" y1="70" x2="40" y2="78" />
+    <!-- Each line goes from the target's dot (x1,y1 for scan; x2,y2 for eye/jaw)
+         to a feature on the mask. % coords match the mask via the shared HUD
+         box, so they stay aligned across viewport sizes. -->
+    <line class="lead-scan" x1="12" y1="36" x2="42" y2="40" />
+    <line class="lead-eye"  x1="62" y1="58" x2="89" y2="55" />
+    <line class="lead-jaw"  x1="45" y1="70" x2="34" y2="80" />
   </svg>
 
   <div class="target scan">
@@ -133,6 +136,9 @@
   }
 
   /* ── Leader lines (mid parallax) ─────────────────────────────── */
+  /* Continuous float: `translate` carries the mouse parallax, `transform`
+     carries the ambient drift — they're separate CSS properties so they
+     compose without overwriting each other. */
   .leaders {
     position: absolute;
     inset: 0;
@@ -142,6 +148,7 @@
     fill: none;
     translate: calc(var(--mx) * -6px) calc(var(--my) * -4px);
     transition: translate .12s linear;
+    animation: hudFloatSmall 9.4s ease-in-out -2.1s infinite;
   }
   .leaders line {
     stroke-dasharray: 200;
@@ -161,7 +168,13 @@
     display: flex; align-items: center; gap: 10px;
     translate: calc(var(--mx) * -10px) calc(var(--my) * -7px);
     transition: translate .12s linear;
+    animation: hudFloat 7s ease-in-out infinite;
   }
+  /* Different durations + negative delays so the three targets drift out of
+     phase with each other instead of moving as a rigid block. */
+  .target.scan { animation-duration: 7.3s; animation-delay: -0.6s; }
+  .target.eye  { animation-duration: 8.6s; animation-delay: -2.9s; }
+  .target.jaw  { animation-duration: 6.7s; animation-delay: -1.4s; }
   .target .dot {
     position: relative;
     width: 8px; height: 8px;
@@ -204,10 +217,10 @@
     text-align: right;
   }
   .target.eye  {
-    top: 54%; right: 1.5%;
+    top: 52%; right: 1.5%;
   }
   .target.jaw  {
-    top: 78%; left: 31%;
+    top: 79%; left: 30%;
   }
 
   /* ── Telemetry ticker ────────────────────────────────────────── */
@@ -252,14 +265,32 @@
     0%, 80%, 100% { opacity: 1; }
     81%, 82%      { opacity: .35; }
   }
+  /* Ambient drift — small, continuous, no rest position so it always reads as
+     moving. Applied to `transform` (not `translate`) so it stacks with the
+     mouse parallax instead of replacing it. */
+  @keyframes hudFloat {
+    0%   { transform: translate( 3px, -2px); }
+    25%  { transform: translate(-2px, -3px); }
+    50%  { transform: translate(-3px,  2px); }
+    75%  { transform: translate( 2px,  3px); }
+    100% { transform: translate( 3px, -2px); }
+  }
+  @keyframes hudFloatSmall {
+    0%   { transform: translate( 2px, -1.5px); }
+    25%  { transform: translate(-1.5px, -2px); }
+    50%  { transform: translate(-2px,  1.5px); }
+    75%  { transform: translate( 1.5px, 2px); }
+    100% { transform: translate( 2px, -1.5px); }
+  }
 
   @media (prefers-reduced-motion: reduce) {
-    .bracket, .leaders line, .target .dot, .target .label, .telemetry, .scanline {
+    .bracket, .leaders, .leaders line, .target, .target .dot, .target .label, .telemetry, .scanline {
       animation-duration: .01s !important;
       animation-iteration-count: 1 !important;
     }
     .bracket, .leaders, .target, .telemetry {
       translate: 0 !important;
+      transform: none !important;
     }
   }
 
