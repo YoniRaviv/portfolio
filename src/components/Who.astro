@@ -1,7 +1,7 @@
 ---
 import { who } from '@/content';
 ---
-<section class="sec who" id="who" aria-labelledby="who-title">
+<section class="sec who" id="who" aria-labelledby="who-title" tabindex="-1">
   <div class="sec-label"><span class="num">{who.label.num}</span><span class="lbl">{who.label.text}</span></div>
   <h2 id="who-title" class="visually-hidden">{who.label.text}</h2>
   <p class="quote reveal-words" data-words set:html={who.quote}></p>
@@ -32,7 +32,13 @@ import { who } from '@/content';
     max-width: 1400px;
     text-transform: uppercase;
   }
-  .who .quote :global(em) { color: var(--accent); font-style: normal; }
+  .who .quote :global(em) {
+    color: var(--accent);
+    font-style: normal;
+    display: inline-block;
+    font-variant-numeric: tabular-nums;
+    cursor: pointer;
+  }
   .who .meta-grid {
     margin-top: 120px;
     display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px;

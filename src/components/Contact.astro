@@ -1,7 +1,7 @@
 ---
 import { contact, socials } from '@/content';
 ---
-<section class="sec contact" id="contact" aria-labelledby="contact-title">
+<section class="sec contact" id="contact" aria-labelledby="contact-title" tabindex="-1">
   <div class="sec-label"><span class="num">{contact.label.num}</span><span class="lbl">{contact.label.text}</span></div>
   <h2 id="contact-title" class="lead reveal-words" data-words set:html={contact.lead}></h2>
   <a class="mail" href={`mailto:${contact.email}`}>{contact.email} ↗</a>
