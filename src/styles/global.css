@@ -2,7 +2,7 @@
 @import "./fonts.css";
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
-html { scroll-behavior: smooth; }
+html { scroll-behavior: smooth; overflow-x: clip; }
 html, body {
   background: var(--main);
   color: var(--text);
@@ -12,7 +12,7 @@ body {
   font-weight: 400;
   line-height: 1.5;
   letter-spacing: -0.005em;
-  overflow-x: hidden;
+  overflow-x: clip;
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;

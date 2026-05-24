@@ -12,7 +12,7 @@ export const hero = {
     right: {
       label: '// Coordinates',
       value: '32.0853° N · 34.7818° E',
-      sub: 'Tel Aviv — Remote',
+      sub: 'Tel Aviv',
     },
   },
   signature: {

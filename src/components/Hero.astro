@@ -1,10 +1,12 @@
 ---
 import HeroScene from './HeroScene/index.astro';
+import HeroHud from './HeroScene/HeroHud.astro';
 import { hero } from '@/content';
 ---
 <section class="hero" id="hero" aria-labelledby="hero-title">
   <HeroScene />
   <div class="scrim"></div>
+  <HeroHud />
 
   <div class="top-meta">
     <div class="col">
@@ -18,8 +20,6 @@ import { hero } from '@/content';
       <span>{hero.topMeta.right.sub}</span>
     </div>
   </div>
-
-  <div class="backname" aria-hidden="true">{hero.backName}</div>
 
   <div class="title-block">
     <h1 id="hero-title" class="reveal-words" data-words>
@@ -47,6 +47,18 @@ import { hero } from '@/content';
     display: flex; flex-direction: column; justify-content: flex-end;
     overflow: hidden;
     z-index: 10;
+  }
+  .hero .grid-filter {
+    position: absolute; width: 0; height: 0;
+    pointer-events: none;
+  }
+  .hero::before {
+    content: '';
+    position: absolute; inset: 0; z-index: 0;
+    pointer-events: none;
+    background-image: radial-gradient(rgba(191, 178, 155, .18) 1px, transparent 1.5px);
+    background-size: 20px 20px;
+    background-position: 0 0;
   }
   .hero :global(.stage) {
     position: absolute; top: 0; right: 0; bottom: 0; left: 30%; z-index: 1;
@@ -146,31 +158,12 @@ import { hero } from '@/content';
     100% { transform: scaleY(0); transform-origin: bottom; }
   }
 
-  .hero .backname {
-    position: absolute; bottom: -14px; left: 50%; transform: translateX(-50%); z-index: 1;
-    font-family: var(--display); font-weight: 400;
-    font-size: clamp(220px, 38vw, 600px);
-    line-height: .8;
-    color: transparent;
-    -webkit-text-stroke: 1px rgba(191, 178, 155, .08);
-    letter-spacing: -0.04em;
-    white-space: nowrap;
-    pointer-events: none;
-    user-select: none;
-    animation: backIn 2s cubic-bezier(.2,.7,.2,1) both;
-    animation-delay: .2s;
-  }
-  @keyframes backIn {
-    from { opacity: 0; transform: translateX(-50%) translateY(40px); }
-    to   { opacity: 1; transform: translateX(-50%) translateY(0); }
-  }
-
   @media (max-width: 720px) {
     .hero { min-height: auto; height: auto; padding-bottom: 60px; padding-top: 100px; }
-    .hero :global(.stage) { position: relative; left: 0; right: 0; top: 0; height: 55vh; min-height: 380px; }
+    .hero :global(.stage) { position: relative; left: 0; right: 0; top: 0; height: 50vh; min-height: 380px; }
     .hero .scrim { background: linear-gradient(to bottom, transparent 30%, rgba(21,21,21,.9) 95%); }
     .hero .top-meta { display: none; }
-    .hero .title-block { padding: 40px 0 0; position: relative; }
+    .hero .title-block { padding: 20px 0 0; position: relative; }
     .hero h1 { font-size: clamp(56px, 16vw, 100px); line-height: .95; }
     .hero .role-line {
       display: flex; flex-direction: column; align-items: flex-start; gap: 20px;
@@ -179,7 +172,6 @@ import { hero } from '@/content';
     .hero .role-line .role { font-size: 15px; max-width: none; }
     .hero .role-line .signature { text-align: left; align-items: flex-start; }
     .hero .scroll-cue { display: none; }
-    .hero .backname { font-size: 36vw; }
   }
   @media (max-width: 420px) {
     .hero h1 { font-size: clamp(48px, 17vw, 84px); }
