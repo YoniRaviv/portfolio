@@ -3,7 +3,7 @@ import HeroScene from './HeroScene/index.astro';
 import HeroHud from './HeroScene/HeroHud.astro';
 import { hero } from '@/content';
 ---
-<section class="hero" id="hero" aria-labelledby="hero-title">
+<section class="hero" id="hero" aria-labelledby="hero-title" tabindex="-1">
   <HeroScene />
   <div class="scrim"></div>
   <HeroHud />
@@ -42,7 +42,7 @@ import { hero } from '@/content';
 
 <style>
   .hero {
-    position: relative; height: 100vh; min-height: 620px;
+    position: relative; height: 100vh; height: 100svh; min-height: 620px;
     padding: 0 var(--pad-x);
     display: flex; flex-direction: column; justify-content: flex-end;
     overflow: hidden;

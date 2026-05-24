@@ -66,12 +66,16 @@ function scrambleEl(el: HTMLElement, finalText: string, duration = 1400): void {
 function bindHoverScramble(trigger: Element | null, target: HTMLElement | null, duration = 1400): void {
   if (!trigger || !target) return;
   const finalText = target.textContent ?? '';
-  const lockWidth = (): void => {
-    const w = target.getBoundingClientRect().width;
-    target.style.minWidth = `${Math.ceil(w)}px`;
+  const lockSize = (): void => {
+    target.style.width = 'auto';
+    const r = target.getBoundingClientRect();
+    target.style.display = 'inline-block';
+    target.style.width = `${Math.ceil(r.width)}px`;
+    target.style.whiteSpace = 'nowrap';
+    target.style.textAlign = 'left';
   };
-  lockWidth();
-  window.addEventListener('resize', lockWidth);
+  lockSize();
+  window.addEventListener('resize', lockSize);
   let scrambling = false;
   trigger.addEventListener('mouseenter', () => {
     if (scrambling) return;
@@ -90,6 +94,10 @@ function mountScrambles(): void {
   document.querySelectorAll<HTMLElement>('.who .meta-grid .cell').forEach((cell) => {
     const v = cell.querySelector<HTMLElement>('.v');
     bindHoverScramble(cell, v, 900);
+  });
+
+  document.querySelectorAll<HTMLElement>('.who .quote em').forEach((em) => {
+    bindHoverScramble(em, em, 900);
   });
 
   document.querySelectorAll<HTMLElement>('.where .role').forEach((role) => {

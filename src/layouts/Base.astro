@@ -27,9 +27,11 @@ const { title, description } = Astro.props;
     <slot />
 
     <script>
-      import { mountReveal }    from '@/lib/reveal';
-      import { mountCursor }    from '@/lib/cursor';
-      import { mountActiveNav } from '@/lib/active-nav';
+      import { mountReveal }       from '@/lib/reveal';
+      import { mountCursor }       from '@/lib/cursor';
+      import { mountActiveNav }    from '@/lib/active-nav';
+      import { mountSmoothScroll } from '@/lib/smooth-scroll';
+      mountSmoothScroll();
       mountReveal();
       mountCursor();
       mountActiveNav();

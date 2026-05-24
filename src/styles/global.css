@@ -2,7 +2,7 @@
 @import "./fonts.css";
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
-html { scroll-behavior: smooth; overflow-x: clip; }
+html { overflow-x: clip; }
 html, body {
   background: var(--main);
   color: var(--text);
@@ -14,6 +14,7 @@ body {
   letter-spacing: -0.005em;
   overflow-x: clip;
   min-height: 100vh;
+  min-height: 100svh;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
 }
@@ -100,10 +101,12 @@ body {
 }
 
 /* ─── shared section primitives ─── */
+main > section:focus-visible { outline: none; }
 section.sec {
   position: relative; z-index: 10;
   padding: 160px var(--pad-x) 160px;
   min-height: 100vh;
+  min-height: 100svh;
 }
 .sec-label {
   font-family: var(--mono); font-size: 11px; letter-spacing: .18em; text-transform: uppercase;
