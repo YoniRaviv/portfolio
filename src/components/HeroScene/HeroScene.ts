@@ -41,7 +41,7 @@ export function init(mount: HTMLElement): HeroSceneHandle {
   // harsh white specular glare on the wet material.
   const ambient = new THREE.AmbientLight(0xffffff, 0.8);
   scene.add(ambient);
-  const hemi = new THREE.HemisphereLight(0xfff0e0, 0x1a0e10, 0.55);
+  const hemi = new THREE.HemisphereLight(0xfff0e0, 0x1a0e10, 0.65);
   scene.add(hemi);
   const key = new THREE.DirectionalLight(0xffffff, 1.6);
   key.position.set(3, 4, 4);
@@ -53,7 +53,7 @@ export function init(mount: HTMLElement): HeroSceneHandle {
   scene.add(accentBeam.target);
 
   const accentFill = new THREE.PointLight(ACCENT, 1.6, 12, 1.2);
-  accentFill.position.set(0, 0.5, 2);
+  accentFill.position.set(0, 0.5, 3);
   scene.add(accentFill);
 
   const cool = new THREE.PointLight(0x4dd2ff, 1.4, 14, 2);
