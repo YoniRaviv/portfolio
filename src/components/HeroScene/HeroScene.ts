@@ -898,6 +898,12 @@ export function init(mount: HTMLElement): HeroSceneHandle {
   function animate(): void {
     const dt = clock.getDelta();
 
+    if (state.isMobile) {
+      const t = clock.elapsedTime;
+      pointer.tx = 0.35 * Math.sin(t * 0.4);
+      pointer.ty = 0.22 * Math.sin(t * 0.31 + 1.5);
+    }
+
     pointer.x += (pointer.tx - pointer.x) * 0.08;
     pointer.y += (pointer.ty - pointer.y) * 0.08;
 
