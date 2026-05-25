@@ -477,6 +477,9 @@ function resolveSectionRig(key: SectionKey, p: number): Rig {
 }
 
 export function init(mount: HTMLElement): HeroSceneHandle {
+  const mql = matchMedia('(max-width: 720px)');
+  const state = { isMobile: mql.matches };
+
   const scene = new THREE.Scene();
   scene.background = null;
   const fog = new THREE.FogExp2(0x0a0a0a, HERO_RIG.fogDensity);
@@ -487,7 +490,7 @@ export function init(mount: HTMLElement): HeroSceneHandle {
   camera.lookAt(0, 0, 0);
 
   const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, state.isMobile ? 1.5 : 2));
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure = HERO_RIG.exposure;
@@ -591,7 +594,7 @@ export function init(mount: HTMLElement): HeroSceneHandle {
   );
 
   // Foreground particles
-  const PARTICLES = 380;
+  const PARTICLES = state.isMobile ? 180 : 380;
   const pPositions = new Float32Array(PARTICLES * 3);
   for (let i = 0; i < PARTICLES; i++) {
     pPositions[i * 3] = (Math.random() - 0.5) * 14;
