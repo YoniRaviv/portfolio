@@ -379,20 +379,20 @@ const WHERE_RIG_END: Rig = {
 // MOBILE RIGS (viewport ≤ 720px)
 // =============================================================================
 // Trimmed parity with desktop:
-//   Hero          → centered behind title with bleed (large scale)
-//   Who           → fade to alpha 0 (text gets its own breathing room)
+//   Hero          → centered behind title with bleed
+//   Who           → smaller centered mask behind the quote, dim accent
 //   What          → centered 360° spin (smaller scale, no off-axis pos)
 //   Where         → centered sink-flash; end pose holds invisible
 //   How           → fade to alpha 0
-//   Contact       → centered behind lead text with bleed (bookends Hero)
+//   Contact       → centered behind lead text (bookends Hero, smaller scale)
 //
 // On mobile the camera aspect goes portrait (~0.5), shrinking the
 // horizontal world-units in view to ~2.3 (vs ~7.4 on desktop 16:9).
 // Every mobile pos.x is recentered toward 0 so the mask stays on-screen.
 
 const HERO_RIG_MOBILE: Rig = {
-  pos: { x: 0, y: 1.2, z: 0 },
-  scale: 1.3,
+  pos: { x: 0, y: 0.5, z: 0 },
+  scale: 1.2,
   yawBias: 0,
   pitchBias: -0.3,
   exposure: 0.85,
@@ -400,7 +400,7 @@ const HERO_RIG_MOBILE: Rig = {
   alpha: 1,
   accentBeamIntensity: 9,
   accentBeamPos: { x: -2, y: -2, z: 2.5 },
-  accentBeamTarget: { x: 0, y: 1.2, z: 0 },
+  accentBeamTarget: { x: 0, y: 0.5, z: 0 },
   beamYawOffset: 0,
   particleAlpha: 0.4,
   pointerYaw: 0.2,
@@ -411,18 +411,29 @@ const HERO_RIG_MOBILE: Rig = {
   keyIntensity: 1.6,
 };
 
-// Who: fade out. Start matches HERO_MOBILE pose (fade-out is in-place),
-// end matches WHAT_MOBILE_START pose (fade-in to What's spin reads as
-// the mask appearing already on its mark).
+// Who: visible smaller mask behind the quote, dim accent. Within the
+// section the rig drifts from this pose toward WHAT_START so by the
+// section boundary the mask is already on its spin mark. No pointer
+// follow on mobile (auto-drift handles ambient motion elsewhere).
 const WHO_RIG_MOBILE_START: Rig = {
-  ...HERO_RIG_MOBILE,
-  pos: { ...HERO_RIG_MOBILE.pos },
-  accentBeamPos: { ...HERO_RIG_MOBILE.accentBeamPos },
-  accentBeamTarget: { ...HERO_RIG_MOBILE.accentBeamTarget },
-  alpha: 0,
+  pos: { x: 0, y: 0.5, z: 0 },
+  scale: 0.6,
+  yawBias: 0,
+  pitchBias: -0.2,
+  exposure: 0.7,
+  fogDensity: 0.05,
+  alpha: 1,
+  accentBeamIntensity: 12,
+  accentBeamPos: { x: -3, y: -2, z: 2.5 },
+  accentBeamTarget: { x: 0, y: 0.5, z: 0 },
+  beamYawOffset: 0,
+  particleAlpha: 0.4,
   pointerYaw: 0,
   pointerPitch: 0,
   parallaxStrength: 0,
+  ambientIntensity: 0.8,
+  hemiIntensity: 0.65,
+  keyIntensity: 1.6,
 };
 
 const WHAT_RIG_MOBILE_START: Rig = {
@@ -456,14 +467,14 @@ const WHAT_RIG_MOBILE_END: Rig = {
 };
 
 // WHO_END is deliberately declared here (after WHAT_START/END) because it
-// spreads WHAT_START — the fade-in into What's spin should read as the
-// mask appearing exactly where it'll spin.
+// spreads WHAT_START — within Who the rig lerps from WHO_START's "behind
+// the quote" pose into WHAT_START's "spin-ready" pose, so the cross-fade
+// into What is a no-op and the spin starts cleanly on the section boundary.
 const WHO_RIG_MOBILE_END: Rig = {
   ...WHAT_RIG_MOBILE_START,
   pos: { ...WHAT_RIG_MOBILE_START.pos },
   accentBeamPos: { ...WHAT_RIG_MOBILE_START.accentBeamPos },
   accentBeamTarget: { ...WHAT_RIG_MOBILE_START.accentBeamTarget },
-  alpha: 0,
 };
 
 // Where: centered sink-flash. start = sunk-centre flash pose (alpha 0 —
@@ -505,8 +516,8 @@ const WHERE_RIG_MOBILE_END: Rig = {
 };
 
 const CONTACT_RIG_MOBILE_START: Rig = {
-  pos: { x: 0, y: 0.5, z: 0 },
-  scale: 1.2,
+  pos: { x: 0, y: 0.3, z: 0 },
+  scale: 0.85,
   yawBias: 0,
   pitchBias: -0.2,
   exposure: 1,
@@ -514,7 +525,7 @@ const CONTACT_RIG_MOBILE_START: Rig = {
   alpha: 1,
   accentBeamIntensity: 12,
   accentBeamPos: { x: -3, y: 3, z: 3 },
-  accentBeamTarget: { x: 0, y: 0.5, z: 0 },
+  accentBeamTarget: { x: 0, y: 0.3, z: 0 },
   beamYawOffset: 0,
   particleAlpha: 0.4,
   pointerYaw: 0.15,
