@@ -546,14 +546,17 @@ const CONTACT_RIG_MOBILE_START: Rig = {
   keyIntensity: 1.3,
 };
 
-// CONTACT_END is intentionally identical to CONTACT_START — the live
-// beam orbit block in animate() drives Contact's lighting motion;
-// the rig itself contributes zero motion in this section.
+// CONTACT_END is the "landed" bleed pose: large mask centered behind the
+// lead text, bleeding above and below. The within-Contact lerp grows the
+// mask from CONTACT_START's smaller fade-in pose into this bigger pose as
+// the user scrolls through the section. The live beam orbit block in
+// animate() keeps adding lighting motion on top of either pose.
 const CONTACT_RIG_MOBILE_END: Rig = {
   ...CONTACT_RIG_MOBILE_START,
-  pos: { ...CONTACT_RIG_MOBILE_START.pos },
+  pos: { ...CONTACT_RIG_MOBILE_START.pos, y: 0.4 },
   accentBeamPos: { ...CONTACT_RIG_MOBILE_START.accentBeamPos },
-  accentBeamTarget: { ...CONTACT_RIG_MOBILE_START.accentBeamTarget },
+  accentBeamTarget: { ...CONTACT_RIG_MOBILE_START.accentBeamTarget, y: 0.4 },
+  scale: 1.3,
 };
 
 // How: fade out. Start matches WHERE_MOBILE_END (sunk centre, invisible)
