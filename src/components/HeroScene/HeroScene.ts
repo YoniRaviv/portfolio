@@ -375,7 +375,7 @@ const WHERE_RIG_END: Rig = {
   keyIntensity: 0,
 };
 
-const SECTION_RIGS: Record<SectionKey, SectionRig> = {
+const SECTION_RIGS_DESKTOP: Record<SectionKey, SectionRig> = {
   hero: { start: HERO_RIG },
   who: { start: WHO_RIG_START, end: WHO_RIG_END },
   // What holds its small mask + uplight through the project list, then
@@ -468,7 +468,7 @@ function lerpRig(a: Rig, b: Rig, t: number): Rig {
 }
 
 function resolveSectionRig(key: SectionKey, p: number): Rig {
-  const r = SECTION_RIGS[key];
+  const r = SECTION_RIGS_DESKTOP[key];
   if (!r.end) return r.start;
   const hold = r.holdStart ?? 0;
   // Hold rigStart for the first `hold` fraction, then remap (hold..1) → (0..1).
@@ -672,7 +672,7 @@ export function init(mount: HTMLElement): HeroSceneHandle {
     // section, then ease toward the next section's rig in its final portion.
     // Without this, even at the top of the page (probe = mid-hero) we'd be
     // 50% blended into Who, pulling the hero pose visibly off.
-    const tz = SECTION_RIGS[SECTION_KEYS[i]].transitionOut ?? TRANSITION_ZONE;
+    const tz = SECTION_RIGS_DESKTOP[SECTION_KEYS[i]].transitionOut ?? TRANSITION_ZONE;
     const blendStart = 1 - tz;
     const rawBlend = p < blendStart ? 0 : (p - blendStart) / tz;
     const eased = rawBlend * rawBlend * (3 - 2 * rawBlend);
