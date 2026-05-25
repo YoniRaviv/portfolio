@@ -522,9 +522,17 @@ const WHERE_RIG_MOBILE_END: Rig = {
   accentBeamIntensity: 12,
 };
 
+// Contact (mobile): mask sits behind the lead text + email line, with
+// pos.y high enough that the mask's bottom doesn't extend below the
+// email — anything that leaks below shows through the 12% bone grid
+// background of the social cards. START and END are identical (no
+// within-Contact scale/position animation); the only motion comes from
+// the live beam orbit block in animate(). Pair with the overscroll cap
+// in the anchor block below so the mask stops following the scroll once
+// the email line has carried up past its frozen viewport position.
 const CONTACT_RIG_MOBILE_START: Rig = {
-  pos: { x: 0, y: 0.3, z: 0 },
-  scale: 0.7,
+  pos: { x: 0, y: 0.8, z: 0 },
+  scale: 1.0,
   // Carry the 2π yaw through from What's spin (via Where/How rigs that
   // all spread from this chain) so the fade-in at Contact doesn't pop
   // back to 0 — same visual rotation as 0, but no reverse-spin lerp.
@@ -546,17 +554,14 @@ const CONTACT_RIG_MOBILE_START: Rig = {
   keyIntensity: 1.3,
 };
 
-// CONTACT_END is the "landed" bleed pose: large mask centered behind the
-// lead text, bleeding above and below. The within-Contact lerp grows the
-// mask from CONTACT_START's smaller fade-in pose into this bigger pose as
-// the user scrolls through the section. The live beam orbit block in
-// animate() keeps adding lighting motion on top of either pose.
+// CONTACT_END is intentionally identical to CONTACT_START — within
+// Contact the rig contributes zero motion. The live beam orbit in
+// animate() handles ambient lighting movement on top.
 const CONTACT_RIG_MOBILE_END: Rig = {
   ...CONTACT_RIG_MOBILE_START,
-  pos: { ...CONTACT_RIG_MOBILE_START.pos, y: 0.4 },
+  pos: { ...CONTACT_RIG_MOBILE_START.pos },
   accentBeamPos: { ...CONTACT_RIG_MOBILE_START.accentBeamPos },
-  accentBeamTarget: { ...CONTACT_RIG_MOBILE_START.accentBeamTarget, y: 0.4 },
-  scale: 1.3,
+  accentBeamTarget: { ...CONTACT_RIG_MOBILE_START.accentBeamTarget },
 };
 
 // How: fade out. Start matches WHERE_MOBILE_END (sunk centre, invisible)
@@ -944,13 +949,18 @@ export function init(mount: HTMLElement): HeroSceneHandle {
     // Activation is offset past Contact's top by ANCHOR_DELAY so the mask
     // "lands" beside the title text rather than above it; once anchored,
     // the mask scrolls up as a unit with the page through the rest of
-    // Contact.
+    // Contact. On mobile the follow is CAPPED at MOBILE_ANCHOR_CAP so the
+    // mask freezes once the email line has carried past it — without the
+    // cap the mask keeps shifting up and leaks visibly behind the social
+    // cards' semi-transparent grid below the email.
     let overscroll = 0;
     const contactElForAnchor = document.getElementById('contact');
     if (contactElForAnchor) {
       const ANCHOR_DELAY = window.innerHeight * 0.5;
       const anchor = contactElForAnchor.offsetTop - window.innerHeight / 2 + ANCHOR_DELAY;
-      overscroll = Math.max(0, window.scrollY - anchor);
+      const raw = Math.max(0, window.scrollY - anchor);
+      const cap = state.isMobile ? window.innerHeight * 0.4 : Infinity;
+      overscroll = Math.min(raw, cap);
     }
 
     // Drive target rig from scroll position and smoothly lerp current toward it.
