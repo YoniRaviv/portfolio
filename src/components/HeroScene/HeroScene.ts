@@ -209,7 +209,7 @@ const WHAT_RIG_END: Rig = {
 // keyIntensity is zeroed here so there's no static white directional
 // light fighting the moving accent — you only see ONE light source.
 const HOW_RIG_START: Rig = {
-  pos: { x: 4, y: 0.5, z: -0.2 },
+  pos: { x: 4.2, y: 0.5, z: -0.2 },
   scale: 1.2,
   yawBias: (2.9 * Math.PI) / 2,
   pitchBias: 0.1,
@@ -230,7 +230,7 @@ const HOW_RIG_START: Rig = {
 };
 
 const HOW_RIG_END: Rig = {
-  pos: { x: 4, y: 0.5, z: -0.2 },
+  pos: { x: 4.2, y: 0.5, z: -0.2 },
   scale: 1.2,
   yawBias: (2.9 * Math.PI) / 2,
   pitchBias: -0.45,
@@ -312,24 +312,61 @@ const CONTACT_RIG_END: Rig = {
   keyIntensity: 1.3,
 };
 
-// Where: animation pause. Position/rotation/scale and lighting all match
-// HOW_RIG_START so the mask is "set" in profile pose with the light already
-// at the top, ready to start the sweep — just invisible via alpha. When
-// alpha fades in toward How, there's no sliding, rotation, or lighting
-// change — the mask simply materialises where it lives in How.
-const WHERE_RIG: Rig = {
-  pos: { x: 4, y: 0.5, z: -0.2 },
+// Where, part 1: the SINK. As What scrolls into Where, the spinning
+// centred mask sinks straight back along -Z, shrinking and fading out,
+// while a bright front-lit accent beam flares up. The visitor sees the
+// mask drop behind the background lit by a flash — no horizontal slide.
+// alpha lands at 0 at Where p=0, so the rest of Where is dark and empty
+// (the flash has nothing to illuminate by then, which is the point —
+// the afterglow lingers via exposure/particle alpha before everything
+// settles for the slide-in).
+const WHERE_RIG_START: Rig = {
+  pos: { x: 0, y: 0.4, z: -3 },
+  scale: 0.4,
+  // Stay axis-aligned with WHAT_END (yawBias 2π ≡ 0) so the sink reads
+  // as a straight back-away motion, not a rotation.
+  yawBias: 0,
+  pitchBias: 0.01,
+  exposure: 1.4,
+  fogDensity: 0.04,
+  alpha: 0,
+  // Big front-lit flash — the "cool light effect" as the mask sinks. As
+  // alpha lerps 1→0 during What→Where, intensity lerps 10→45, so the
+  // mid-transition shows the half-transparent mask brightly lit before
+  // it fully disappears.
+  accentBeamIntensity: 45,
+  accentBeamPos: { x: 0, y: 0, z: 4 },
+  accentBeamTarget: { x: 0, y: 0.4, z: -3 },
+  beamYawOffset: 0,
+  particleAlpha: 0.7,
+  pointerYaw: 0,
+  pointerPitch: 0,
+  parallaxStrength: 0,
+  ambientIntensity: 0.7,
+  hemiIntensity: 0.55,
+  keyIntensity: 1.2,
+};
+
+// Where, part 2: ready to emerge from the right. The internal lerp from
+// WHERE_RIG_START → WHERE_RIG_END happens entirely with alpha 0, so the
+// drift from sunken-centre to off-screen-right is invisible. Lighting
+// decays from the flash to How's resting setup. The mask only becomes
+// visible during the transitionOut zone (last 20% of Where), where the
+// rig blends from this off-screen position into HOW_RIG_START — that's
+// the slide-in from the right.
+const WHERE_RIG_END: Rig = {
+  pos: { x: 8, y: 0.5, z: -0.2 },
   scale: 1.2,
-  yawBias: (3 * Math.PI) / 2,
+  yawBias: (2.9 * Math.PI) / 2,
   pitchBias: 0.1,
   exposure: 1,
   fogDensity: 0.04,
   alpha: 0,
-  accentBeamIntensity: 0,
+  accentBeamIntensity: 14,
   accentBeamPos: { x: -5, y: 5, z: 3 },
   accentBeamTarget: { x: 4.5, y: 0.3, z: 0 },
   beamYawOffset: 0,
-  particleAlpha: 0,
+  particleAlpha: 0.4,
   pointerYaw: 0,
   pointerPitch: 0,
   parallaxStrength: 0,
@@ -341,20 +378,25 @@ const WHERE_RIG: Rig = {
 const SECTION_RIGS: Record<SectionKey, SectionRig> = {
   hero: { start: HERO_RIG },
   who: { start: WHO_RIG_START, end: WHO_RIG_END },
-  // What holds its small mask + uplight all the way until just before Where —
-  // the transition out is tight (5% of section) so the scale-back lands at
-  // the start of Where, not in the middle of the project list. holdStart
-  // delays the start of the spin until ~the title divider is past.
+  // What holds its small mask + uplight through the project list, then
+  // hands off to Where via a longer (15%) transitionOut so the sink
+  // animation is visible — the mask shrinks and slides back along -Z
+  // while the accent beam flares up. holdStart delays the spin until ~
+  // the title divider is past.
   what: {
     start: WHAT_RIG_START,
     end: WHAT_RIG_END,
-    transitionOut: 0.05,
+    transitionOut: 0.15,
     holdStart: 0.12,
   },
-  // Where stays paused through most of its scroll length; the mask only
-  // re-enters in the last 20% as it lerps toward How — emerging from
-  // center-stage, rotating to profile, and sliding to the right edge.
-  where: { start: WHERE_RIG, transitionOut: 0.2 },
+  // Where: invisible-mask section. rigStart is the sunk-centre flash
+  // pose, rigEnd is off-screen right ready to emerge. Both have alpha 0,
+  // so the internal drift from centre to right is invisible — the user
+  // only sees the sink (from What's transitionOut) at the top of Where
+  // and the slide-in (from Where's transitionOut into How) at the
+  // bottom. transitionOut: 0.2 gives the slide-in enough scroll length
+  // to read as a deliberate emerge.
+  where: { start: WHERE_RIG_START, end: WHERE_RIG_END, transitionOut: 0.2 },
   // How holds the profile still — only the light position lerps from top
   // (rigStart) to bottom (rigEnd) as you scroll. transitionOut: 0.3
   // gives the full Contact landing (90°-ish rotation out of profile,
