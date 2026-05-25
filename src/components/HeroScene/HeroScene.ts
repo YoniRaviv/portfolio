@@ -375,6 +375,200 @@ const WHERE_RIG_END: Rig = {
   keyIntensity: 0,
 };
 
+// =============================================================================
+// MOBILE RIGS (viewport ≤ 720px)
+// =============================================================================
+// Trimmed parity with desktop:
+//   Hero          → centered behind title with bleed (large scale)
+//   Who           → fade to alpha 0 (text gets its own breathing room)
+//   What          → centered 360° spin (smaller scale, no off-axis pos)
+//   Where         → centered sink-flash; end pose holds invisible
+//   How           → fade to alpha 0
+//   Contact       → centered behind lead text with bleed (bookends Hero)
+//
+// On mobile the camera aspect goes portrait (~0.5), shrinking the
+// horizontal world-units in view to ~2.3 (vs ~7.4 on desktop 16:9).
+// Every mobile pos.x is recentered toward 0 so the mask stays on-screen.
+
+const HERO_RIG_MOBILE: Rig = {
+  pos: { x: 0, y: 1.2, z: 0 },
+  scale: 1.3,
+  yawBias: 0,
+  pitchBias: -0.3,
+  exposure: 0.85,
+  fogDensity: 0.05,
+  alpha: 1,
+  accentBeamIntensity: 9,
+  accentBeamPos: { x: -2, y: -2, z: 2.5 },
+  accentBeamTarget: { x: 0, y: 1.2, z: 0 },
+  beamYawOffset: 0,
+  particleAlpha: 0.4,
+  pointerYaw: 0.2,
+  pointerPitch: 0.12,
+  parallaxStrength: 0.3,
+  ambientIntensity: 0.8,
+  hemiIntensity: 0.65,
+  keyIntensity: 1.6,
+};
+
+// Who: fade out. Start matches HERO_MOBILE pose (fade-out is in-place),
+// end matches WHAT_MOBILE_START pose (fade-in to What's spin reads as
+// the mask appearing already on its mark).
+const WHO_RIG_MOBILE_START: Rig = {
+  ...HERO_RIG_MOBILE,
+  pos: { ...HERO_RIG_MOBILE.pos },
+  accentBeamPos: { ...HERO_RIG_MOBILE.accentBeamPos },
+  accentBeamTarget: { ...HERO_RIG_MOBILE.accentBeamTarget },
+  alpha: 0,
+  pointerYaw: 0,
+  pointerPitch: 0,
+  parallaxStrength: 0,
+};
+
+const WHAT_RIG_MOBILE_START: Rig = {
+  pos: { x: 0, y: 0.3, z: 0 },
+  scale: 0.6,
+  yawBias: 0,
+  pitchBias: 0.01,
+  exposure: 1,
+  fogDensity: 0.04,
+  alpha: 1,
+  accentBeamIntensity: 10,
+  accentBeamPos: { x: 2.2, y: -3, z: 1.5 },
+  accentBeamTarget: { x: 0, y: 0.3, z: 0 },
+  beamYawOffset: 0,
+  particleAlpha: 0.4,
+  pointerYaw: 0,
+  pointerPitch: 0,
+  parallaxStrength: 0,
+  ambientIntensity: 0.7,
+  hemiIntensity: 0.55,
+  keyIntensity: 1.3,
+};
+
+const WHAT_RIG_MOBILE_END: Rig = {
+  ...WHAT_RIG_MOBILE_START,
+  pos: { ...WHAT_RIG_MOBILE_START.pos },
+  accentBeamPos: { ...WHAT_RIG_MOBILE_START.accentBeamPos },
+  accentBeamTarget: { ...WHAT_RIG_MOBILE_START.accentBeamTarget },
+  yawBias: Math.PI * 2,
+  beamYawOffset: -Math.PI * 2,
+};
+
+const WHO_RIG_MOBILE_END: Rig = {
+  ...WHAT_RIG_MOBILE_START,
+  pos: { ...WHAT_RIG_MOBILE_START.pos },
+  accentBeamPos: { ...WHAT_RIG_MOBILE_START.accentBeamPos },
+  accentBeamTarget: { ...WHAT_RIG_MOBILE_START.accentBeamTarget },
+  alpha: 0,
+};
+
+// Where: centered sink-flash. start = sunk-centre bright flash (same
+// concept as desktop WHERE_START, but recentered). end is identical to
+// start — on mobile there's no off-screen-right drift to prep for (How
+// fades out), so the rig just holds the invisible sunk pose across the
+// section.
+const WHERE_RIG_MOBILE_START: Rig = {
+  pos: { x: 0, y: 0.3, z: -3 },
+  scale: 0.3,
+  yawBias: 0,
+  pitchBias: 0.01,
+  exposure: 1.4,
+  fogDensity: 0.04,
+  alpha: 0,
+  accentBeamIntensity: 45,
+  accentBeamPos: { x: 0, y: 0, z: 4 },
+  accentBeamTarget: { x: 0, y: 0.3, z: -3 },
+  beamYawOffset: 0,
+  particleAlpha: 0.5,
+  pointerYaw: 0,
+  pointerPitch: 0,
+  parallaxStrength: 0,
+  ambientIntensity: 0.7,
+  hemiIntensity: 0.55,
+  keyIntensity: 1.2,
+};
+
+const WHERE_RIG_MOBILE_END: Rig = {
+  ...WHERE_RIG_MOBILE_START,
+  pos: { ...WHERE_RIG_MOBILE_START.pos },
+  accentBeamPos: { ...WHERE_RIG_MOBILE_START.accentBeamPos },
+  accentBeamTarget: { ...WHERE_RIG_MOBILE_START.accentBeamTarget },
+  // Decay the flash back toward neutral so the cross-fade into How (alpha 0)
+  // isn't lit by a static 45-intensity beam.
+  exposure: 1,
+  accentBeamIntensity: 12,
+};
+
+const CONTACT_RIG_MOBILE_START: Rig = {
+  pos: { x: 0, y: 0.5, z: 0 },
+  scale: 1.2,
+  yawBias: 0,
+  pitchBias: -0.2,
+  exposure: 1,
+  fogDensity: 0.04,
+  alpha: 1,
+  accentBeamIntensity: 12,
+  accentBeamPos: { x: -3, y: 3, z: 3 },
+  accentBeamTarget: { x: 0, y: 0.5, z: 0 },
+  beamYawOffset: 0,
+  particleAlpha: 0.4,
+  pointerYaw: 0.15,
+  pointerPitch: 0.1,
+  parallaxStrength: 0.3,
+  ambientIntensity: 0.7,
+  hemiIntensity: 0.55,
+  keyIntensity: 1.3,
+};
+
+const CONTACT_RIG_MOBILE_END: Rig = {
+  ...CONTACT_RIG_MOBILE_START,
+  pos: { ...CONTACT_RIG_MOBILE_START.pos },
+  accentBeamPos: { ...CONTACT_RIG_MOBILE_START.accentBeamPos },
+  accentBeamTarget: { ...CONTACT_RIG_MOBILE_START.accentBeamTarget },
+};
+
+// How: fade out. Start matches WHERE_MOBILE_END (sunk centre, invisible)
+// so the cross-fade from Where is in-place; end matches CONTACT_MOBILE_START
+// pose with alpha 0 so the fade-in to Contact's bleed reads as the mask
+// appearing exactly where it'll sit.
+const HOW_RIG_MOBILE_START: Rig = {
+  ...WHERE_RIG_MOBILE_END,
+  pos: { ...WHERE_RIG_MOBILE_END.pos },
+  accentBeamPos: { ...WHERE_RIG_MOBILE_END.accentBeamPos },
+  accentBeamTarget: { ...WHERE_RIG_MOBILE_END.accentBeamTarget },
+  alpha: 0,
+};
+
+const HOW_RIG_MOBILE_END: Rig = {
+  ...CONTACT_RIG_MOBILE_START,
+  pos: { ...CONTACT_RIG_MOBILE_START.pos },
+  accentBeamPos: { ...CONTACT_RIG_MOBILE_START.accentBeamPos },
+  accentBeamTarget: { ...CONTACT_RIG_MOBILE_START.accentBeamTarget },
+  alpha: 0,
+  pointerYaw: 0,
+  pointerPitch: 0,
+  parallaxStrength: 0,
+};
+
+const SECTION_RIGS_MOBILE: Record<SectionKey, SectionRig> = {
+  hero: { start: HERO_RIG_MOBILE },
+  who: { start: WHO_RIG_MOBILE_START, end: WHO_RIG_MOBILE_END },
+  what: {
+    start: WHAT_RIG_MOBILE_START,
+    end: WHAT_RIG_MOBILE_END,
+    transitionOut: 0.15,
+    holdStart: 0.12,
+  },
+  where: {
+    start: WHERE_RIG_MOBILE_START,
+    end: WHERE_RIG_MOBILE_END,
+    transitionOut: 0.2,
+  },
+  how: { start: HOW_RIG_MOBILE_START, end: HOW_RIG_MOBILE_END, transitionOut: 0.3 },
+  contact: { start: CONTACT_RIG_MOBILE_START, end: CONTACT_RIG_MOBILE_END },
+};
+
 const SECTION_RIGS_DESKTOP: Record<SectionKey, SectionRig> = {
   hero: { start: HERO_RIG },
   who: { start: WHO_RIG_START, end: WHO_RIG_END },
