@@ -28,13 +28,6 @@ import Placeholder from './Placeholder.astro';
     to   { opacity: 1; transform: translate3d(0, var(--anchor-y, 0px), 0) scale(1);    filter: none; }
   }
   .stage :global(canvas) { display: block; width: 100%; height: 100%; }
-
-  @media (max-width: 720px) {
-    /* Mobile: a more refined choreography lands in Step 8 of the plan.
-       For now keep the canvas pinned to the upper half so hero content
-       below remains readable, matching the prior mobile behaviour. */
-    .stage { top: 0; right: 0; left: 0; bottom: auto; height: 50vh; min-height: 380px; }
-  }
 </style>
 
 <script>
