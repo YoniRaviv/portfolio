@@ -101,8 +101,9 @@ import { what, projects } from '@/content';
     .what .proj .thumb { display: none; }
   }
   @media (max-width: 720px) {
-    .what .proj { grid-template-columns: 1fr; gap: 12px; padding: 40px 0; }
-    .what .proj:hover { padding: 50px 0; }
+    .what { padding-top: 100px; padding-bottom: 96px; }
+    .what .proj { grid-template-columns: 1fr; gap: 12px; padding: 32px 0; }
+    .what .proj:hover { padding: 40px 0; }
     .what .proj .idx, .what .proj .arrow { display: none; }
     .what .proj .name { font-size: clamp(56px, 16vw, 88px); line-height: 1; }
     .what .proj .desc { max-width: none; font-size: 13px; }

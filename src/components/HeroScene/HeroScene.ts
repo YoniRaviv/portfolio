@@ -420,7 +420,7 @@ const HERO_RIG_MOBILE: Rig = {
 // follow on mobile (auto-drift handles ambient motion elsewhere).
 const WHO_RIG_MOBILE_START: Rig = {
   pos: { x: 0, y: 0.5, z: 0 },
-  scale: 0.6,
+  scale: 0.4,
   yawBias: 0,
   pitchBias: -0.2,
   exposure: 0.7,
@@ -441,7 +441,7 @@ const WHO_RIG_MOBILE_START: Rig = {
 
 const WHAT_RIG_MOBILE_START: Rig = {
   pos: { x: 0, y: 0.3, z: 0 },
-  scale: 0.6,
+  scale: 0.4,
   yawBias: 0,
   pitchBias: 0.01,
   exposure: 1,
@@ -532,7 +532,7 @@ const WHERE_RIG_MOBILE_END: Rig = {
 // the email line has carried up past its frozen viewport position.
 const CONTACT_RIG_MOBILE_START: Rig = {
   pos: { x: 0, y: 0.8, z: 0 },
-  scale: 1.0,
+  scale: 0.8,
   // Carry the 2π yaw through from What's spin (via Where/How rigs that
   // all spread from this chain) so the fade-in at Contact doesn't pop
   // back to 0 — same visual rotation as 0, but no reverse-spin lerp.
@@ -957,7 +957,7 @@ export function init(mount: HTMLElement): HeroSceneHandle {
     const contactElForAnchor = document.getElementById('contact');
     if (contactElForAnchor) {
       const ANCHOR_DELAY = window.innerHeight * 0.5;
-      const anchor = contactElForAnchor.offsetTop - window.innerHeight / 2 + ANCHOR_DELAY;
+      const anchor = contactElForAnchor.offsetTop - window.innerHeight / 1.5 + ANCHOR_DELAY;
       const raw = Math.max(0, window.scrollY - anchor);
       const cap = state.isMobile ? window.innerHeight * 0.4 : Infinity;
       overscroll = Math.min(raw, cap);

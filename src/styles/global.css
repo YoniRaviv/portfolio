@@ -141,6 +141,14 @@ section.sec {
   min-height: 100vh;
   min-height: 100svh;
 }
+@media (max-width: 720px) {
+  section.sec {
+    padding: 96px var(--pad-x) 96px;
+    min-height: auto;
+  }
+  .sec-label { margin-bottom: 28px; gap: 10px; }
+  .sec-label::before { width: 40px; }
+}
 .sec-label {
   font-family: var(--mono); font-size: 11px; letter-spacing: .18em; text-transform: uppercase;
   color: var(--text-dim);
