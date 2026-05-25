@@ -665,6 +665,11 @@ export function init(mount: HTMLElement): HeroSceneHandle {
   const mql = matchMedia('(max-width: 720px)');
   const state = { isMobile: mql.matches };
 
+  const onBreakpointChange = (e: MediaQueryListEvent): void => {
+    state.isMobile = e.matches;
+  };
+  mql.addEventListener('change', onBreakpointChange);
+
   const getActiveRigs = (): Record<SectionKey, SectionRig> =>
     state.isMobile ? SECTION_RIGS_MOBILE : SECTION_RIGS_DESKTOP;
 
@@ -1076,6 +1081,7 @@ export function init(mount: HTMLElement): HeroSceneHandle {
     destroy(): void {
       cancelAnimationFrame(raf);
       window.removeEventListener('pointermove', onPointer);
+      mql.removeEventListener('change', onBreakpointChange);
       resizeObserver.disconnect();
       renderer.dispose();
       if (renderer.domElement.parentElement === mount) mount.removeChild(renderer.domElement);
