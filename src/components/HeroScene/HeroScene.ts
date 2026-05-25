@@ -127,7 +127,7 @@ const WHO_RIG_END: Rig = {
   pos: { x: 0, y: 0.5, z: 0 },
   scale: 0.6,
   yawBias: 0,
-  pitchBias: 0.01,
+  pitchBias: -0.5,
   exposure: 0.85,
   fogDensity: 0.04,
   alpha: 1,
@@ -250,25 +250,57 @@ const HOW_RIG_END: Rig = {
   keyIntensity: 0,
 };
 
-// Contact: mask sits to the right of the centered text block, face turned
-// back toward camera (forward-facing). yawBias is 2π — visually identical
-// to 0, but numerically just +π/2 from How_END's 3π/2, so the transition
-// from How → Contact is a clean 90° CCW rotation (mask rotates from left
-// profile back to forward) instead of unwinding the full 3π/2 backward.
-const CONTACT_RIG: Rig = {
-  pos: { x: 2, y: 0.3, z: 0 },
-  scale: 0.8,
-  // ~45° turn toward -X (the text is on the LEFT of the viewport, so the
-  // mask should turn its face toward the left to address it). 2π - π/4 is
-  // visually 45° CCW from forward and still keeps the lerp path from
-  // How_END (3π/2) clean — just +π/4 numerically.
-  yawBias: Math.PI * 2 - Math.PI / 4,
-  pitchBias: -0,
+// Contact: mask is anchored beside the title and gazes down-and-left
+// toward the email link (the section's CTA). Cursor reactivity is off
+// here — the offset mask + bbox-centred pivot + camera's downward look
+// made corner cursor poses read as a head tilt no matter how we
+// corrected. Instead, the only thing that moves over the scroll length
+// of Contact is the accent beam: rigStart lights the mask from
+// upper-left at the top of the section, rigEnd from lower-right at the
+// bottom — a slow chiaroscuro sweep that gives the section life without
+// asking the mask to follow the cursor.
+//
+// yawBias is 2π - 0.45 (a 26° CCW turn from forward toward -X). 2π keeps
+// the lerp path from How_END (3π/2) clean — the mask rotates +π/2 CCW
+// out of profile and stops a little before forward, gaze pointed at the
+// email link instead of straight at camera.
+const CONTACT_RIG_START: Rig = {
+  pos: { x: 1.5, y: 0.2, z: 0 },
+  scale: 0.9,
+  yawBias: Math.PI * 2 - 1.2,
+  pitchBias: -0.65,
   exposure: 1,
   fogDensity: 0.04,
   alpha: 1,
-  accentBeamIntensity: 9,
-  accentBeamPos: { x: -3, y: 0, z: 3 },
+  accentBeamIntensity: 12,
+  accentBeamPos: { x: -3, y: 3, z: 3 },
+  accentBeamTarget: { x: 2, y: 0.3, z: 0 },
+  beamYawOffset: 0,
+  particleAlpha: 0.4,
+  pointerYaw: 0,
+  pointerPitch: 0,
+  parallaxStrength: 0,
+  ambientIntensity: 0.7,
+  hemiIntensity: 0.55,
+  keyIntensity: 1.3,
+};
+
+// Identical to CONTACT_RIG_START. The mask doesn't change pose at all
+// over Contact's scroll length — instead, animate() drives a live,
+// time-based beam orbit inside Contact (see the "live lighting" block
+// in animate()), so the lighting feels alive even when the visitor
+// isn't scrolling. Keeping start ≡ end means the rig system contributes
+// zero motion in Contact and the orbit is the only thing animating.
+const CONTACT_RIG_END: Rig = {
+  pos: { x: 1.5, y: 0.2, z: 0 },
+  scale: 0.9,
+  yawBias: Math.PI * 2 - 1.2,
+  pitchBias: -0.65,
+  exposure: 1,
+  fogDensity: 0.04,
+  alpha: 1,
+  accentBeamIntensity: 12,
+  accentBeamPos: { x: -3, y: 3, z: 3 },
   accentBeamTarget: { x: 2, y: 0.3, z: 0 },
   beamYawOffset: 0,
   particleAlpha: 0.4,
@@ -324,11 +356,18 @@ const SECTION_RIGS: Record<SectionKey, SectionRig> = {
   // center-stage, rotating to profile, and sliding to the right edge.
   where: { start: WHERE_RIG, transitionOut: 0.2 },
   // How holds the profile still — only the light position lerps from top
-  // (rigStart) to bottom (rigEnd) as you scroll. transitionOut: 0.15 gives
-  // the 90° rotation from profile → forward-facing enough room to feel
-  // natural rather than snap.
-  how: { start: HOW_RIG_START, end: HOW_RIG_END, transitionOut: 0.15 },
-  contact: { start: CONTACT_RIG },
+  // (rigStart) to bottom (rigEnd) as you scroll. transitionOut: 0.3
+  // gives the full Contact landing (90°-ish rotation out of profile,
+  // scale-down from 1.2 → 0.8, slide from x=4 → x=2, position drop, and
+  // light hand-off) a generous third of the How section to play out, so
+  // the mask doesn't snap into its Contact pose at the boundary.
+  how: { start: HOW_RIG_START, end: HOW_RIG_END, transitionOut: 0.3 },
+  // Contact runs a slow accent-beam sweep across its full scroll length
+  // (upper-left at the top of the section, lower-right at the bottom).
+  // The mask pose itself is identical in start/end — only lighting
+  // changes — so the visitor reads the same gaze while the
+  // illumination quietly walks around the head.
+  contact: { start: CONTACT_RIG_START, end: CONTACT_RIG_END },
 };
 
 function cloneRig(r: Rig): Rig {
@@ -486,6 +525,10 @@ export function init(mount: HTMLElement): HeroSceneHandle {
       const s = TARGET_SIZE / maxAxis;
       model.position.sub(center).multiplyScalar(s);
       model.scale.setScalar(s);
+      // Defensive: a GLB authored with a slight root rotation would read
+      // as a permanent head tilt that no rig bias can cancel. We control
+      // all rotation through modelGroup, so neutralise the scene root.
+      model.rotation.set(0, 0, 0);
 
       modelGroup.add(model);
       modelLoaded = true;
@@ -597,6 +640,11 @@ export function init(mount: HTMLElement): HeroSceneHandle {
   let currentRig = cloneRig(HERO_RIG);
   const RIG_LERP = 0.12;
 
+  // Reused scratch vector for projecting the mask's world position to NDC
+  // each frame (used for cursor-relative rotation). Hoisted so we don't
+  // allocate a Vector3 every animate() tick.
+  const maskNdc = new THREE.Vector3();
+
   // animate
   const clock = new THREE.Clock();
   let raf = 0;
@@ -605,6 +653,21 @@ export function init(mount: HTMLElement): HeroSceneHandle {
 
     pointer.x += (pointer.tx - pointer.x) * 0.08;
     pointer.y += (pointer.ty - pointer.y) * 0.08;
+
+    // Compute the Contact anchor's canvas translation BEFORE the rotation
+    // block so cursor-relative tracking can correct for it (see the cursor
+    // calc below). The actual CSS write happens at the bottom of animate().
+    // Activation is offset past Contact's top by ANCHOR_DELAY so the mask
+    // "lands" beside the title text rather than above it; once anchored,
+    // the mask scrolls up as a unit with the page through the rest of
+    // Contact.
+    let overscroll = 0;
+    const contactElForAnchor = document.getElementById('contact');
+    if (contactElForAnchor) {
+      const ANCHOR_DELAY = window.innerHeight * 0.5;
+      const anchor = contactElForAnchor.offsetTop - window.innerHeight / 2 + ANCHOR_DELAY;
+      overscroll = Math.max(0, window.scrollY - anchor);
+    }
 
     // Drive target rig from scroll position and smoothly lerp current toward it.
     const target = computeTargetRig();
@@ -621,9 +684,59 @@ export function init(mount: HTMLElement): HeroSceneHandle {
     root.position.y = -pointer.y * 0.08 * currentRig.parallaxStrength;
 
     if (modelLoaded) {
-      // Mask rotation = pointer parallax * per-rig sensitivity + rig bias.
-      modelGroup.rotation.y = pointer.x * currentRig.pointerYaw + currentRig.yawBias;
-      modelGroup.rotation.x = pointer.y * currentRig.pointerPitch + currentRig.pitchBias;
+      // Cursor-driven rotation is computed relative to the mask's projected
+      // screen position, not viewport centre. Without this, a mask parked
+      // at the right edge (Hero, Contact) tracks the cursor as if the mask
+      // were dead centre — so a cursor on the left of the screen barely
+      // turns the head because pointer.x is only ~-0.3. Subtracting the
+      // mask's NDC makes the rotation respond to actual angular offset
+      // from the mask, so it reads as "looking at" the cursor.
+      // NDC y is +1 at top, -1 at bottom; pointer.y is the opposite, so we
+      // ADD maskNdc.y to invert it into pointer space.
+      // Once the Contact anchor activates the canvas is CSS-translated up
+      // by `overscroll` pixels — the camera still projects the mask to the
+      // SAME canvas NDC, but the mask's *viewport* y is higher by that
+      // many pixels. Without the overscrollNdc adjustment the cursor calc
+      // would think the mask is still mid-canvas while it actually sits
+      // near the top of the viewport, throwing pitch off by tens of
+      // degrees once you've scrolled into Contact.
+      maskNdc.set(currentRig.pos.x, currentRig.pos.y, currentRig.pos.z).project(camera);
+      const overscrollNdc = 2 * overscroll / window.innerHeight;
+      const cursorX = pointer.x - maskNdc.x;
+      const cursorY = pointer.y + maskNdc.y + overscrollNdc;
+      const yaw = cursorX * currentRig.pointerYaw + currentRig.yawBias;
+      // Clamp pitch to a reasonable head-nod range. The model is centered on
+      // its bounding-box midpoint (which sits *above* the face because the
+      // hair spikes extend up), so a very negative pitch swings the face
+      // back-and-down around that high pivot while the spikes swing
+      // forward-and-up — the eye reads that as a head roll the Z
+      // correction can't cancel. Capping pitch keeps the pose inside the
+      // range where the pivot asymmetry is invisible. Top-left was the
+      // only corner pushing past this limit because it's the only one
+      // combining cursor-far-left (max negative yaw delta) with cursor-
+      // near-top (max negative pitch delta).
+      const PITCH_LIMIT_UP = -5.6;
+      const PITCH_LIMIT_DOWN = 0.6;
+      const pitch = Math.max(PITCH_LIMIT_UP, Math.min(PITCH_LIMIT_DOWN,
+        cursorY * currentRig.pointerPitch + currentRig.pitchBias));
+      modelGroup.rotation.y = yaw;
+      modelGroup.rotation.x = pitch;
+      // YXZ Euler with combined non-zero yaw + pitch makes the mask's up
+      // vector pick up a world-X component, which the camera reads as
+      // ~5–10° of apparent roll (head tilted to one side). Counter it
+      // with a Z rotation that satisfies tan(roll) = sin(pitch)*tan(yaw),
+      // keeping the up vector in the world YZ plane. Faded smoothly out
+      // for non-forward yaws (cos ≤ 0.3) because the formula blows up
+      // near profile poses (yaw ≈ ±π/2); without the fade, the correction
+      // snaps on/off as the lerp into Contact crosses the gate threshold,
+      // which reads as a visible flicker at the How→Contact boundary.
+      const cosYaw = Math.cos(yaw);
+      const FADE_LO = 0.3;
+      const FADE_HI = 0.5;
+      const correctionFactor = Math.max(0, Math.min(1, (cosYaw - FADE_LO) / (FADE_HI - FADE_LO)));
+      modelGroup.rotation.z = correctionFactor > 0
+        ? correctionFactor * Math.atan2(Math.sin(pitch) * Math.sin(yaw), Math.max(0.001, cosYaw))
+        : 0;
     }
 
     // Lights, fog, exposure from rig.
@@ -655,6 +768,38 @@ export function init(mount: HTMLElement): HeroSceneHandle {
       currentRig.accentBeamTarget.y,
       currentRig.accentBeamTarget.z
     );
+
+    // Live (time-based) beam orbit in Contact. The rig contributes a static
+    // beam position inside Contact (start ≡ end), and this block overlays a
+    // continuous slow orbit on top so the lighting feels alive even when
+    // the visitor isn't scrolling. liveLightFactor smoothly ramps from 0
+    // (outside Contact / through the How→Contact lerp) to 1 (well inside
+    // Contact), blending from rig position to orbit so there's no pop at
+    // the boundary. Multiple sinusoidal axes at different periods keep the
+    // motion from feeling like a clean circle — the visitor reads it as
+    // chiaroscuro shifting around the mask.
+    let liveLightFactor = 0;
+    if (contactElForAnchor) {
+      const probe = window.scrollY + window.innerHeight / 2;
+      const fadeStart = contactElForAnchor.offsetTop;
+      const fadeEnd = contactElForAnchor.offsetTop + window.innerHeight * 0.4;
+      const raw = Math.max(0, Math.min(1, (probe - fadeStart) / (fadeEnd - fadeStart)));
+      liveLightFactor = raw * raw * (3 - 2 * raw); // smoothstep
+    }
+    if (liveLightFactor > 0) {
+      const t = clock.elapsedTime;
+      const orbitX = currentRig.pos.x + 4.5 * Math.cos(t * 0.35);
+      const orbitY = currentRig.pos.y + 2.5 + 2.5 * Math.sin(t * 0.27);
+      const orbitZ = currentRig.pos.z + 3 + 1.2 * Math.sin(t * 0.22);
+      accentBeam.position.x = accentBeam.position.x * (1 - liveLightFactor) + orbitX * liveLightFactor;
+      accentBeam.position.y = accentBeam.position.y * (1 - liveLightFactor) + orbitY * liveLightFactor;
+      accentBeam.position.z = accentBeam.position.z * (1 - liveLightFactor) + orbitZ * liveLightFactor;
+      // Subtle intensity pulse with a third period so the brightness shifts
+      // independently of the orbit position.
+      const liveIntensity = 14 + 4 * Math.sin(t * 0.31);
+      accentBeam.intensity = accentBeam.intensity * (1 - liveLightFactor) + liveIntensity * liveLightFactor;
+    }
+
     accentBeam.target.updateMatrixWorld();
     particlesMat.opacity = currentRig.particleAlpha;
 
@@ -672,22 +817,13 @@ export function init(mount: HTMLElement): HeroSceneHandle {
       renderer.domElement.style.opacity = String(currentRig.alpha);
     }
 
-    // Anchor the canvas to the page once the mask has parked at Contact.
-    // Up to that point the canvas stays viewport-fixed (so the rig system
-    // can place the mask anywhere on screen). Activation is offset past
-    // Contact's top by ANCHOR_DELAY so the mask "lands" beside the title
-    // text rather than above it; once anchored, the mask scrolls up as a
-    // unit with the page through the rest of Contact.
-    const contactEl = document.getElementById('contact');
-    if (contactEl) {
-      const ANCHOR_DELAY = window.innerHeight * 0.5;
-      const anchor = contactEl.offsetTop - window.innerHeight / 2 + ANCHOR_DELAY;
-      const overscroll = Math.max(0, window.scrollY - anchor);
-      // Drive a CSS variable rather than inline transform — the stage element's
-      // entry animation uses `both` fill, which would otherwise hold
-      // `transform: none` over our inline write. See index.astro keyframes.
-      mount.style.setProperty('--anchor-y', `${-overscroll}px`);
-    }
+    // Apply the Contact anchor translation (overscroll was already computed
+    // at the top of animate() so the rotation block could correct for it).
+    // Drives a CSS variable rather than inline transform — the stage
+    // element's entry animation uses `both` fill, which would otherwise
+    // hold `transform: none` over our inline write. See index.astro
+    // keyframes.
+    mount.style.setProperty('--anchor-y', `${-overscroll}px`);
 
     renderer.render(scene, camera);
     raf = requestAnimationFrame(animate);
