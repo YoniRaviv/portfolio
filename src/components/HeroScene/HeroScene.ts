@@ -9,7 +9,7 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { MeshoptDecoder } from 'three/examples/jsm/libs/meshopt_decoder.module.js';
 
 import type { SectionKey, SectionRig } from './scene/types';
-import { MODEL_URL, TARGET_SIZE } from './scene/types';
+import { MODEL_URL, TARGET_SIZE, SWORD_URL, SWORD_TARGET_SIZE } from './scene/types';
 import { cloneRig, lerpRig } from './scene/rig-math';
 import { HERO_RIG, SECTION_RIGS_DESKTOP, SECTION_RIGS_MOBILE } from './scene/rigs';
 import { createTargetRigComputer } from './scene/section-probe';
@@ -106,10 +106,23 @@ export function init(mount: HTMLElement): HeroSceneHandle {
   modelGroup.rotation.order = 'YXZ';
   root.add(modelGroup);
 
+  // Separate group for the katana shown in the How section. Lives as a
+  // sibling of modelGroup so they share stageGroup transforms (rig pos
+  // + scale) but rotate independently — mask yaws/pitches per cursor,
+  // sword spins per scroll.
+  const swordGroup = new THREE.Group();
+  swordGroup.visible = false;
+  root.add(swordGroup);
+  // Holds the loaded sword model; we rotate this child for tip-down
+  // orientation while swordGroup itself owns the scroll-driven spin.
+  const swordPivot = new THREE.Group();
+  swordGroup.add(swordPivot);
+
   // Load the GLB
   const loader = new GLTFLoader();
   loader.setMeshoptDecoder(MeshoptDecoder);
   let modelLoaded = false;
+  let swordLoaded = false;
   loader.load(
     MODEL_URL,
     (gltf) => {
@@ -144,6 +157,66 @@ export function init(mount: HTMLElement): HeroSceneHandle {
     (err) => {
       console.error('Failed to load hero model', err);
       mount.setAttribute('data-load-error', 'true');
+    }
+  );
+
+  // Collect sword mesh materials so animate() can drive per-frame opacity
+  // for a clean fade at the How section boundaries — group.visible is a
+  // hard toggle, which would cause a one-frame pop. Setting material
+  // transparent + opacity gives a real cross-fade with the mask.
+  const swordMaterials: THREE.Material[] = [];
+  loader.load(
+    SWORD_URL,
+    (gltf) => {
+      const sword = gltf.scene;
+
+      const box = new THREE.Box3().setFromObject(sword);
+      const size = new THREE.Vector3();
+      const center = new THREE.Vector3();
+      box.getSize(size);
+      box.getCenter(center);
+      const maxAxis = Math.max(size.x, size.y, size.z) || 1;
+      const s = SWORD_TARGET_SIZE / maxAxis;
+      sword.position.sub(center).multiplyScalar(s);
+      sword.scale.setScalar(s);
+      sword.rotation.set(0, 0, 0);
+
+      sword.traverse((obj) => {
+        const mesh = obj as THREE.Mesh;
+        if (mesh.isMesh && mesh.material) {
+          const mats = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
+          for (const mat of mats) {
+            mat.transparent = true;
+            mat.depthWrite = true;
+            // Lift near-black materials out of silhouette. The current
+            // sword GLB ships with very dark hilt/tsuka albedo that
+            // disappears under all but the brightest direct light.
+            // We add a warm grey emissive baseline so the geometry
+            // always reads as 3D, while leaving brighter materials
+            // (the blade) untouched. Luminance threshold is tuned for
+            // sRGB albedo values.
+            const stdMat = mat as THREE.MeshStandardMaterial;
+            if (stdMat.color && stdMat.emissive) {
+              const lum =
+                stdMat.color.r * 0.299 +
+                stdMat.color.g * 0.587 +
+                stdMat.color.b * 0.114;
+              if (lum < 0.3) {
+                stdMat.emissive.setHex(0x4a3825);
+                stdMat.emissiveIntensity = 0.9;
+              }
+            }
+            swordMaterials.push(mat);
+          }
+        }
+      });
+
+      swordPivot.add(sword);
+      swordLoaded = true;
+    },
+    undefined,
+    (err) => {
+      console.error('Failed to load katana model', err);
     }
   );
 
@@ -197,6 +270,16 @@ export function init(mount: HTMLElement): HeroSceneHandle {
   // allocate a Vector3 every animate() tick.
   const maskNdc = new THREE.Vector3();
 
+  // Sword spin: rotates around its own length (Y) axis as you scroll —
+  // like the Mina-Massoud style where the handle sweeps left→right→left
+  // while the blade stays roughly vertical. The slight x=2.9 tilt on the
+  // pivot gives the blade visible arc; without the tilt the blade would
+  // barely move (just narrow/widen with no side sweep).
+  const SWORD_SPIN_AXIS = new THREE.Vector3(0, 1, 0);
+  const SWORD_REST_ANGLE = 0;
+  const SWORD_REVOLUTIONS = 1.5;
+  const swordSpinQuat = new THREE.Quaternion();
+
   const clock = new THREE.Clock();
   let raf = 0;
   function animate(): void {
@@ -238,6 +321,90 @@ export function init(mount: HTMLElement): HeroSceneHandle {
     // Apply rig position + scale (stageGroup).
     stageGroup.position.set(currentRig.pos.x, currentRig.pos.y, currentRig.pos.z);
     stageGroup.scale.setScalar(currentRig.scale);
+
+    // How section: swap mask for the katana. The sword cross-fades with
+    // the mask at the section boundaries (material opacity ramp) so the
+    // swap never reads as a one-frame pop. Within How, the sword spins
+    // around its (now-vertical) long axis driven by scroll progress, plus
+    // a constant slow rotation so the blade keeps catching light when the
+    // visitor stops scrolling. A subtle hover bob + spin-axis wobble
+    // keep the motion from feeling mechanical.
+    // Sword visibility window: fade-IN happens *inside* Where (60%-80% of
+    // the section) so the mask→sword swap completes BEFORE the user reaches
+    // How. By the time the probe crosses into How, the model is already
+    // the sword. The Where rig holds What_END's pose through this window
+    // (no scale growth during the cross-fade), then morphs to HOW_RIG_START
+    // during Where's transitionOut zone (last 20%) while only the sword
+    // is visible. Fade-OUT still happens in the last 6% of How.
+    const whereElForSword = document.getElementById('where');
+    const howEl = document.getElementById('how');
+    const contactElForSword = document.getElementById('contact');
+    const swordProbe = window.scrollY + window.innerHeight / 2;
+    let howProgress = 0;
+    let swordOpacity = 0;
+    if (howEl) {
+      const top = howEl.offsetTop;
+      const bottom = contactElForSword ? contactElForSword.offsetTop : top + howEl.clientHeight;
+      howProgress = Math.max(0, Math.min(1, (swordProbe - top) / Math.max(1, bottom - top)));
+    }
+    if (whereElForSword && howEl) {
+      const whereTop = whereElForSword.offsetTop;
+      const whereBottom = howEl.offsetTop;
+      if (swordProbe >= whereTop && swordProbe < whereBottom) {
+        const wp = (swordProbe - whereTop) / Math.max(1, whereBottom - whereTop);
+        const FADE_IN_START = 0.6;
+        const FADE_IN_END = 0.8;
+        if (wp >= FADE_IN_END) {
+          swordOpacity = 1;
+        } else if (wp > FADE_IN_START) {
+          swordOpacity = (wp - FADE_IN_START) / (FADE_IN_END - FADE_IN_START);
+        }
+      }
+    }
+    if (howEl && contactElForSword) {
+      const top = howEl.offsetTop;
+      const bottom = contactElForSword.offsetTop;
+      if (swordProbe >= top && swordProbe < bottom) {
+        const FADE_OUT = 0.06;
+        swordOpacity = howProgress > 1 - FADE_OUT
+          ? (1 - howProgress) / FADE_OUT
+          : 1;
+      }
+    }
+    swordOpacity = Math.max(0, Math.min(1, swordOpacity));
+    if (swordLoaded) {
+      swordGroup.visible = swordOpacity > 0;
+      if (swordGroup.visible) {
+        for (const mat of swordMaterials) {
+          mat.opacity = swordOpacity;
+        }
+      }
+    }
+    // Mask hides only past the cross-fade midpoint so both are visible
+    // briefly during the dissolve — no one-frame pop at the boundary.
+    if (modelLoaded) {
+      modelGroup.visible = swordOpacity < 0.5;
+    }
+    if (swordLoaded && swordGroup.visible) {
+      // Static pose on swordPivot: maps the GLB's authored blade
+      // direction to -Y inside swordGroup's local frame, so the blade
+      // points down when swordGroup's quaternion is identity. The
+      // scroll-driven Z rotation below then sweeps the blade through
+      // every angle in the screen plane.
+      // Pivot orients the blade to point down (-Y). The x=2.9 (≈π) tilt is
+      // intentional — it puts the blade slightly off the Y axis so spinning
+      // around Y gives a visible side-sweep rather than a flat narrow/widen.
+      swordPivot.rotation.x = 2.7;
+      swordPivot.rotation.y = 0.2;
+      swordPivot.rotation.z = -Math.PI / 2;
+      const angle = SWORD_REST_ANGLE + howProgress * Math.PI * 2 * SWORD_REVOLUTIONS;
+      swordSpinQuat.setFromAxisAngle(SWORD_SPIN_AXIS, angle);
+      swordGroup.quaternion.copy(swordSpinQuat);
+      swordGroup.position.set(0, 0, 0);
+    } else {
+      swordGroup.quaternion.identity();
+      swordGroup.position.set(0, 0, 0);
+    }
 
     // Pointer parallax on root — gated by rig.parallaxStrength so we can fully
     // disable cursor sway in sections (What onwards) where it'd fight the
@@ -448,6 +615,35 @@ export function init(mount: HTMLElement): HeroSceneHandle {
       accentBeam.position.z = accentBeam.position.z * (1 - whatLiveFactor) + arcZ * whatLiveFactor;
       const liveIntensity = 14 + 5 * Math.sin(t * 0.29 + 1.2);
       accentBeam.intensity = accentBeam.intensity * (1 - whatLiveFactor) + liveIntensity * whatLiveFactor;
+    }
+
+    // Live (time-based) beam motion in How. The katana spins around its
+    // vertical axis; this block orbits the accent beam *horizontally*
+    // around the spin axis at a different period — the relative motion
+    // between spin and beam means the blade catches highlights at a
+    // shifting angle every frame, giving the constant rotational sparkle
+    // a katana should have. Intensity also pulses on a third period for
+    // extra unpredictability. swordOpacity gates the orbit so it ramps
+    // in/out with the cross-fade — no jolt when the sword swaps with
+    // the mask.
+    if (swordOpacity > 0) {
+      const t = clock.elapsedTime;
+      // Horizontal orbit at blade midpoint height — radius wider than
+      // the sword so the beam sweeps across the visible side of the
+      // blade rather than from inside it.
+      const orbitR = 4.5;
+      const orbitX = currentRig.pos.x + orbitR * Math.cos(t * 0.55);
+      const orbitZ = currentRig.pos.z + orbitR * Math.sin(t * 0.55);
+      // Slow vertical bob so the beam height also varies — accents the
+      // upper half of the blade on one period, the lower half on another.
+      const orbitY = currentRig.pos.y + 1.8 * Math.sin(t * 0.32);
+      accentBeam.position.x = accentBeam.position.x * (1 - swordOpacity) + orbitX * swordOpacity;
+      accentBeam.position.y = accentBeam.position.y * (1 - swordOpacity) + orbitY * swordOpacity;
+      accentBeam.position.z = accentBeam.position.z * (1 - swordOpacity) + orbitZ * swordOpacity;
+      // Beam intensity flickers between 24 and 38 — punchier than the
+      // mask sections so the blade highlights pop.
+      const liveIntensity = 31 + 7 * Math.sin(t * 0.71);
+      accentBeam.intensity = accentBeam.intensity * (1 - swordOpacity) + liveIntensity * swordOpacity;
     }
 
     accentBeam.target.updateMatrixWorld();

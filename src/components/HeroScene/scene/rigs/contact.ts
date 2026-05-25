@@ -73,11 +73,11 @@ export const CONTACT_RIG_END: Rig = {
 // from the live beam orbit block in animate().
 export const CONTACT_RIG_MOBILE_START: Rig = {
   pos: { x: 0, y: 0.5, z: 0 },
-  scale: 0.85,
+  scale: 0.65,
   // 2π carries through from What's spin (Where/How chain) so the fade-in
   // doesn't pop. +0.18 layers a small CCW yaw on top so the gaze drifts
   // toward screen-left where the email begins.
-  yawBias: Math.PI * 2 + 0.18,
+  yawBias: Math.PI * 2 + 0.1,
   // -0.45 sinks the gaze toward the email line below the mask centre.
   pitchBias: -0.45,
   exposure: 1,

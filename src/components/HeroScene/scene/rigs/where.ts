@@ -1,113 +1,110 @@
 import type { Rig, SectionRig } from '../types';
 
-// Where, part 1: the SINK. As What scrolls into Where, the spinning
-// centred mask sinks straight back along -Z, shrinking and fading out,
-// while a bright front-lit accent beam flares up. The visitor sees the
-// mask drop behind the background lit by a flash — no horizontal slide.
-// alpha lands at 0 at Where p=0, so the rest of Where is dark and empty
-// (the flash has nothing to illuminate by then, which is the point —
-// the afterglow lingers via exposure/particle alpha before everything
-// settles for the slide-in).
+// Where (desktop): NO flash, NO sink, NO slide-in. The old behaviour
+// dropped alpha 1 → 0 with a 45-intensity flash, drifted the invisible
+// mask off-screen right, then slid it back in for How — a long, showy
+// transition. We replace that with a quiet invisible swap: Where holds
+// What_END's exact pose through the section while HeroScene.ts cross-
+// fades the sword in over the mask mid-section (see swordOpacity ramp).
+// By the time the probe crosses into How, the model is already the
+// sword. The rig then morphs from this held pose into HOW_RIG_START
+// during the transitionOut zone (last 20%), but the mask is already
+// hidden by then so the morph is only visible on the sword.
 export const WHERE_RIG_START: Rig = {
-  pos: { x: 0, y: 0.4, z: -3 },
-  scale: 0.4,
-  // Match WHAT_END's 2π exactly (NOT 0, even though they're visually
-  // equivalent) so the cross-fade from What's spin doesn't numerically
-  // lerp 2π → 0 — which would render as a fast reverse spin across the
-  // transitionOut zone. Keeping the same number means the spin reads
-  // as decelerating to a stop instead of unwinding.
-  yawBias: Math.PI * 2,
-  pitchBias: 0.01,
-  exposure: 1.4,
-  fogDensity: 0.04,
-  alpha: 0,
-  // Big front-lit flash — the "cool light effect" as the mask sinks. As
-  // alpha lerps 1→0 during What→Where, intensity lerps 10→45, so the
-  // mid-transition shows the half-transparent mask brightly lit before
-  // it fully disappears.
-  accentBeamIntensity: 45,
-  accentBeamPos: { x: 0, y: 0, z: 4 },
-  accentBeamTarget: { x: 0, y: 0.4, z: -3 },
-  beamYawOffset: 0,
-  particleAlpha: 0.7,
-  pointerYaw: 0,
-  pointerPitch: 0,
-  parallaxStrength: 0,
-  ambientIntensity: 0.7,
-  hemiIntensity: 0.55,
-  keyIntensity: 1.2,
-};
-
-// Where, part 2: ready to emerge from the right. The internal lerp from
-// WHERE_RIG_START → WHERE_RIG_END happens entirely with alpha 0, so the
-// drift from sunken-centre to off-screen-right is invisible. Lighting
-// decays from the flash to How's resting setup. The mask only becomes
-// visible during the transitionOut zone (last 20% of Where), where the
-// rig blends from this off-screen position into HOW_RIG_START — that's
-// the slide-in from the right.
-export const WHERE_RIG_END: Rig = {
-  pos: { x: 8, y: 0.5, z: -0.2 },
-  scale: 1.2,
-  yawBias: (2.9 * Math.PI) / 2,
-  pitchBias: 0.1,
-  exposure: 1,
-  fogDensity: 0.04,
-  alpha: 0,
-  accentBeamIntensity: 14,
-  accentBeamPos: { x: -5, y: 5, z: 3 },
-  accentBeamTarget: { x: 4.5, y: 0.3, z: 0 },
-  beamYawOffset: 0,
-  particleAlpha: 0.4,
-  pointerYaw: 0,
-  pointerPitch: 0,
-  parallaxStrength: 0,
-  ambientIntensity: 0.55,
-  hemiIntensity: 0.45,
-  keyIntensity: 0,
-};
-
-// Where (mobile): clean alpha fade — NO flash. The desktop flash (exposure
-// 1.4, beam 45) reads as the mask "bouncing back brighter" on mobile
-// because the rig-lerp lag (~0.5s) overlaps the alpha drop with the
-// brightness rise — the user sees a partly-visible mask flaring up just
-// before it disappears. Matching exposure/beam/particle to WHAT_END turns
-// the cross-fade into a pure opacity fade, so the mask just dissolves.
-// On mobile there's no off-screen-right drift to prep for (How fades out
-// instead of slides in), so the rig holds an invisible calm pose.
-export const WHERE_RIG_MOBILE_START: Rig = {
-  pos: { x: 0, y: 0.3, z: -3 },
-  scale: 0.3,
-  // Match WHAT_END's 2π (NOT 0) so the cross-fade from What's spin
-  // doesn't unwind 2π → 0 as a fast reverse spin. Visually identical
-  // to 0; numerically continuous with WHAT_END so the spin reads as
-  // decelerating rather than reversing.
+  pos: { x: 0, y: 0.4, z: 0 },
+  scale: 0.5,
   yawBias: Math.PI * 2,
   pitchBias: 0.01,
   exposure: 1,
   fogDensity: 0.04,
-  alpha: 0,
+  alpha: 1,
   accentBeamIntensity: 10,
-  accentBeamPos: { x: 0, y: 0, z: 4 },
-  accentBeamTarget: { x: 0, y: 0.3, z: -3 },
-  beamYawOffset: 0,
+  accentBeamPos: { x: 2.2, y: -3, z: 1.5 },
+  accentBeamTarget: { x: 0, y: 0.4, z: 0 },
+  beamYawOffset: -Math.PI * 2,
   particleAlpha: 0.4,
   pointerYaw: 0,
   pointerPitch: 0,
   parallaxStrength: 0,
   ambientIntensity: 0.7,
   hemiIntensity: 0.55,
-  keyIntensity: 1.2,
+  keyIntensity: 1.3,
 };
 
+// Where_END matches HOW_RIG_START's pos and scale so the sword's apparent
+// angle (which depends on perspective at a given scale/position) is
+// identical at the Where→How boundary. Without this, the same Y-rotation
+// looks different at scale 0.5 vs 1, causing a visible angle jump when
+// the sword fades in during Where but How starts at scale 1.
+// The mask is hidden by swordOpacity by the time this end-pose is reached,
+// so the scale/pos change doesn't affect any visible mask geometry.
+export const WHERE_RIG_END: Rig = {
+  pos: { x: 0, y: 0, z: 0 },
+  scale: 1,
+  yawBias: Math.PI * 2,
+  pitchBias: 0.01,
+  exposure: 1,
+  fogDensity: 0.04,
+  alpha: 1,
+  accentBeamIntensity: 10,
+  accentBeamPos: { x: 2.2, y: -3, z: 1.5 },
+  accentBeamTarget: { x: 0, y: 0, z: 0 },
+  beamYawOffset: -Math.PI * 2,
+  particleAlpha: 0.4,
+  pointerYaw: 0,
+  pointerPitch: 0,
+  parallaxStrength: 0,
+  ambientIntensity: 0.7,
+  hemiIntensity: 0.55,
+  keyIntensity: 1.3,
+};
+
+// Where (mobile): NO alpha fade at the What→Where boundary. The old
+// behaviour dropped alpha 1 → 0 across the boundary so the mask dissolved
+// before Where began — visually redundant with the sword cross-fade that
+// already handles the mask→sword swap at the start of How. Instead, Where
+// inherits What_END's exact pose (centre, scale, 2π spin, lights) and
+// holds it through the section. The mask just stays where it was; the
+// sword cross-fade in How (HeroScene.ts: swordOpacity ramp over the first
+// 6% of How) does the actual handoff. Pose drifts toward HOW_RIG_MOBILE_START
+// over the section's transitionOut zone so the swap happens at the same
+// scale/lighting as the sword's entry pose — no flying-back jolt.
+export const WHERE_RIG_MOBILE_START: Rig = {
+  pos: { x: 0, y: 0, z: 0 },
+  scale: 0.42,
+  // Match WHAT_END's 2π (NOT 0) so the spin doesn't unwind across the
+  // boundary. The transitionOut zone interpolates this toward HOW_START's
+  // yaw (also set to 2π below) so the held angle stays continuous.
+  yawBias: Math.PI * 2,
+  pitchBias: 0.01,
+  exposure: 1,
+  fogDensity: 0.04,
+  alpha: 1,
+  accentBeamIntensity: 10,
+  accentBeamPos: { x: 2.2, y: -3, z: 1.5 },
+  accentBeamTarget: { x: 0, y: 0, z: 0 },
+  // Match WHAT_END's counter-orbit so the beam stays parked where What
+  // left it instead of unwinding back to 0 inside Where.
+  beamYawOffset: -Math.PI * 2,
+  particleAlpha: 0.4,
+  pointerYaw: 0,
+  pointerPitch: 0,
+  parallaxStrength: 0,
+  ambientIntensity: 0.7,
+  hemiIntensity: 0.55,
+  keyIntensity: 1.3,
+};
+
+// Where_END holds What_END's pose so the mask doesn't grow visibly during
+// the section. The transitionOut zone (last 20%) lerps this pose into
+// HOW_RIG_MOBILE_START — but by then HeroScene.ts has already cross-faded
+// the sword in (the swap window finishes BEFORE transitionOut starts), so
+// the user only sees the sword grow into How's pose, not the mask.
 export const WHERE_RIG_MOBILE_END: Rig = {
   ...WHERE_RIG_MOBILE_START,
   pos: { ...WHERE_RIG_MOBILE_START.pos },
   accentBeamPos: { ...WHERE_RIG_MOBILE_START.accentBeamPos },
   accentBeamTarget: { ...WHERE_RIG_MOBILE_START.accentBeamTarget },
-  // Decay the flash back toward neutral so the cross-fade into How (alpha 0)
-  // isn't lit by a static 45-intensity beam.
-  exposure: 1,
-  accentBeamIntensity: 12,
 };
 
 // Invisible-mask section. rigStart is the sunk-centre flash pose, rigEnd is

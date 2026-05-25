@@ -6,6 +6,12 @@ export type SectionKey = (typeof SECTION_KEYS)[number];
 export const MODEL_URL = '/models/hero.compressed.glb';
 // World units along the largest bounding-box axis the loaded GLB is scaled to.
 export const TARGET_SIZE = 3.5;
+// Katana shown in How section instead of the mask. Slightly larger than the
+// mask because the blade is long and thin — bounding-box-normalising to 4
+// gives the visible blade a similar overall presence to the mask.
+// export const SWORD_URL = '/models/cyberpunk_katana.glb';
+export const SWORD_URL = '/models/thermal_katana.glb';
+export const SWORD_TARGET_SIZE = 5;
 // Default last-N portion of a section over which the rig blends to the next.
 // Overridable per-section via SectionRig.transitionOut.
 export const TRANSITION_ZONE = 0.4;

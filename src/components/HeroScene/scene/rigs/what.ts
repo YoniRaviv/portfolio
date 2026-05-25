@@ -107,5 +107,9 @@ export const whatMobile: SectionRig = {
   // mask is still solid behind the last project (NEXT) instead of half-gone
   // mid-card.
   transitionOut: -0.06,
-  holdStart: 0.52,
+  // Start the 2π spin at the section top so the rotation reads against
+  // RELAY (the first project) instead of only kicking in mid-list near
+  // SHISHI. Spanning the full section also slows the per-pixel angular
+  // velocity, so the spin feels steady through the project list.
+  holdStart: 0,
 };
