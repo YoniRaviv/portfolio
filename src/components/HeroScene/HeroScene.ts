@@ -323,9 +323,12 @@ const CONTACT_RIG_END: Rig = {
 const WHERE_RIG_START: Rig = {
   pos: { x: 0, y: 0.4, z: -3 },
   scale: 0.4,
-  // Stay axis-aligned with WHAT_END (yawBias 2π ≡ 0) so the sink reads
-  // as a straight back-away motion, not a rotation.
-  yawBias: 0,
+  // Match WHAT_END's 2π exactly (NOT 0, even though they're visually
+  // equivalent) so the cross-fade from What's spin doesn't numerically
+  // lerp 2π → 0 — which would render as a fast reverse spin across the
+  // transitionOut zone. Keeping the same number means the spin reads
+  // as decelerating to a stop instead of unwinding.
+  yawBias: Math.PI * 2,
   pitchBias: 0.01,
   exposure: 1.4,
   fogDensity: 0.04,
@@ -391,23 +394,23 @@ const WHERE_RIG_END: Rig = {
 // Every mobile pos.x is recentered toward 0 so the mask stays on-screen.
 
 const HERO_RIG_MOBILE: Rig = {
-  pos: { x: 0, y: 0.5, z: 0 },
-  scale: 1.2,
+  pos: { x: 0, y: 0.8, z: 0 },
+  scale: 0.6,
   yawBias: 0,
   pitchBias: -0.3,
   exposure: 0.85,
   fogDensity: 0.05,
   alpha: 1,
-  accentBeamIntensity: 9,
-  accentBeamPos: { x: -2, y: -2, z: 2.5 },
-  accentBeamTarget: { x: 0, y: 0.5, z: 0 },
+  accentBeamIntensity: 15,
+  accentBeamPos: { x: 0, y: -3, z: 2.5 },
+  accentBeamTarget: { x: 0, y: -0.5, z: 0 },
   beamYawOffset: 0,
-  particleAlpha: 0.4,
+  particleAlpha: 0.6,
   pointerYaw: 0.2,
   pointerPitch: 0.12,
   parallaxStrength: 0.3,
   ambientIntensity: 0.8,
-  hemiIntensity: 0.65,
+  hemiIntensity: 0.45,
   keyIntensity: 1.6,
 };
 
@@ -486,7 +489,11 @@ const WHO_RIG_MOBILE_END: Rig = {
 const WHERE_RIG_MOBILE_START: Rig = {
   pos: { x: 0, y: 0.3, z: -3 },
   scale: 0.3,
-  yawBias: 0,
+  // Match WHAT_END's 2π (NOT 0) so the cross-fade from What's spin
+  // doesn't unwind 2π → 0 as a fast reverse spin. Visually identical
+  // to 0; numerically continuous with WHAT_END so the spin reads as
+  // decelerating rather than reversing.
+  yawBias: Math.PI * 2,
   pitchBias: 0.01,
   exposure: 1.4,
   fogDensity: 0.04,
@@ -517,8 +524,11 @@ const WHERE_RIG_MOBILE_END: Rig = {
 
 const CONTACT_RIG_MOBILE_START: Rig = {
   pos: { x: 0, y: 0.3, z: 0 },
-  scale: 0.85,
-  yawBias: 0,
+  scale: 0.7,
+  // Carry the 2π yaw through from What's spin (via Where/How rigs that
+  // all spread from this chain) so the fade-in at Contact doesn't pop
+  // back to 0 — same visual rotation as 0, but no reverse-spin lerp.
+  yawBias: Math.PI * 2,
   pitchBias: -0.2,
   exposure: 1,
   fogDensity: 0.04,
