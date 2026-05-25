@@ -455,6 +455,9 @@ const WHAT_RIG_MOBILE_END: Rig = {
   beamYawOffset: -Math.PI * 2,
 };
 
+// WHO_END is deliberately declared here (after WHAT_START/END) because it
+// spreads WHAT_START — the fade-in into What's spin should read as the
+// mask appearing exactly where it'll spin.
 const WHO_RIG_MOBILE_END: Rig = {
   ...WHAT_RIG_MOBILE_START,
   pos: { ...WHAT_RIG_MOBILE_START.pos },
@@ -463,11 +466,12 @@ const WHO_RIG_MOBILE_END: Rig = {
   alpha: 0,
 };
 
-// Where: centered sink-flash. start = sunk-centre bright flash (same
-// concept as desktop WHERE_START, but recentered). end is identical to
-// start — on mobile there's no off-screen-right drift to prep for (How
-// fades out), so the rig just holds the invisible sunk pose across the
-// section.
+// Where: centered sink-flash. start = sunk-centre flash pose (alpha 0 —
+// the visible flash is the LERP from WHAT_END alpha 1 / beam 10 → here
+// alpha 0 / beam 45 during What's transitionOut zone, NOT a moment
+// within Where itself). end is identical to start — on mobile there's
+// no off-screen-right drift to prep for (How fades out), so the rig
+// just holds the invisible sunk pose across the section.
 const WHERE_RIG_MOBILE_START: Rig = {
   pos: { x: 0, y: 0.3, z: -3 },
   scale: 0.3,
@@ -521,6 +525,9 @@ const CONTACT_RIG_MOBILE_START: Rig = {
   keyIntensity: 1.3,
 };
 
+// CONTACT_END is intentionally identical to CONTACT_START — the live
+// beam orbit block in animate() drives Contact's lighting motion;
+// the rig itself contributes zero motion in this section.
 const CONTACT_RIG_MOBILE_END: Rig = {
   ...CONTACT_RIG_MOBILE_START,
   pos: { ...CONTACT_RIG_MOBILE_START.pos },
