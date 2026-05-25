@@ -56,10 +56,12 @@ export const WHO_RIG_END: Rig = {
   keyIntensity: 1.6,
 };
 
-// Who (mobile): visible smaller mask behind the quote, dim accent. Within the
-// section the rig drifts from this pose toward WHAT_START so by the section
-// boundary the mask is already on its spin mark. No pointer follow on mobile
-// (auto-drift handles ambient motion elsewhere).
+// Who (mobile): mask sits centred behind the quote. Pose is intentionally
+// static — the section's life comes from a time-based accent-beam arc
+// driven in HeroScene.ts's animate() block (mirrors Contact's live beam
+// orbit pattern). Rig-level params here just establish the starting
+// light pose; the orbit overrides accentBeam.position once the visitor
+// enters Who.
 export const WHO_RIG_MOBILE_START: Rig = {
   pos: { x: 0, y: 0.5, z: 0 },
   scale: 0.4,
@@ -68,7 +70,7 @@ export const WHO_RIG_MOBILE_START: Rig = {
   exposure: 0.7,
   fogDensity: 0.05,
   alpha: 1,
-  accentBeamIntensity: 12,
+  accentBeamIntensity: 14,
   accentBeamPos: { x: -3, y: -2, z: 2.5 },
   accentBeamTarget: { x: 0, y: 0.5, z: 0 },
   beamYawOffset: 0,
@@ -81,10 +83,11 @@ export const WHO_RIG_MOBILE_START: Rig = {
   keyIntensity: 1.6,
 };
 
-// WHO_END spreads WHAT_START — within Who the rig lerps from WHO_START's
-// "behind the quote" pose into WHAT_START's "spin-ready" pose, so the
-// cross-fade into What is a no-op and the spin starts cleanly on the
-// section boundary.
+// WHO_END spreads WHAT_START so the cross-fade into the spin section is a
+// no-op (same pose either side of the boundary, the spin starts cleanly).
+// The visible "ambient drift" inside Who is contributed by the mobile
+// breathing block in animate(), not by START≠END here — keeping the rig
+// continuous at the boundary while still feeling alive.
 export const WHO_RIG_MOBILE_END: Rig = {
   ...WHAT_RIG_MOBILE_START,
   pos: { ...WHAT_RIG_MOBILE_START.pos },

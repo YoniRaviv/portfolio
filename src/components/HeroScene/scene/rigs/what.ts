@@ -53,9 +53,14 @@ export const WHAT_RIG_END: Rig = {
   keyIntensity: 1.3,
 };
 
+// What (mobile): the mask drops to roughly the canvas mid-line (pos.y ≈ 0)
+// so as project rows scroll past, the names visually pass *across* the
+// mask rather than entirely below it — what was an above-the-fold token
+// now reads as the visual anchor *between* project entries. The 2π spin
+// remains the section's signature gesture.
 export const WHAT_RIG_MOBILE_START: Rig = {
-  pos: { x: 0, y: 0.3, z: 0 },
-  scale: 0.4,
+  pos: { x: 0, y: 0, z: 0 },
+  scale: 0.42,
   yawBias: 0,
   pitchBias: 0.01,
   exposure: 1,
@@ -63,7 +68,7 @@ export const WHAT_RIG_MOBILE_START: Rig = {
   alpha: 1,
   accentBeamIntensity: 10,
   accentBeamPos: { x: 2.2, y: -3, z: 1.5 },
-  accentBeamTarget: { x: 0, y: 0.3, z: 0 },
+  accentBeamTarget: { x: 0, y: 0, z: 0 },
   beamYawOffset: 0,
   particleAlpha: 0.4,
   pointerYaw: 0,

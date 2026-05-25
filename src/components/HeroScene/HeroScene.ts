@@ -301,6 +301,21 @@ export function init(mount: HTMLElement): HeroSceneHandle {
         : 0;
     }
 
+    // Mobile ambient breathing. Layered on top of whatever the rig already
+    // wrote so even sections with start ≡ end (Who, Where, How, Contact)
+    // feel alive between scroll events. Three independent periods (scale,
+    // pitch, yaw) keep the motion from reading as a single repeating pulse
+    // — the visitor can't predict the loop, so it registers as "alive"
+    // rather than "looping". Amplitudes are intentionally small (±1.2%
+    // scale, ±0.025 rad pitch, ±0.03 rad yaw) so they don't fight the
+    // rig's per-section gestures (e.g. What's 2π spin, Where's flash).
+    if (state.isMobile && modelLoaded) {
+      const t = clock.elapsedTime;
+      stageGroup.scale.multiplyScalar(1 + 0.012 * Math.sin(t * 0.6));
+      modelGroup.rotation.x += 0.025 * Math.sin(t * 0.4);
+      modelGroup.rotation.y += 0.03 * Math.sin(t * 0.33 + 0.7);
+    }
+
     // Lights, fog, exposure from rig.
     renderer.toneMappingExposure = currentRig.exposure;
     fog.density = currentRig.fogDensity;
@@ -360,6 +375,79 @@ export function init(mount: HTMLElement): HeroSceneHandle {
       // independently of the orbit position.
       const liveIntensity = 14 + 4 * Math.sin(t * 0.31);
       accentBeam.intensity = accentBeam.intensity * (1 - liveLightFactor) + liveIntensity * liveLightFactor;
+    }
+
+    // Live (time-based) beam motion in Who (mobile). The Who mobile rig is
+    // intentionally static — the section's life comes from a slow accent
+    // beam arc carved around the mask's lower hemisphere (sweeping from
+    // bottom-left through bottom-right and back), with an out-of-phase
+    // intensity pulse. The factor ramps via a tent: fades in over the
+    // first 30% of Who, full from 30%-70%, fades out over the last 30%,
+    // so the orbit doesn't clash with the section boundaries.
+    let whoLiveFactor = 0;
+    if (state.isMobile) {
+      const whoEl = document.getElementById('who');
+      const whatEl = document.getElementById('what');
+      if (whoEl) {
+        const top = whoEl.offsetTop;
+        const bottom = whatEl ? whatEl.offsetTop : top + whoEl.clientHeight;
+        const probe = window.scrollY + window.innerHeight / 2;
+        const raw = Math.max(0, Math.min(1, (probe - top) / Math.max(1, bottom - top)));
+        const tent = raw < 0.3 ? raw / 0.3 : raw > 0.7 ? (1 - raw) / 0.3 : 1;
+        whoLiveFactor = Math.max(0, Math.min(1, tent));
+      }
+    }
+    if (whoLiveFactor > 0) {
+      const t = clock.elapsedTime;
+      // Lateral arc — beam swings under the mask in a lazy ellipse,
+      // periodically rising above. Three independent periods keep the
+      // motion from reading as a single circle.
+      const arcX = currentRig.pos.x + 3.2 * Math.cos(t * 0.42);
+      const arcY = currentRig.pos.y - 1.2 + 1.8 * Math.sin(t * 0.55);
+      const arcZ = currentRig.pos.z + 2.5 + 0.8 * Math.sin(t * 0.31);
+      accentBeam.position.x = accentBeam.position.x * (1 - whoLiveFactor) + arcX * whoLiveFactor;
+      accentBeam.position.y = accentBeam.position.y * (1 - whoLiveFactor) + arcY * whoLiveFactor;
+      accentBeam.position.z = accentBeam.position.z * (1 - whoLiveFactor) + arcZ * whoLiveFactor;
+      // Intensity breathes between 10 (dim contour) and 22 (bright wash)
+      // on its own period — the visitor reads alternating soft / hard
+      // light passes across the silhouette.
+      const liveIntensity = 16 + 6 * Math.sin(t * 0.23);
+      accentBeam.intensity = accentBeam.intensity * (1 - whoLiveFactor) + liveIntensity * whoLiveFactor;
+    }
+
+    // Live (time-based) beam motion in What (mobile). Layered on top of
+    // What's 2π spin (which keeps the rig's beam offset orbiting opposite
+    // to the mask) — this block adds a *position* orbit on top, so the
+    // beam doesn't just counter-rotate around the mask, it also shifts
+    // around in 3D space. The combination keeps the chiaroscuro
+    // unpredictable. Tent factor fades in over the first 30% and out
+    // over the last 30% so the orbit doesn't clash with the What→Where
+    // sink transition or the Who→What spin onset.
+    let whatLiveFactor = 0;
+    if (state.isMobile) {
+      const whatEl = document.getElementById('what');
+      const whereEl = document.getElementById('where');
+      if (whatEl) {
+        const top = whatEl.offsetTop;
+        const bottom = whereEl ? whereEl.offsetTop : top + whatEl.clientHeight;
+        const probe = window.scrollY + window.innerHeight / 2;
+        const raw = Math.max(0, Math.min(1, (probe - top) / Math.max(1, bottom - top)));
+        const tent = raw < 0.3 ? raw / 0.3 : raw > 0.7 ? (1 - raw) / 0.3 : 1;
+        whatLiveFactor = Math.max(0, Math.min(1, tent));
+      }
+    }
+    if (whatLiveFactor > 0) {
+      const t = clock.elapsedTime;
+      // Upper arc — beam orbits above and around the spinning mask. Different
+      // axis weights from Who's orbit so the silhouette reads differently.
+      const arcX = currentRig.pos.x + 4 * Math.sin(t * 0.38);
+      const arcY = currentRig.pos.y + 2 + 1.4 * Math.cos(t * 0.31);
+      const arcZ = currentRig.pos.z + 3 + 1 * Math.sin(t * 0.27);
+      accentBeam.position.x = accentBeam.position.x * (1 - whatLiveFactor) + arcX * whatLiveFactor;
+      accentBeam.position.y = accentBeam.position.y * (1 - whatLiveFactor) + arcY * whatLiveFactor;
+      accentBeam.position.z = accentBeam.position.z * (1 - whatLiveFactor) + arcZ * whatLiveFactor;
+      const liveIntensity = 14 + 5 * Math.sin(t * 0.29 + 1.2);
+      accentBeam.intensity = accentBeam.intensity * (1 - whatLiveFactor) + liveIntensity * whatLiveFactor;
     }
 
     accentBeam.target.updateMatrixWorld();

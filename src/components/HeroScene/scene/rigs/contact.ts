@@ -62,28 +62,31 @@ export const CONTACT_RIG_END: Rig = {
   keyIntensity: 1.3,
 };
 
-// Contact (mobile): mask sits behind the lead text + email line, with
-// pos.y high enough that the mask's bottom doesn't extend below the email
-// — anything that leaks below shows through the 12% bone grid background
-// of the social cards. START and END are identical (no within-Contact
-// scale/position animation); the only motion comes from the live beam
-// orbit block in animate(). Pair with the overscroll cap in the anchor
-// block so the mask stops following the scroll once the email line has
-// carried up past its frozen viewport position.
+// Contact (mobile): the mask is anchored *behind the email line*, not above
+// it — pos.y drops to 0.5 (was 0.8) so the silhouette is centred on the
+// email's vertical band once the anchor freeze engages. The mask gazes
+// toward the email by combining a small +yaw (face turns to screen-left
+// toward where the email text begins) with a more pronounced -pitch
+// (eyes drop down toward the email line). accentBeamTarget aims at the
+// email anchor so the warm wash lands on the type, not the forehead.
+// START and END are identical — the only within-Contact motion comes
+// from the live beam orbit block in animate().
 export const CONTACT_RIG_MOBILE_START: Rig = {
-  pos: { x: 0, y: 0.8, z: 0 },
-  scale: 0.8,
-  // Carry the 2π yaw through from What's spin (via Where/How rigs that
-  // all spread from this chain) so the fade-in at Contact doesn't pop
-  // back to 0 — same visual rotation as 0, but no reverse-spin lerp.
-  yawBias: Math.PI * 2,
-  pitchBias: -0.2,
+  pos: { x: 0, y: 0.5, z: 0 },
+  scale: 0.85,
+  // 2π carries through from What's spin (Where/How chain) so the fade-in
+  // doesn't pop. +0.18 layers a small CCW yaw on top so the gaze drifts
+  // toward screen-left where the email begins.
+  yawBias: Math.PI * 2 + 0.18,
+  // -0.45 sinks the gaze toward the email line below the mask centre.
+  pitchBias: -0.45,
   exposure: 1,
   fogDensity: 0.04,
   alpha: 1,
   accentBeamIntensity: 12,
   accentBeamPos: { x: -3, y: 3, z: 3 },
-  accentBeamTarget: { x: 0, y: 0.3, z: 0 },
+  // Aim at the email anchor (down + left of mask centre).
+  accentBeamTarget: { x: -0.5, y: -0.2, z: 0 },
   beamYawOffset: 0,
   particleAlpha: 0.4,
   pointerYaw: 0.15,
