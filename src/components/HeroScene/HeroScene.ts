@@ -665,6 +665,9 @@ export function init(mount: HTMLElement): HeroSceneHandle {
   const mql = matchMedia('(max-width: 720px)');
   const state = { isMobile: mql.matches };
 
+  const getActiveRigs = (): Record<SectionKey, SectionRig> =>
+    state.isMobile ? SECTION_RIGS_MOBILE : SECTION_RIGS_DESKTOP;
+
   const scene = new THREE.Scene();
   scene.background = null;
   const fog = new THREE.FogExp2(0x0a0a0a, HERO_RIG.fogDensity);
@@ -827,8 +830,7 @@ export function init(mount: HTMLElement): HeroSceneHandle {
   }
 
   function resolveSectionRig(key: SectionKey, p: number): Rig {
-    const rigs = state.isMobile ? SECTION_RIGS_MOBILE : SECTION_RIGS_DESKTOP;
-    const r = rigs[key];
+    const r = getActiveRigs()[key];
     if (!r.end) return r.start;
     const hold = r.holdStart ?? 0;
     // Hold rigStart for the first `hold` fraction, then remap (hold..1) → (0..1).
@@ -867,8 +869,7 @@ export function init(mount: HTMLElement): HeroSceneHandle {
     // section, then ease toward the next section's rig in its final portion.
     // Without this, even at the top of the page (probe = mid-hero) we'd be
     // 50% blended into Who, pulling the hero pose visibly off.
-    const rigs = state.isMobile ? SECTION_RIGS_MOBILE : SECTION_RIGS_DESKTOP;
-    const tz = rigs[SECTION_KEYS[i]].transitionOut ?? TRANSITION_ZONE;
+    const tz = getActiveRigs()[SECTION_KEYS[i]].transitionOut ?? TRANSITION_ZONE;
     const blendStart = 1 - tz;
     const rawBlend = p < blendStart ? 0 : (p - blendStart) / tz;
     const eased = rawBlend * rawBlend * (3 - 2 * rawBlend);
