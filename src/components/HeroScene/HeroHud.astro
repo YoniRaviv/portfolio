@@ -1,6 +1,12 @@
 ---
 // Decorative HUD overlay for the hero 3D scene. Pure DOM/SVG + a tiny script
 // for mouse parallax. No canvas impact.
+//
+// Hosts the boot-terminal placeholder so the loader sits inside the same
+// bracket frame the HUD draws — once the GLB resolves and <html> picks up
+// data-hero-loaded, the placeholder fades and the leaders/targets/telemetry
+// stream in on a stagger.
+import Placeholder from './Placeholder.astro';
 ---
 <div class="hud" aria-hidden="true">
   <span class="bracket tl"></span>
@@ -9,6 +15,8 @@
   <span class="bracket br"></span>
 
   <span class="scanline"></span>
+
+  <Placeholder />
 
   <svg class="leaders" viewBox="0 0 100 100" preserveAspectRatio="none">
     <!-- Each line goes from the target's dot (x1,y1 for scan; x2,y2 for eye/jaw)
@@ -153,11 +161,18 @@
   .leaders line {
     stroke-dasharray: 200;
     stroke-dashoffset: 200;
+    /* Paused until <html> picks up data-hero-loaded — keeps the readout
+       lines hidden behind the boot terminal so the HUD only "wires up"
+       once the mask is on screen. */
     animation: drawLine .7s cubic-bezier(.55,.05,.25,1) forwards;
+    animation-play-state: paused;
   }
-  .leaders .lead-scan { animation-delay: 1.2s; }
-  .leaders .lead-eye  { animation-delay: 1.3s; }
-  .leaders .lead-jaw  { animation-delay: 1.4s; }
+  /* Delays restart from data-hero-loaded, not page load — kept tight so the
+     readouts cascade in immediately after the loader exits, not on a long
+     dramatic timeline. */
+  .leaders .lead-scan { animation-delay: 0.2s; }
+  .leaders .lead-eye  { animation-delay: 0.3s; }
+  .leaders .lead-jaw  { animation-delay: 0.4s; }
   @keyframes drawLine {
     to { stroke-dashoffset: 0; }
   }
@@ -183,6 +198,7 @@
     opacity: 0;
     transform: scale(0);
     animation: dotIn .35s cubic-bezier(.2,.9,.3,1.2) forwards;
+    animation-play-state: paused;
   }
   .target .dot::after {
     content: '';
@@ -196,19 +212,22 @@
     line-height: 1.25;
     clip-path: inset(0 100% 0 0);
     animation: labelScan .55s cubic-bezier(.7,0,.3,1) forwards;
+    animation-play-state: paused;
   }
   .target .label em {
     font-style: normal;
     color: var(--accent);
   }
 
-  /* Stagger entrance: scan → eye → jaw. Dot precedes label by 180ms. */
-  .target.scan .dot   { animation-delay: 1.35s; }
-  .target.scan .label { animation-delay: 1.55s; }
-  .target.eye  .dot   { animation-delay: 1.5s;  }
-  .target.eye  .label { animation-delay: 1.7s;  }
-  .target.jaw  .dot   { animation-delay: 1.65s; }
-  .target.jaw  .label { animation-delay: 1.85s; }
+  /* Stagger entrance: scan → eye → jaw. Dot precedes label by 200ms.
+     Delays restart from data-hero-loaded — tight enough that the cascade
+     reads as the HUD wiring itself up the moment the mask is alive. */
+  .target.scan .dot   { animation-delay: 0.35s; }
+  .target.scan .label { animation-delay: 0.55s; }
+  .target.eye  .dot   { animation-delay: 0.5s;  }
+  .target.eye  .label { animation-delay: 0.7s;  }
+  .target.jaw  .dot   { animation-delay: 0.65s; }
+  .target.jaw  .label { animation-delay: 0.85s; }
 
   /* Positions are now in stage-relative %, so they track the mask. */
   .target.scan {
@@ -232,7 +251,8 @@
     text-align: right;
     opacity: 0;
     animation: hudFadeIn .9s ease forwards;
-    animation-delay: 2s;
+    animation-delay: 0.6s;
+    animation-play-state: paused;
     translate: calc(var(--mx) * -6px) calc(var(--my) * -4px);
     transition: translate .12s linear;
   }
@@ -281,6 +301,18 @@
     50%  { transform: translate(-2px,  1.5px); }
     75%  { transform: translate( 1.5px, 2px); }
     100% { transform: translate( 2px, -1.5px); }
+  }
+
+  /* Gate the readout layer (leaders, target dots+labels, telemetry) on
+     "mask is loaded" — they hold their paused initial state while the boot
+     terminal is showing, then cascade in on the staggered delays above
+     once HeroScene.ts mirrors the load flag onto <html>. Brackets and the
+     scanline are intentionally NOT gated: they frame the loader. */
+  :global([data-hero-loaded='true']) .leaders line,
+  :global([data-hero-loaded='true']) .target .dot,
+  :global([data-hero-loaded='true']) .target .label,
+  :global([data-hero-loaded='true']) .telemetry {
+    animation-play-state: running;
   }
 
   @media (prefers-reduced-motion: reduce) {

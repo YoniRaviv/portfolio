@@ -105,8 +105,9 @@ import { where, roles } from '@/content';
     .where .role .city { grid-column: 1 / -1; text-align: left; }
   }
   @media (max-width: 720px) {
+    .where { padding-top: 100px; padding-bottom: 100px; }
     .where .header h2 { font-size: clamp(48px, 13vw, 80px); }
-    .where .role { grid-template-columns: 1fr; gap: 8px; padding: 24px var(--pad-x); }
+    .where .role { grid-template-columns: 1fr; gap: 8px; padding: 20px var(--pad-x); }
     .where .role .company { font-size: clamp(28px, 8vw, 44px); }
     .where .role .city { text-align: left; grid-column: auto; }
   }
