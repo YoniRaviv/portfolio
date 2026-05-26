@@ -423,18 +423,18 @@ export function init(mount: HTMLElement): HeroSceneHandle {
     // Activation is offset past Contact's top by ANCHOR_DELAY so the mask
     // "lands" beside the title text rather than above it; once anchored,
     // the mask scrolls up as a unit with the page through the rest of
-    // Contact. On mobile the follow is CAPPED at MOBILE_ANCHOR_CAP so the
-    // mask freezes once the email line has carried past it — without the
-    // cap the mask keeps shifting up and leaks visibly behind the social
-    // cards' semi-transparent grid below the email.
+    // Contact. Tracking continues uncapped on both breakpoints — once the
+    // sword has landed it should scroll up and exit with the rest of the
+    // page rather than stay pinned in the viewport as the visitor reaches
+    // the footer. (The mask, which the original cap was designed to keep
+    // from leaking through the social grid, is hidden throughout Contact
+    // because the sword is at full opacity here.)
     let overscroll = 0;
     const contactElForAnchor = document.getElementById('contact');
     if (contactElForAnchor) {
       const ANCHOR_DELAY = window.innerHeight * 0.5;
       const anchor = contactElForAnchor.offsetTop - window.innerHeight / 1.5 + ANCHOR_DELAY;
-      const raw = Math.max(0, window.scrollY - anchor);
-      const cap = state.isMobile ? window.innerHeight * 0.4 : Infinity;
-      overscroll = Math.min(raw, cap);
+      overscroll = Math.max(0, window.scrollY - anchor);
     }
 
     // Drive target rig from scroll position and smoothly lerp current toward it.
