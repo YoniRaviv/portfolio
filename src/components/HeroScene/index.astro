@@ -1,9 +1,9 @@
 ---
-import Placeholder from './Placeholder.astro';
+// Placeholder now lives inside <HeroHud /> so it can occupy the bracket
+// frame using the same --hud-* offsets — keeps the loader and the final
+// HUD framing visually aligned.
 ---
-<div class="stage" id="stage">
-  <Placeholder />
-</div>
+<div class="stage" id="stage"></div>
 
 <style>
   /* Persistent canvas: now full-viewport so particles aren't clipped to a

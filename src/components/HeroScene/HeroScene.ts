@@ -245,6 +245,11 @@ export function init(mount: HTMLElement): HeroSceneHandle {
 
       renderer.domElement.style.opacity = '1';
       mount.setAttribute('data-loaded', 'true');
+      // Mirror onto <html> so components outside #stage (the HUD's leaders,
+      // targets and telemetry — which live in <HeroHud /> inside <section.hero>)
+      // can gate their entrance animations on "mask is ready" without needing
+      // a JS bridge or a parent-relationship change.
+      document.documentElement.setAttribute('data-hero-loaded', 'true');
       // Once the initial CSS fade-in completes, clear the transition so
       // per-frame rig-driven opacity writes are instant (no lag/smear).
       setTimeout(() => {

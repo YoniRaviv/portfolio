@@ -1,36 +1,234 @@
 ---
-// Static fallback shown before Three.js hydrates and when prefers-reduced-motion is set.
+// Static fallback shown before Three.js hydrates and when prefers-reduced-motion
+// is set. Cyberpunk boot-terminal aesthetic: scrolling mono lines + glitchy
+// cursor on the last line. Pure CSS animation so it has zero scripting cost
+// during the load window the user is staring at it.
 ---
 <div class="hero-placeholder" aria-hidden="true">
-  <div class="ring r1"></div>
-  <div class="ring r2"></div>
-  <div class="ring r3"></div>
-  <div class="core"></div>
+  <div class="boot">
+    <header class="boot-head">
+      <span class="boot-dots"><i></i><i></i><i></i></span>
+      <span class="boot-title">HERO.SHELL // v0.1</span>
+    </header>
+    <div class="boot-log">
+      <div class="ln"><span class="p">&gt;</span> init shell<b class="ok">OK</b></div>
+      <div class="ln"><span class="p">&gt;</span> mount gpu<b class="ok">OK</b></div>
+      <div class="ln"><span class="p">&gt;</span> decode meshopt<b class="cycle"></b></div>
+      <div class="ln"><span class="p">&gt;</span> load hero.glb<span class="bar-wrap"><span class="bar"></span></span></div>
+      <div class="ln"><span class="p">&gt;</span> bind lights<b class="ok">13/13</b></div>
+      <div class="ln"><span class="p">&gt;</span> await mask<span class="glitch"></span><b class="caret">_</b></div>
+    </div>
+  </div>
 </div>
 
 <style>
   .hero-placeholder {
-    position: absolute; inset: 0;
+    /* Occupy the same rectangle the corner brackets frame — the parent
+       <HeroHud /> defines --hud-top/right/bottom/left and the brackets sit
+       at those insets, so the loader lands centred inside the brackets on
+       every breakpoint without a per-viewport override. */
+    position: absolute;
+    top: var(--hud-top);
+    right: var(--hud-right);
+    bottom: var(--hud-bottom);
+    left: var(--hud-left);
     display: grid; place-items: center;
     pointer-events: none;
     transition: opacity 0.6s cubic-bezier(.2,.7,.2,1);
   }
-  :global([data-loaded='true']) > .hero-placeholder { opacity: 0; }
-  .hero-placeholder .core {
-    width: 96px; height: 96px;
+  /* Fade when HeroScene.ts mirrors the load flag onto <html>. We watch a
+     document-level attribute rather than a parent so the placeholder can
+     live anywhere in the tree (now inside HeroHud, not #stage). */
+  :global([data-hero-loaded='true']) .hero-placeholder { opacity: 0; }
+  /* Once the canvas takes over, pause every looping animation in the
+     loader. Opacity is already 0 so it's invisible, but the rAF-backed
+     CSS animations keep ticking until the element is removed from the
+     stacking context — pausing them frees the CPU. */
+  :global([data-hero-loaded='true']) .hero-placeholder * {
+    animation-play-state: paused !important;
+  }
+
+  .boot {
+    font-family: var(--mono);
+    font-size: 11.5px;
+    letter-spacing: 0.04em;
+    color: var(--text);
+    background: rgba(21, 21, 21, 0.6);
+    border: 1px solid rgba(255, 111, 89, 0.18);
+    min-width: 300px;
+    max-width: 88vw;
+    position: relative;
+    backdrop-filter: blur(2px);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
+    /* Subtle vertical scanline overlay so the terminal panel reads as part
+       of the page's CRT aesthetic, not a floating UI card. */
+    background-image:
+      repeating-linear-gradient(to bottom,
+        rgba(255, 111, 89, 0.03) 0 1px, transparent 1px 3px);
+  }
+
+  /* HUD corner brackets — only two diagonals, keeps it readable rather than
+     boxy. Drawn with two borders per pseudo so they appear as L-shapes. */
+  .boot::before,
+  .boot::after {
+    content: '';
+    position: absolute;
+    width: 10px; height: 10px;
+    border: 1px solid var(--accent);
+    opacity: 0.85;
+  }
+  .boot::before { top: -1px; left: -1px; border-right: none; border-bottom: none; }
+  .boot::after  { bottom: -1px; right: -1px; border-left: none; border-top: none; }
+
+  /* Mock window chrome — three indicator dots + a fake title. The first dot
+     glows accent like an active session indicator. */
+  .boot-head {
+    display: flex; align-items: center; gap: 10px;
+    padding: 6px 12px;
+    border-bottom: 1px solid rgba(255, 111, 89, 0.18);
+    background: rgba(255, 111, 89, 0.04);
+  }
+  .boot-dots { display: inline-flex; gap: 5px; }
+  .boot-dots i {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: rgba(191, 178, 155, 0.18);
+    box-shadow: inset 0 0 0 1px rgba(191, 178, 155, 0.25);
+  }
+  .boot-dots i:first-child {
+    background: var(--accent);
+    box-shadow: 0 0 6px var(--accent);
+    animation: headPulse 1.6s ease-in-out infinite;
+  }
+  @keyframes headPulse {
+    50% { box-shadow: 0 0 10px var(--accent); opacity: 0.7; }
+  }
+  .boot-title {
+    font-size: 9.5px;
+    letter-spacing: 0.18em;
+    color: rgba(191, 178, 155, 0.55);
+    text-transform: uppercase;
+  }
+
+  .boot-log { padding: 12px 14px 14px; }
+
+  /* Each line fades in on a staggered delay so the log reads top-to-bottom
+     like a real boot sequence rather than appearing all at once. */
+  .ln {
+    display: flex;
+    align-items: center;
+    gap: 0.7ch;
+    line-height: 1.9;
+    white-space: pre;
+    opacity: 0;
+    transform: translateY(2px);
+    animation: lineIn .35s cubic-bezier(.2,.7,.2,1) forwards;
+  }
+  .ln:nth-child(1) { animation-delay: 0.08s; }
+  .ln:nth-child(2) { animation-delay: 0.24s; }
+  .ln:nth-child(3) { animation-delay: 0.40s; }
+  .ln:nth-child(4) { animation-delay: 0.56s; }
+  .ln:nth-child(5) { animation-delay: 0.72s; }
+  .ln:nth-child(6) { animation-delay: 0.88s; }
+  @keyframes lineIn {
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .p { color: var(--accent); }
+  .ok { margin-left: auto; color: var(--accent); }
+
+  /* Rolling meshopt indicator — content cycles through block characters so
+     the glyph mass shifts each step. Using `content:` keyframes is cheap
+     and avoids any JS. */
+  .cycle { margin-left: auto; color: var(--accent); min-width: 4ch; text-align: right; }
+  .cycle::after {
+    content: '░▒▓█';
+    animation: cycle 0.6s steps(4, end) infinite;
+  }
+  @keyframes cycle {
+    0%   { content: '░▒▓█'; }
+    25%  { content: '▒▓█░'; }
+    50%  { content: '▓█░▒'; }
+    75%  { content: '█░▒▓'; }
+  }
+
+  /* Load-progress bar. Wrap holds the gutter (accent-tinted border) so the
+     fill can run edge-to-edge without leaving a 1px seam. */
+  .bar-wrap {
+    margin-left: auto;
+    width: 9ch;
+    height: 6px;
+    border: 1px solid rgba(255, 111, 89, 0.35);
+    position: relative;
+    overflow: hidden;
+  }
+  .bar {
+    position: absolute; inset: 0;
     background:
-      radial-gradient(circle at 50% 50%, var(--accent) 0%, rgba(255,111,89,.6) 30%, transparent 70%);
-    filter: blur(2px);
-    opacity: .9;
-    grid-area: 1 / 1;
-    animation: pulse 2.6s ease-in-out infinite;
+      linear-gradient(90deg,
+        var(--accent) 0%,
+        var(--accent) 60%,
+        rgba(255, 111, 89, 0.4) 100%);
+    transform-origin: left center;
+    transform: scaleX(0);
+    animation: barFill 2.2s cubic-bezier(.2,.7,.2,1) infinite;
   }
-  .hero-placeholder .ring {
-    grid-area: 1 / 1;
-    border-radius: 50%;
-    border: 1px solid rgba(255, 111, 89, .25);
+  @keyframes barFill {
+    0%   { transform: scaleX(0); }
+    70%  { transform: scaleX(0.92); }
+    85%  { transform: scaleX(0.96); }
+    100% { transform: scaleX(1); }
   }
-  .hero-placeholder .r1 { width: 220px; height: 220px; }
-  .hero-placeholder .r2 { width: 360px; height: 360px; border-color: rgba(191,178,155,.12); }
-  .hero-placeholder .r3 { width: 520px; height: 520px; border-color: rgba(191,178,155,.06); }
+
+  /* Final line keeps animating until the canvas takes over — that's the
+     "alive" tell during the slow 6MB GLB fetch. Glitch chars rotate through
+     a small set of dense block / arrow glyphs to feel like undecoded data. */
+  .glitch { color: var(--accent); margin-left: 0.4ch; min-width: 4ch; display: inline-block; }
+  .glitch::after {
+    content: '◆▒▓';
+    animation: glitch 0.42s steps(6, end) infinite;
+  }
+  @keyframes glitch {
+    0%   { content: '◆▒▓'; }
+    16%  { content: '▓█◆'; }
+    33%  { content: '█▎▌'; }
+    50%  { content: '▌◆▒'; }
+    66%  { content: '▒▓█'; }
+    83%  { content: '◇▒▓'; }
+  }
+
+  .caret {
+    color: var(--accent);
+    margin-left: 0.2ch;
+    animation: caret 0.9s steps(2, end) infinite;
+  }
+  @keyframes caret {
+    50% { opacity: 0; }
+  }
+
+  /* Tighten the panel + drop the chrome on small screens. The boot log still
+     reads on a phone but the window chrome would dominate the viewport. */
+  @media (max-width: 720px) {
+    /* Mobile: tighten the panel so it sits comfortably inside the smaller
+       bracket frame. Centering is already handled by the .hud's --hud-*
+       offsets being inherited by .hero-placeholder. */
+    .boot { min-width: 240px; font-size: 10.5px; }
+    .boot-head { padding: 5px 10px; }
+    .boot-log { padding: 10px 12px 12px; }
+    .ln { line-height: 1.75; }
+  }
+
+  /* Accessibility: respect reduced motion. Reveal every line immediately
+     and stop the looping bars/glitch/caret — the static final state still
+     reads as "system loading" without any movement. */
+  @media (prefers-reduced-motion: reduce) {
+    .ln { animation: none; opacity: 1; transform: none; }
+    .cycle::after,
+    .bar,
+    .glitch::after,
+    .caret,
+    .boot-dots i:first-child {
+      animation: none;
+    }
+    .bar { transform: scaleX(0.72); }
+  }
 </style>
