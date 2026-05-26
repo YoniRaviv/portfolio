@@ -1,6 +1,7 @@
 :root {
   --main: #151515;
   --text: #BFB29B;
+  --text-bright: #F4EEE2;
   --text-dim: #5a544a;
   --accent: #FF6F59;
   --accent-soft: rgba(255, 111, 89, 0.18);

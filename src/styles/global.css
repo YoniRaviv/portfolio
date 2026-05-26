@@ -105,14 +105,47 @@ body {
   background: rgba(255, 111, 89, .08);
   border-color: var(--accent);
 }
-/* Reveal cursor: matches the spotlight mask radius (100px) on the Who quote
-   so the expanded ring traces exactly where the cream text gives way to mask
-   + accent stroke. Diameter = 2 × --reveal-radius. */
+/* Reveal cursor: diameter matches the Who quote spotlight mask radius (240px).
+   A solid outer ring + slowly rotating dashed inner ring + small concentric
+   reticle give it a HUD/scope feel — signalling that the cursor is actively
+   "reading" hidden text beneath the type. */
 .cur-ring.reveal {
-  width: 200px; height: 200px;
-  margin: -100px 0 0 -100px;
-  background: rgba(255, 111, 89, .05);
+  width: 480px; height: 480px;
+  margin: -240px 0 0 -240px;
+  background: radial-gradient(circle,
+    rgba(255, 111, 89, .10) 0%,
+    rgba(255, 111, 89, .03) 55%,
+    transparent 80%);
   border-color: var(--accent);
+  box-shadow:
+    0 0 24px rgba(255, 111, 89, .15),
+    inset 0 0 24px rgba(255, 111, 89, .08);
+}
+/* Tick-ring built from a conic gradient (12 dashes, generous gaps) then
+   clipped to a thin band by a radial mask — gives clearly-spaced, visibly
+   rotating ticks that a uniform dashed border can't. */
+.cur-ring.reveal::before {
+  content: "";
+  position: absolute;
+  inset: 4px;
+  border-radius: 50%;
+  background: repeating-conic-gradient(
+    rgba(255, 111, 89, .75) 0deg 3deg,
+    transparent 3deg 15deg
+  );
+  -webkit-mask: radial-gradient(circle closest-side, transparent 96%, black 99%);
+          mask: radial-gradient(circle closest-side, transparent 96%, black 99%);
+  animation: revealSpin 16s linear infinite;
+}
+.cur-ring.reveal::after {
+  content: "";
+  position: absolute;
+  inset: 38%;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 111, 89, .35);
+}
+@keyframes revealSpin {
+  to { transform: rotate(360deg); }
 }
 .cur-dot.hover {
   width: 0; height: 0;

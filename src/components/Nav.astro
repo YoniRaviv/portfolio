@@ -37,7 +37,7 @@ import { navLinks } from '@/content';
     to   { transform: translateY(0);     opacity: 1; }
   }
   nav.top .logo {
-    color: #f4eee2; display: flex; align-items: center; gap: 12px;
+    color: var(--text-bright); display: flex; align-items: center; gap: 12px;
     font-weight: 500; white-space: nowrap; text-decoration: none;
   }
   nav.top .logo :global(.logo-img) {
@@ -46,11 +46,11 @@ import { navLinks } from '@/content';
   }
   nav.top .logo .logo-text {
     font-family: var(--mono); font-size: 13px; letter-spacing: .14em; text-transform: uppercase;
-    color: #f4eee2; opacity: .85;
+    color: var(--text-bright); opacity: .85;
   }
   nav.top ul { list-style: none; display: flex; gap: 36px; align-items: center; }
   nav.top ul a {
-    color: #f4eee2; text-decoration: none; opacity: .75; position: relative; padding: 6px 0;
+    color: var(--text-bright); text-decoration: none; opacity: .75; position: relative; padding: 6px 0;
     transition: opacity .25s;
   }
   nav.top ul a:hover { opacity: 1; }
