@@ -35,13 +35,25 @@ export function mountCursor(): void {
   tick();
 
   document.addEventListener('mouseover', (e) => {
-    if ((e.target as Element).closest(HOVER_SEL)) {
+    const target = e.target as Element;
+    if (target.closest('[data-cursor="reveal"]')) {
+      ring.classList.add('reveal');
+      dot.classList.add('hover');
+      return;
+    }
+    if (target.closest(HOVER_SEL)) {
       ring.classList.add('hover');
       dot.classList.add('hover');
     }
   });
   document.addEventListener('mouseout', (e) => {
-    if ((e.target as Element).closest(HOVER_SEL)) {
+    const target = e.target as Element;
+    if (target.closest('[data-cursor="reveal"]')) {
+      ring.classList.remove('reveal');
+      dot.classList.remove('hover');
+      return;
+    }
+    if (target.closest(HOVER_SEL)) {
       ring.classList.remove('hover');
       dot.classList.remove('hover');
     }

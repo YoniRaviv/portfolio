@@ -23,6 +23,7 @@ pnpm-debug.log*
 !.vscode/extensions.json
 .idea/
 .playwright-mcp
+.agents
 
 # design source images (large)
 _design/uploads/
