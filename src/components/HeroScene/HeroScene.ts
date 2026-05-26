@@ -109,9 +109,12 @@ export function init(mount: HTMLElement): HeroSceneHandle {
   // Separate group for the katana shown in the How section. Lives as a
   // sibling of modelGroup so they share stageGroup transforms (rig pos
   // + scale) but rotate independently — mask yaws/pitches per cursor,
-  // sword spins per scroll.
+  // sword spins per scroll. In Contact the sword descends out of How and
+  // embeds at a landing pose (Z-tilt + offset position) — YXZ order keeps
+  // the spin Y-axis independent of the landing Z-tilt.
   const swordGroup = new THREE.Group();
   swordGroup.visible = false;
+  swordGroup.rotation.order = 'YXZ';
   root.add(swordGroup);
   // Holds the loaded sword model; we rotate this child for tip-down
   // orientation while swordGroup itself owns the scroll-driven spin.
@@ -275,10 +278,19 @@ export function init(mount: HTMLElement): HeroSceneHandle {
   // while the blade stays roughly vertical. The slight x=2.9 tilt on the
   // pivot gives the blade visible arc; without the tilt the blade would
   // barely move (just narrow/widen with no side sweep).
-  const SWORD_SPIN_AXIS = new THREE.Vector3(0, 1, 0);
   const SWORD_REST_ANGLE = 0;
   const SWORD_REVOLUTIONS = 1.5;
-  const swordSpinQuat = new THREE.Quaternion();
+  // Persistent spin angle for the sword. While inside How (landingProgress=0)
+  // this is re-derived from howProgress every frame. Once landing engages we
+  // *advance* it with a decaying time-based delta so the blade keeps a slow
+  // residual spin during the fall — never unwinds, never snaps to a stop.
+  let swordYawState = 0;
+  // Grand-finale landing pose — sword descends out of How and embeds in the
+  // bottom social strip (desktop) / top of the GitHub block (mobile). Tilt
+  // is a Z rotation (hilt to upper-right, tip into the surface).
+  const SWORD_LANDING_POS_DESKTOP = { x: 0, y: -1.4, z: 0.5 };
+  const SWORD_LANDING_POS_MOBILE = { x: 0.3, y: -0.3, z: 0.5 };
+  const SWORD_LANDING_TILT_Z = -0.62;
 
   const clock = new THREE.Clock();
   let raf = 0;
@@ -361,17 +373,29 @@ export function init(mount: HTMLElement): HeroSceneHandle {
         }
       }
     }
-    if (howEl && contactElForSword) {
-      const top = howEl.offsetTop;
-      const bottom = contactElForSword.offsetTop;
-      if (swordProbe >= top && swordProbe < bottom) {
-        const FADE_OUT = 0.06;
-        swordOpacity = howProgress > 1 - FADE_OUT
-          ? (1 - howProgress) / FADE_OUT
-          : 1;
+    // Grand finale: sword stays at full opacity through How AND all of Contact.
+    // The old FADE_OUT in the last 6% of How is gone — the sword never fades
+    // away; it descends out of How and embeds at the landing pose in Contact.
+    if (howEl) {
+      if (swordProbe >= howEl.offsetTop) {
+        swordOpacity = 1;
       }
     }
     swordOpacity = Math.max(0, Math.min(1, swordOpacity));
+
+    // Landing progress drives the descent + embed: 0 while still spinning in
+    // How, 1 once the sword is fully embedded just past the Contact boundary.
+    // Starts in the last 30% of How (gives the spin time to slow and the
+    // position room to lerp without snapping at the section boundary).
+    let landingProgress = 0;
+    if (howEl && contactElForSword) {
+      const howTop = howEl.offsetTop;
+      const contactTop = contactElForSword.offsetTop;
+      const startZone = howTop + (contactTop - howTop) * 0.7;
+      const endZone = contactTop + window.innerHeight * 0.15;
+      const raw = (swordProbe - startZone) / Math.max(1, endZone - startZone);
+      landingProgress = Math.max(0, Math.min(1, raw));
+    }
     if (swordLoaded) {
       swordGroup.visible = swordOpacity > 0;
       if (swordGroup.visible) {
@@ -388,21 +412,39 @@ export function init(mount: HTMLElement): HeroSceneHandle {
     if (swordLoaded && swordGroup.visible) {
       // Static pose on swordPivot: maps the GLB's authored blade
       // direction to -Y inside swordGroup's local frame, so the blade
-      // points down when swordGroup's quaternion is identity. The
-      // scroll-driven Z rotation below then sweeps the blade through
+      // points down when swordGroup's rotation is identity. The
+      // scroll-driven Y rotation below then sweeps the blade through
       // every angle in the screen plane.
-      // Pivot orients the blade to point down (-Y). The x=2.9 (≈π) tilt is
-      // intentional — it puts the blade slightly off the Y axis so spinning
-      // around Y gives a visible side-sweep rather than a flat narrow/widen.
       swordPivot.rotation.x = 2.7;
       swordPivot.rotation.y = 0.2;
       swordPivot.rotation.z = -Math.PI / 2;
-      const angle = SWORD_REST_ANGLE + howProgress * Math.PI * 2 * SWORD_REVOLUTIONS;
-      swordSpinQuat.setFromAxisAngle(SWORD_SPIN_AXIS, angle);
-      swordGroup.quaternion.copy(swordSpinQuat);
-      swordGroup.position.set(0, 0, 0);
+
+      // Spin state: in How (landingProgress=0) the yaw is re-derived from
+      // scroll every frame. Once landing engages we advance the SAME state
+      // with a decaying time delta — never recompute from scroll while
+      // landing or the blade would visibly unwind. settleEase fades the
+      // residual spin smoothly to a stop as the sword embeds.
+      if (landingProgress <= 0) {
+        swordYawState = SWORD_REST_ANGLE + howProgress * Math.PI * 2 * SWORD_REVOLUTIONS;
+      } else if (landingProgress < 1) {
+        const settleEase = 1 - landingProgress;
+        swordYawState += dt * 0.5 * settleEase;
+      }
+
+      // Landing tilt + position interpolate from 0 (How centre) to the
+      // breakpoint-specific landing pose. smoothstep on landingProgress
+      // gives the descent an ease-in-ease-out feel instead of linear drift.
+      const lp = landingProgress;
+      const landEase = lp * lp * (3 - 2 * lp);
+      const landingPos = state.isMobile ? SWORD_LANDING_POS_MOBILE : SWORD_LANDING_POS_DESKTOP;
+      swordGroup.rotation.set(0, swordYawState, SWORD_LANDING_TILT_Z * landEase);
+      swordGroup.position.set(
+        landingPos.x * landEase,
+        landingPos.y * landEase,
+        landingPos.z * landEase
+      );
     } else {
-      swordGroup.quaternion.identity();
+      swordGroup.rotation.set(0, 0, 0);
       swordGroup.position.set(0, 0, 0);
     }
 
@@ -628,18 +670,34 @@ export function init(mount: HTMLElement): HeroSceneHandle {
     // the mask.
     if (swordOpacity > 0) {
       const t = clock.elapsedTime;
+      // Orbit centre follows the sword: rig pos in How, sliding to the
+      // landing pose in Contact. Without the landing offset the beam stays
+      // anchored to the (now-hidden) mask anchor while the sword is
+      // physically several units away — the embedded blade would never
+      // catch the orbit's highlight pass.
+      const lp = landingProgress;
+      const landEase = lp * lp * (3 - 2 * lp);
+      const landingPos = state.isMobile ? SWORD_LANDING_POS_MOBILE : SWORD_LANDING_POS_DESKTOP;
+      const centreX = currentRig.pos.x + landingPos.x * landEase;
+      const centreY = currentRig.pos.y + landingPos.y * landEase;
+      const centreZ = currentRig.pos.z + landingPos.z * landEase;
       // Horizontal orbit at blade midpoint height — radius wider than
       // the sword so the beam sweeps across the visible side of the
       // blade rather than from inside it.
       const orbitR = 4.5;
-      const orbitX = currentRig.pos.x + orbitR * Math.cos(t * 0.55);
-      const orbitZ = currentRig.pos.z + orbitR * Math.sin(t * 0.55);
+      const orbitX = centreX + orbitR * Math.cos(t * 0.55);
+      const orbitZ = centreZ + orbitR * Math.sin(t * 0.55);
       // Slow vertical bob so the beam height also varies — accents the
       // upper half of the blade on one period, the lower half on another.
-      const orbitY = currentRig.pos.y + 1.8 * Math.sin(t * 0.32);
+      const orbitY = centreY + 1.8 * Math.sin(t * 0.32);
       accentBeam.position.x = accentBeam.position.x * (1 - swordOpacity) + orbitX * swordOpacity;
       accentBeam.position.y = accentBeam.position.y * (1 - swordOpacity) + orbitY * swordOpacity;
       accentBeam.position.z = accentBeam.position.z * (1 - swordOpacity) + orbitZ * swordOpacity;
+      // Beam target also follows the sword so the cone is aimed at the
+      // blade in Contact, not at the empty rig anchor.
+      accentBeam.target.position.x = centreX;
+      accentBeam.target.position.y = centreY;
+      accentBeam.target.position.z = centreZ;
       // Beam intensity flickers between 24 and 38 — punchier than the
       // mask sections so the blade highlights pop.
       const liveIntensity = 31 + 7 * Math.sin(t * 0.71);
@@ -649,11 +707,34 @@ export function init(mount: HTMLElement): HeroSceneHandle {
     accentBeam.target.updateMatrixWorld();
     particlesMat.opacity = currentRig.particleAlpha;
 
-    // Particles tick.
+    // Sakura-mode particles in Contact: petals fall *diagonally* (down + to
+    // screen-left) instead of the default upward drift, and the dots get a
+    // little larger so they read as leaves rather than embers. Blend factor
+    // reuses liveLightFactor — same Contact smoothstep that drives the
+    // beam-orbit lighting, so particle mode and lighting come up together.
+    const sakuraFactor = liveLightFactor;
+    particlesMat.size = 0.04 + 0.03 * sakuraFactor;
+
+    // Particles tick. Per-particle velocity has the same magnitude variation
+    // (((i * 17) % 5) * 0.2 + 0.3) in both modes — only the direction blends.
     const ppos = pGeo.attributes.position.array as Float32Array;
     for (let i = 0; i < PARTICLES; i++) {
-      ppos[i * 3 + 1] += dt * 0.12 * (((i * 17) % 5) * 0.2 + 0.3);
+      const speed = ((i * 17) % 5) * 0.2 + 0.3;
+      const upVy = dt * 0.12 * speed;
+      // Falling petals: a bit faster than the upward drift and with a
+      // horizontal component so they slide across screen as they fall.
+      const downVy = -dt * 0.18 * speed;
+      const drift = ((i * 11) % 5) * 0.2 + 0.3;
+      const downVx = -dt * 0.07 * drift;
+
+      ppos[i * 3] += downVx * sakuraFactor;
+      ppos[i * 3 + 1] += upVy * (1 - sakuraFactor) + downVy * sakuraFactor;
+
+      // Wrap on both edges of the falling path so the stream stays full
+      // regardless of which direction is active.
       if (ppos[i * 3 + 1] > 5) ppos[i * 3 + 1] = -5;
+      else if (ppos[i * 3 + 1] < -5) ppos[i * 3 + 1] = 5;
+      if (ppos[i * 3] < -7) ppos[i * 3] = 7;
     }
     pGeo.attributes.position.needsUpdate = true;
 
