@@ -91,22 +91,95 @@ export function init(mount: HTMLElement): HeroSceneHandle {
   // light is set to ONLY that layer. Everything else in the scene (mask,
   // particles, fog) is unaffected by this spot no matter how we tune it.
   // -------- SWORD SPOT TUNING --------
-  // color      : ACCENT (the --accent CSS var, resolved at line 56)
-  // intensity  : 60     — overall brightness
-  // distance   : 16     — max range
-  // angle      : π/3    — cone full-angle (≈60°). Lower = tighter spot
-  // penumbra   : 0.6    — softness at cone edge (0=hard, 1=very soft)
-  // decay      : 1.5    — falloff (2=physically correct, lower=brighter at range)
-  // position   : (3, 4, 5)  — top-right, in front of sword
-  // target    : (0, 0, 0)  — sword's world center
+  // Warm key from front-right. Tightened from π/2.2 to π/3 so the cone
+  // hugs the blade silhouette instead of bleeding orange over the
+  // whole sword — that lets the cool back-rim (below) own the left
+  // edge for cinematic separation. Intensity dropped from 60 to 38
+  // to match the tighter cone.
   // -----------------------------------
   const SWORD_LIGHT_LAYER = 2;
-  const swordSpot = new THREE.SpotLight(ACCENT, 60, 16, Math.PI / 2.2, 0.6, 1.5);
+  const swordSpot = new THREE.SpotLight(ACCENT, 38, 16, Math.PI / 3, 0.55, 1.5);
   swordSpot.position.set(3, 4, 5);
   swordSpot.target.position.set(0, 0, 0);
   swordSpot.layers.set(SWORD_LIGHT_LAYER);
   scene.add(swordSpot);
   scene.add(swordSpot.target);
+
+  // Cool back-rim from behind-left. Sells the silhouette against the
+  // dark page bg by tracing a cyan-tinted edge down the left side of
+  // the blade and tsuka. Layer-scoped to the sword only.
+  const swordRim = new THREE.SpotLight(0x88c5ff, 26, 14, Math.PI / 3.5, 0.7, 1.6);
+  swordRim.position.set(-3.5, 2, -3);
+  swordRim.target.position.set(0, 0, 0);
+  swordRim.layers.set(SWORD_LIGHT_LAYER);
+  scene.add(swordRim);
+  scene.add(swordRim.target);
+
+  // Top kicker — subtle warm catch on the tsuka cap + pommel from
+  // directly overhead. Reads as a thin highlight along the upper
+  // hilt detail; gives the blade a sense of presence under stage
+  // light. Tight and low-intensity so it doesn't compete with the
+  // ACCENT key.
+  const swordKicker = new THREE.SpotLight(0xfff0d0, 14, 10, Math.PI / 4, 0.6, 1.8);
+  swordKicker.position.set(0.3, 5, 1.5);
+  swordKicker.target.position.set(0, 0.5, 0);
+  swordKicker.layers.set(SWORD_LIGHT_LAYER);
+  scene.add(swordKicker);
+  scene.add(swordKicker.target);
+
+  // ===== Contact landing dramatic lights — gated by landingProgress =====
+  // These three lights all start at intensity 0 and ramp up via
+  // landingProgress in animate(). They run continuous time-based
+  // animations so the final scene reads as "alive" — not a still pose.
+  // All scoped to SWORD_LIGHT_LAYER so the mask + particles + page
+  // backdrop never see them. Initial position values are placeholders;
+  // animate() rewrites them every frame once landed.
+  //
+  // 1. Impact glow — point light at the tip of the embedded sword.
+  //    Pulses warm orange with a heartbeat period, sells the "blade
+  //    buried in glowing ground" read.
+  const impactGlow = new THREE.PointLight(ACCENT, 0, 5, 1.6);
+  impactGlow.layers.set(SWORD_LIGHT_LAYER);
+  scene.add(impactGlow);
+
+  // 2. Orbiting accent spot — slow circle around the embedded sword,
+  //    catching edge highlights on the blade and tsuka as it sweeps.
+  //    Same colour family as the key, so the wash blends instead of
+  //    fighting the warm tone.
+  const swordOrbiter = new THREE.SpotLight(ACCENT, 0, 14, Math.PI / 4.5, 0.6, 1.5);
+  swordOrbiter.target.position.set(0, -0.8, 0);
+  swordOrbiter.layers.set(SWORD_LIGHT_LAYER);
+  scene.add(swordOrbiter);
+  scene.add(swordOrbiter.target);
+
+  // 3. Cool counter-pulse — opposite-phase cool point light on the
+  //    far side. Breathes inversely to the impact glow so the
+  //    chiaroscuro shifts back and forth across the blade.
+  const coolPulse = new THREE.PointLight(0x6fb0ff, 0, 8, 1.6);
+  coolPulse.layers.set(SWORD_LIGHT_LAYER);
+  scene.add(coolPulse);
+
+  // 4. Theatrical stage spot — the "showpiece" key for the landed
+  //    sword. Tight cone pointing straight down from directly above
+  //    the blade midpoint, like a stage spotlight cutting through
+  //    the dark. Cone tightened (π/7) and penumbra lowered (0.25)
+  //    so the beam reads as a focused overhead column rather than a
+  //    soft wash. Per-frame pan is small and along X only so the
+  //    highlight crawls along the blade edge without the light
+  //    drifting off the vertical axis. This is what sells the
+  //    cinematic "buried weapon under a spotlight" read.
+  const swordStage = new THREE.SpotLight(ACCENT, 0, 16, Math.PI / 7, 0.25, 1.4);
+  swordStage.target.position.set(0, -0.8, 0);
+  swordStage.layers.set(SWORD_LIGHT_LAYER);
+  scene.add(swordStage);
+  scene.add(swordStage.target);
+
+  // 5. Warm ground bounce — low fill from below the landing point.
+  //    Sells the "the floor is faintly lit by the embedded blade"
+  //    read and lifts the lower half of the sword off pure black.
+  const swordFloor = new THREE.PointLight(ACCENT, 0, 6, 1.4);
+  swordFloor.layers.set(SWORD_LIGHT_LAYER);
+  scene.add(swordFloor);
 
   // Scene graph: scene > stageGroup > root > modelGroup
   // - stageGroup holds rig-driven position/scale (per-section transforms)
@@ -314,6 +387,21 @@ export function init(mount: HTMLElement): HeroSceneHandle {
   // tuned alongside SWORD_LANDING_* and shouldn't need to change.
   const SWORD_REST_HOW = { x: Math.PI / 2, y: 70 * Math.PI / 180, z: 0 };
   const SWORD_REST_LAND = { x: 2.7, y: -0.4, z: -Math.PI / 2 };
+  // Quaternions for the two rest poses. We slerp between them rather
+  // than lerping the three Euler axes independently — independent-axis
+  // lerping tumbles the blade through a near-horizontal intermediate
+  // (the X axis hits ~2.1 rad while Z is mid-way to -π/2, so the sword
+  // pitches into a sideways pose before "straightening" into the
+  // landing). Slerp takes the shortest great-arc rotation between the
+  // two orientations, so the sword swings cleanly from the How
+  // helicopter pose to the embed pose without an awkward midpoint.
+  const SWORD_REST_HOW_Q = new THREE.Quaternion().setFromEuler(
+    new THREE.Euler(SWORD_REST_HOW.x, SWORD_REST_HOW.y, SWORD_REST_HOW.z, 'XYZ')
+  );
+  const SWORD_REST_LAND_Q = new THREE.Quaternion().setFromEuler(
+    new THREE.Euler(SWORD_REST_LAND.x, SWORD_REST_LAND.y, SWORD_REST_LAND.z, 'XYZ')
+  );
+  const swordRestQ = new THREE.Quaternion();
 
   const clock = new THREE.Clock();
   let raf = 0;
@@ -438,15 +526,14 @@ export function init(mount: HTMLElement): HeroSceneHandle {
       const lp = landingProgress;
       const landEase = lp * lp * (3 - 2 * lp);
 
-      // Rest pose: lerp from SWORD_REST_HOW (helicopter-friendly tilt)
+      // Rest pose: slerp from SWORD_REST_HOW (helicopter-friendly tilt)
       // toward SWORD_REST_LAND (original Contact pose) as the sword
       // embeds. landingProgress=0 holds How exactly; landingProgress=1
       // reaches the embedded pose verbatim. The scroll-driven Y spin
       // and landing Z-tilt below are applied on swordGroup, separate
       // from this rest pose.
-      swordPivot.rotation.x = SWORD_REST_HOW.x + (SWORD_REST_LAND.x - SWORD_REST_HOW.x) * landEase;
-      swordPivot.rotation.y = SWORD_REST_HOW.y + (SWORD_REST_LAND.y - SWORD_REST_HOW.y) * landEase;
-      swordPivot.rotation.z = SWORD_REST_HOW.z + (SWORD_REST_LAND.z - SWORD_REST_HOW.z) * landEase;
+      swordRestQ.copy(SWORD_REST_HOW_Q).slerp(SWORD_REST_LAND_Q, landEase);
+      swordPivot.quaternion.copy(swordRestQ);
 
       // Spin state: in How (landingProgress=0) the yaw is re-derived from
       // scroll every frame. Once landing engages we advance the SAME state
@@ -470,9 +557,98 @@ export function init(mount: HTMLElement): HeroSceneHandle {
         landingPos.y * landEase,
         landingPos.z * landEase
       );
+
+      // === Contact landing dramatic light show ===
+      // Three sword-scoped lights animate during landing + Contact to
+      // sell the "wow" finish. All ramp via landEase so they fade in
+      // smoothly as the sword embeds, and animate continuously off
+      // clock.elapsedTime so the final scene never reads as a still.
+      // - impactGlow throbs at the tip (heartbeat ~ 1.4 rad/s = ~80 bpm)
+      // - swordOrbiter spotlights the blade from a slow circle
+      // - coolPulse breathes opposite-phase to impactGlow on the back
+      const t = clock.elapsedTime;
+      // Tip world position: extend a bit past the landing position
+      // along the negative Y, then nudged by the Z-tilt direction
+      // (sword leans hilt-right tip-left, so tip is left-down of the
+      // group origin). Tuned visually for each breakpoint.
+      const tipX = state.isMobile ? landingPos.x - 0.4 : landingPos.x - 0.8;
+      const tipY = state.isMobile ? landingPos.y - 1.4 : landingPos.y - 1.6;
+      const tipZ = landingPos.z;
+      impactGlow.position.set(tipX, tipY, tipZ);
+      // Heartbeat: 6 baseline + ±3 sin pulse. landEase gates the whole
+      // thing so it stays dark while the sword is still spinning in How.
+      impactGlow.intensity = landEase * (6 + 3 * Math.sin(t * 1.4));
+
+      // Orbiting accent spot circles the embedded sword. Slightly
+      // elliptical orbit (different cos/sin multipliers) + bobbed Y
+      // gives the sweep an organic feel rather than a flat circle.
+      const orbitR = 3.6;
+      swordOrbiter.position.set(
+        landingPos.x + orbitR * Math.cos(t * 0.42),
+        landingPos.y + 1.8 + 1.0 * Math.sin(t * 0.31),
+        landingPos.z + 2.0 + (orbitR * 0.8) * Math.sin(t * 0.42)
+      );
+      swordOrbiter.target.position.set(landingPos.x, landingPos.y - 0.6, landingPos.z);
+      swordOrbiter.intensity = landEase * 34;
+
+      // Cool counter-pulse — opposite side and opposite phase. Sits
+      // on the back-left so it edge-lights the blade silhouette as
+      // the orbiter sweeps off the front. Low intensity so it tints,
+      // doesn't dominate.
+      coolPulse.position.set(
+        landingPos.x - 2.6,
+        landingPos.y + 0.4,
+        landingPos.z - 1.8
+      );
+      coolPulse.intensity = landEase * (5 + 3 * Math.sin(t * 1.4 + Math.PI));
+
+      // Theatrical stage spot — pointing straight down from directly
+      // above the blade. Position is locked to landingPos.x/z (no Z
+      // offset, no X pan on the light itself) so the source reads as
+      // a fixed overhead column. The target pans gently across the
+      // blade midline, which tilts the cone a few degrees off-vertical
+      // and makes the hot spot crawl along the blade without the
+      // beam ever drifting off the top of the scene.
+      const panX = 0.6 * Math.sin(t * 0.23);
+      swordStage.position.set(
+        landingPos.x,
+        landingPos.y + 5.5,
+        landingPos.z
+      );
+      swordStage.target.position.set(
+        landingPos.x + panX,
+        landingPos.y - 0.6,
+        landingPos.z
+      );
+      // Punchy baseline (78) with a slow breath. Bumped from 60 to
+      // compensate for the tighter cone (π/7) — same delivered
+      // illuminance on the blade, more dramatic falloff at the edges.
+      swordStage.intensity = landEase * (78 + 12 * Math.sin(t * 0.4));
+
+      // Warm ground bounce just below the embed point. Low intensity
+      // (constant) — it's a fill, not a feature.
+      swordFloor.position.set(
+        landingPos.x,
+        landingPos.y - 2.4,
+        landingPos.z + 0.3
+      );
+      swordFloor.intensity = landEase * 5;
+
+      // Breath on the baseline lights so the key + back-rim also move,
+      // and lift them noticeably once landed so the whole sword reads
+      // brighter (not just the new orbital + stage).
+      swordSpot.intensity = 38 + landEase * (16 + 6 * Math.sin(t * 0.5));
+      swordRim.intensity = 26 + landEase * (12 + 5 * Math.sin(t * 0.5 + 1.7));
     } else {
       swordGroup.rotation.set(0, 0, 0);
       swordGroup.position.set(0, 0, 0);
+      // Mute the landing dramatic lights when the sword isn't visible
+      // so they don't keep affecting anything during early sections.
+      impactGlow.intensity = 0;
+      swordOrbiter.intensity = 0;
+      coolPulse.intensity = 0;
+      swordStage.intensity = 0;
+      swordFloor.intensity = 0;
     }
 
     // Pointer parallax on root — gated by rig.parallaxStrength so we can fully
