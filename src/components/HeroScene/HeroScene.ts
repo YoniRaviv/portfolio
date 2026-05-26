@@ -192,13 +192,15 @@ export function init(mount: HTMLElement): HeroSceneHandle {
   stageGroup.add(root);
 
   const modelGroup = new THREE.Group();
-  // Use YXZ Euler order so yaw is applied first, then pitch around the mask's
-  // *new* local right-axis. With the default XYZ, a non-zero yaw turns the
-  // world X axis into the mask's forward/backward direction, and then any
-  // pitchBias on rotation.x rolls the head like a clock face instead of
-  // nodding it up/down. YXZ keeps pitch as a proper head-nod regardless of
-  // how far the head is yawed.
-  modelGroup.rotation.order = 'YXZ';
+  // Use XYZ Euler order: pitch is applied around the model's local X axis
+  // (intrinsic), then yaw around the local Y. The crucial property for cursor
+  // tracking is that the up vector after this composition is
+  // (0, cos(pitch), sin(pitch)) — no X component, ever. YXZ would compose
+  // these in a way that lets non-zero yaw drag pitch's contribution into the
+  // up vector's X channel, which the camera reads as a head roll growing
+  // with both yaw and pitch — most visible at top-left, where both deltas
+  // are maximal.
+  modelGroup.rotation.order = 'XYZ';
   root.add(modelGroup);
 
   // Separate group for the katana shown in the How section. Lives as a
@@ -684,38 +686,10 @@ export function init(mount: HTMLElement): HeroSceneHandle {
       const cursorX = pointer.x - maskNdc.x;
       const cursorY = pointer.y + maskNdc.y + overscrollNdc;
       const yaw = cursorX * currentRig.pointerYaw + currentRig.yawBias;
-      // Clamp pitch to a reasonable head-nod range. The model is centered on
-      // its bounding-box midpoint (which sits *above* the face because the
-      // hair spikes extend up), so a very negative pitch swings the face
-      // back-and-down around that high pivot while the spikes swing
-      // forward-and-up — the eye reads that as a head roll the Z
-      // correction can't cancel. Capping pitch keeps the pose inside the
-      // range where the pivot asymmetry is invisible. Top-left was the
-      // only corner pushing past this limit because it's the only one
-      // combining cursor-far-left (max negative yaw delta) with cursor-
-      // near-top (max negative pitch delta).
-      const PITCH_LIMIT_UP = -5.6;
-      const PITCH_LIMIT_DOWN = 0.6;
-      const pitch = Math.max(PITCH_LIMIT_UP, Math.min(PITCH_LIMIT_DOWN,
-        cursorY * currentRig.pointerPitch + currentRig.pitchBias));
+      const pitch = cursorY * currentRig.pointerPitch + currentRig.pitchBias;
       modelGroup.rotation.y = yaw;
       modelGroup.rotation.x = pitch;
-      // YXZ Euler with combined non-zero yaw + pitch makes the mask's up
-      // vector pick up a world-X component, which the camera reads as
-      // ~5–10° of apparent roll (head tilted to one side). Counter it
-      // with a Z rotation that satisfies tan(roll) = sin(pitch)*tan(yaw),
-      // keeping the up vector in the world YZ plane. Faded smoothly out
-      // for non-forward yaws (cos ≤ 0.3) because the formula blows up
-      // near profile poses (yaw ≈ ±π/2); without the fade, the correction
-      // snaps on/off as the lerp into Contact crosses the gate threshold,
-      // which reads as a visible flicker at the How→Contact boundary.
-      const cosYaw = Math.cos(yaw);
-      const FADE_LO = 0.3;
-      const FADE_HI = 0.5;
-      const correctionFactor = Math.max(0, Math.min(1, (cosYaw - FADE_LO) / (FADE_HI - FADE_LO)));
-      modelGroup.rotation.z = correctionFactor > 0
-        ? correctionFactor * Math.atan2(Math.sin(pitch) * Math.sin(yaw), Math.max(0.001, cosYaw))
-        : 0;
+      modelGroup.rotation.z = 0;
     }
 
     // Mobile ambient breathing. Layered on top of whatever the rig already
