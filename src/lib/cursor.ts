@@ -10,29 +10,15 @@ export function mountCursor(): void {
   if (!matchMedia('(hover: hover) and (pointer: fine)').matches) return;
   if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
 
-  let mx = window.innerWidth / 2;
-  let my = window.innerHeight / 2;
-  let rx = mx;
-  let ry = my;
-
   window.addEventListener(
     'pointermove',
     (e) => {
-      mx = e.clientX;
-      my = e.clientY;
-      dot.style.transform = `translate3d(${mx}px, ${my}px, 0)`;
+      const t = `translate3d(${e.clientX}px, ${e.clientY}px, 0)`;
+      dot.style.transform = t;
+      ring.style.transform = t;
     },
     { passive: true }
   );
-
-  const ringEl = ring;
-  function tick(): void {
-    rx += (mx - rx) * 0.18;
-    ry += (my - ry) * 0.18;
-    ringEl.style.transform = `translate3d(${rx}px, ${ry}px, 0)`;
-    requestAnimationFrame(tick);
-  }
-  tick();
 
   document.addEventListener('mouseover', (e) => {
     const target = e.target as Element;
