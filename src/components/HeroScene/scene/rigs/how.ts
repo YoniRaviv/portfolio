@@ -12,7 +12,7 @@ import { WHERE_RIG_MOBILE_END } from './where';
 // dominates for the orange wash, but ambient/hemi/key are raised to
 // fill in shadows on the dark hilt geometry.
 export const HOW_RIG_START: Rig = {
-  pos: { x: 0, y: 0, z: 0 },
+  pos: { x: 0, y: -0.5, z: 0 },
   scale: 1,
   // 2π (not 0) so the held spin from What→Where doesn't unwind during
   // the WHERE→HOW transitionOut blend. Visually identical to 0; the
@@ -24,7 +24,7 @@ export const HOW_RIG_START: Rig = {
   fogDensity: 0.04,
   alpha: 1,
   accentBeamIntensity: 20,
-  accentBeamPos: { x: -4, y: 3.5, z: 3 },
+  accentBeamPos: { x: 3, y: 4, z: 5 },
   accentBeamTarget: { x: 0, y: 0, z: 0 },
   // -2π to match WHERE_END's beam orbit angle so the accent beam
   // doesn't visibly orbit backwards during the WHERE→HOW blend.
@@ -39,15 +39,15 @@ export const HOW_RIG_START: Rig = {
 };
 
 export const HOW_RIG_END: Rig = {
-  pos: { x: 0, y: 0, z: 0 },
+  pos: { x: 0, y: -0.5, z: 0 },
   scale: 1,
   yawBias: 0,
   pitchBias: 0,
-  exposure: 0.7,
+  exposure: 0.9,
   fogDensity: 0.04,
   alpha: 1,
   accentBeamIntensity: 44,
-  accentBeamPos: { x: 4, y: -3, z: 3 },
+  accentBeamPos: { x: 3, y: 4, z: 5 },
   accentBeamTarget: { x: 0, y: 0, z: 0 },
   beamYawOffset: 0,
   particleAlpha: 0.5,
@@ -77,7 +77,7 @@ export const HOW_RIG_MOBILE_START: Rig = {
   alpha: 1,
   exposure: 0.7,
   accentBeamIntensity: 26,
-  accentBeamPos: { x: -3, y: 3, z: 3 },
+  accentBeamPos: { x: 2.5, y: 3.5, z: 4 },
   accentBeamTarget: { x: 0, y: 0, z: 0 },
   // Bright fill — the new sword model has dark hilt geometry that
   // disappears under low ambient/key. Combined with the per-material
@@ -93,7 +93,7 @@ export const HOW_RIG_MOBILE_END: Rig = {
   ...HOW_RIG_MOBILE_START,
   pos: { ...HOW_RIG_MOBILE_START.pos },
   accentBeamIntensity: 30,
-  accentBeamPos: { x: 3, y: -2.5, z: 3 },
+  accentBeamPos: { x: 2.5, y: 3.5, z: 4 },
   accentBeamTarget: { ...HOW_RIG_MOBILE_START.accentBeamTarget },
 };
 

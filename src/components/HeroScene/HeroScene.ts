@@ -62,7 +62,7 @@ export function init(mount: HTMLElement): HeroSceneHandle {
   const key = new THREE.DirectionalLight(0xffffff, 1.6);
   key.position.set(3, 4, 4);
   scene.add(key);
-  const accentBeam = new THREE.SpotLight(ACCENT, HERO_RIG.accentBeamIntensity, 16, Math.PI / 4.5, 0.55, 1.2);
+  const accentBeam = new THREE.SpotLight(ACCENT, HERO_RIG.accentBeamIntensity, 16, Math.PI / 2, 0.55, 1.2);
   accentBeam.position.set(HERO_RIG.accentBeamPos.x, HERO_RIG.accentBeamPos.y, HERO_RIG.accentBeamPos.z);
   accentBeam.target.position.set(
     HERO_RIG.accentBeamTarget.x,
@@ -85,6 +85,28 @@ export function init(mount: HTMLElement): HeroSceneHandle {
   const rim = new THREE.PointLight(ACCENT, 4, 12, 0.6);
   rim.position.set(0, 3.5, -2.5);
   scene.add(rim);
+
+  // Sword-only spot. Uses Three.js render layers to scope the light to
+  // sword meshes — sword meshes opt into SWORD_LIGHT_LAYER below, this
+  // light is set to ONLY that layer. Everything else in the scene (mask,
+  // particles, fog) is unaffected by this spot no matter how we tune it.
+  // -------- SWORD SPOT TUNING --------
+  // color      : ACCENT (the --accent CSS var, resolved at line 56)
+  // intensity  : 60     — overall brightness
+  // distance   : 16     — max range
+  // angle      : π/3    — cone full-angle (≈60°). Lower = tighter spot
+  // penumbra   : 0.6    — softness at cone edge (0=hard, 1=very soft)
+  // decay      : 1.5    — falloff (2=physically correct, lower=brighter at range)
+  // position   : (3, 4, 5)  — top-right, in front of sword
+  // target    : (0, 0, 0)  — sword's world center
+  // -----------------------------------
+  const SWORD_LIGHT_LAYER = 2;
+  const swordSpot = new THREE.SpotLight(ACCENT, 60, 16, Math.PI / 2.2, 0.6, 1.5);
+  swordSpot.position.set(3, 4, 5);
+  swordSpot.target.position.set(0, 0, 0);
+  swordSpot.layers.set(SWORD_LIGHT_LAYER);
+  scene.add(swordSpot);
+  scene.add(swordSpot.target);
 
   // Scene graph: scene > stageGroup > root > modelGroup
   // - stageGroup holds rig-driven position/scale (per-section transforms)
@@ -187,28 +209,19 @@ export function init(mount: HTMLElement): HeroSceneHandle {
       sword.traverse((obj) => {
         const mesh = obj as THREE.Mesh;
         if (mesh.isMesh && mesh.material) {
+          // Opt this mesh into the sword spot's layer (still on layer 0
+          // for the camera, so it renders as normal — but now ALSO on
+          // layer 2 so the dedicated sword spot can light it).
+          mesh.layers.enable(SWORD_LIGHT_LAYER);
           const mats = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
           for (const mat of mats) {
             mat.transparent = true;
             mat.depthWrite = true;
-            // Lift near-black materials out of silhouette. The current
-            // sword GLB ships with very dark hilt/tsuka albedo that
-            // disappears under all but the brightest direct light.
-            // We add a warm grey emissive baseline so the geometry
-            // always reads as 3D, while leaving brighter materials
-            // (the blade) untouched. Luminance threshold is tuned for
-            // sRGB albedo values.
-            const stdMat = mat as THREE.MeshStandardMaterial;
-            if (stdMat.color && stdMat.emissive) {
-              const lum =
-                stdMat.color.r * 0.299 +
-                stdMat.color.g * 0.587 +
-                stdMat.color.b * 0.114;
-              if (lum < 0.3) {
-                stdMat.emissive.setHex(0x4a3825);
-                stdMat.emissiveIntensity = 0.9;
-              }
-            }
+            // BASELINE: no overrides — the GLB's authored materials are
+            // used as-is (lambert5 = thermal stripe with baked red
+            // emissive; lambert2 = pure-black metallic for blade body
+            // and hilt wraps). transparent + depthWrite above are kept
+            // because the per-frame swordOpacity ramp needs them.
             swordMaterials.push(mat);
           }
         }
@@ -291,6 +304,16 @@ export function init(mount: HTMLElement): HeroSceneHandle {
   const SWORD_LANDING_POS_DESKTOP = { x: 0, y: -1.4, z: 0.5 };
   const SWORD_LANDING_POS_MOBILE = { x: 0.3, y: -0.3, z: 0.5 };
   const SWORD_LANDING_TILT_Z = -0.62;
+
+  // Sword rest pose (orientation before the per-frame scroll spin and
+  // landing tilt are layered on). Two poses, lerped by landingProgress:
+  //   - SWORD_REST_HOW : helicopter-friendly tilt for the How section.
+  //   - SWORD_REST_LAND: original Contact landing pose, kept verbatim
+  //                      so the embed visual reads as before.
+  // Tune SWORD_REST_HOW freely — only affects How. SWORD_REST_LAND was
+  // tuned alongside SWORD_LANDING_* and shouldn't need to change.
+  const SWORD_REST_HOW = { x: Math.PI / 2, y: 70 * Math.PI / 180, z: 0 };
+  const SWORD_REST_LAND = { x: 2.7, y: -0.4, z: -Math.PI / 2 };
 
   const clock = new THREE.Clock();
   let raf = 0;
@@ -410,14 +433,20 @@ export function init(mount: HTMLElement): HeroSceneHandle {
       modelGroup.visible = swordOpacity < 0.5;
     }
     if (swordLoaded && swordGroup.visible) {
-      // Static pose on swordPivot: maps the GLB's authored blade
-      // direction to -Y inside swordGroup's local frame, so the blade
-      // points down when swordGroup's rotation is identity. The
-      // scroll-driven Y rotation below then sweeps the blade through
-      // every angle in the screen plane.
-      swordPivot.rotation.x = 2.7;
-      swordPivot.rotation.y = 0.2;
-      swordPivot.rotation.z = -Math.PI / 2;
+      // Compute landing ease once — drives both the rest-pose lerp
+      // below and the descent tilt/position further down.
+      const lp = landingProgress;
+      const landEase = lp * lp * (3 - 2 * lp);
+
+      // Rest pose: lerp from SWORD_REST_HOW (helicopter-friendly tilt)
+      // toward SWORD_REST_LAND (original Contact pose) as the sword
+      // embeds. landingProgress=0 holds How exactly; landingProgress=1
+      // reaches the embedded pose verbatim. The scroll-driven Y spin
+      // and landing Z-tilt below are applied on swordGroup, separate
+      // from this rest pose.
+      swordPivot.rotation.x = SWORD_REST_HOW.x + (SWORD_REST_LAND.x - SWORD_REST_HOW.x) * landEase;
+      swordPivot.rotation.y = SWORD_REST_HOW.y + (SWORD_REST_LAND.y - SWORD_REST_HOW.y) * landEase;
+      swordPivot.rotation.z = SWORD_REST_HOW.z + (SWORD_REST_LAND.z - SWORD_REST_HOW.z) * landEase;
 
       // Spin state: in How (landingProgress=0) the yaw is re-derived from
       // scroll every frame. Once landing engages we advance the SAME state
@@ -432,10 +461,8 @@ export function init(mount: HTMLElement): HeroSceneHandle {
       }
 
       // Landing tilt + position interpolate from 0 (How centre) to the
-      // breakpoint-specific landing pose. smoothstep on landingProgress
-      // gives the descent an ease-in-ease-out feel instead of linear drift.
-      const lp = landingProgress;
-      const landEase = lp * lp * (3 - 2 * lp);
+      // breakpoint-specific landing pose. smoothstep (via landEase
+      // above) gives the descent an ease-in-ease-out feel.
       const landingPos = state.isMobile ? SWORD_LANDING_POS_MOBILE : SWORD_LANDING_POS_DESKTOP;
       swordGroup.rotation.set(0, swordYawState, SWORD_LANDING_TILT_Z * landEase);
       swordGroup.position.set(
