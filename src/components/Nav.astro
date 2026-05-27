@@ -91,13 +91,13 @@ const externalLinks = navLinks.filter((l) => l.external);
   nav.top ul a:hover { opacity: 1; background-size: 100% 2px; }
   nav.top ul a.active { opacity: 1; color: var(--accent); background-size: 100% 2px; }
   /* brackets reserve space at opacity 0 so activating doesn't shift neighbours */
-  nav.top ul a::before {
+  nav.top ul a:not(.blog)::before {
     content: "["; opacity: 0; margin-right: 4px; color: var(--accent); transition: opacity .25s;
   }
   nav.top ul a:not(.blog)::after {
     content: "]"; opacity: 0; margin-left: 4px; color: var(--accent); transition: opacity .25s;
   }
-  nav.top ul a.active::before,
+  nav.top ul a.active:not(.blog)::before,
   nav.top ul a.active:not(.blog)::after { opacity: 1; }
   nav.top ul a.blog { color: var(--accent); opacity: 1; }
   nav.top ul a.blog::after { content: "↗"; margin-left: 4px; display: inline-block; }
@@ -113,6 +113,7 @@ const externalLinks = navLinks.filter((l) => l.external);
     content: "["; color: var(--accent); font-family: var(--mono); font-size: 18px; line-height: 1;
   }
   .nav-toggle::after { content: "]"; }
+  .nav-toggle:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 2px; }
   .nt-glyph { position: relative; width: 18px; height: 14px; margin: 0 5px; }
   .nt-glyph i {
     position: absolute; left: 0; height: 2px; background: var(--text-bright);
@@ -126,6 +127,9 @@ const externalLinks = navLinks.filter((l) => l.external);
   .nav-toggle[aria-expanded="true"] .nt-glyph i:nth-child(3) { top: 6px; width: 100%; transform: rotate(-45deg); }
 
   /* ── full-screen terminal overlay (mobile only) ── */
+  /* z-index 40 keeps the overlay below nav.top (z-50) so the toggle stays
+     clickable. Both are children of <body>'s stacking context — do not add
+     transform/filter/isolation to a shared ancestor or this relationship breaks. */
   .nav-overlay {
     position: fixed; inset: 0; z-index: 40;
     display: none;
@@ -156,6 +160,7 @@ const externalLinks = navLinks.filter((l) => l.external);
   .ov-link.active .ov-label { color: var(--accent); }
   .ov-link.active .ov-label::before { content: "[ "; color: var(--accent); }
   .ov-link.active .ov-label::after  { content: " ]"; color: var(--accent); }
+  .ov-link:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
 
   .ov-foot { margin-top: clamp(22px, 6vh, 48px); display: flex; flex-direction: column; gap: 16px; }
   .ov-blog {
