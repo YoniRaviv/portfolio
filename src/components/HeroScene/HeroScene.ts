@@ -405,7 +405,7 @@ export function init(mount: HTMLElement): HeroSceneHandle {
 
   // Contact blade-hover sparks (see scene/sparks.ts). Added to the scene now;
   // emission is driven from animate() only inside embedded Contact.
-  const sparkSystem = createSparkSystem({ isMobile: state.isMobile });
+  const sparkSystem = createSparkSystem({ isMobile: state.isMobile, accent: ACCENT });
   scene.add(sparkSystem.points);
 
   // Sparks are a hover affordance — only meaningful on devices with a real
@@ -779,12 +779,15 @@ export function init(mount: HTMLElement): HeroSceneHandle {
       const seg = pointSegDistance(pointer.px, pointer.py, a.x, a.y, b.x, b.y);
 
       const BAND_PX = 28; // hover tolerance around the thin blade line
-      // Active range along the blade segment (t=0 = handle end, top-right;
-      // t=1 = geometric tip). The cutting blade visible in the Contact landing
-      // pose spans ~[0.28, 0.80]: below that is the wrapped handle, above it the
-      // tip is embedded "in the ground" (the social strip) and out of view.
-      const T_MIN = 0.28;
-      const T_MAX = 0.8;
+      // Active range along the blade segment (t=0 = geometric handle end,
+      // t=1 = geometric tip). The visible cutting blade in the Contact landing
+      // pose spans ~[0.30, 0.72]: below T_MIN sits the wrapped handle (and the
+      // headline overlaps it), above T_MAX the tip descends into the social
+      // strip / past the rendered blade. Re-tuned for the current landing
+      // tilt — re-check against the tick overlay if SWORD_LANDING_TILT_Z or
+      // the rest pose changes again.
+      const T_MIN = 0.3;
+      const T_MAX = 0.72;
       const onBlade =
         pointer.px >= 0 && seg.dist < BAND_PX && seg.t >= T_MIN && seg.t <= T_MAX;
 
@@ -795,20 +798,22 @@ export function init(mount: HTMLElement): HeroSceneHandle {
         const moveX = prevCursorX < 0 ? 0 : pointer.px - prevCursorX;
         const moveY = prevCursorY < 0 ? 0 : pointer.py - prevCursorY;
         const speed = Math.hypot(moveX, moveY); // px moved this frame
-        // Spray axis: follow the brush direction, bias up and strongly toward
-        // the camera (+Z) so embers fly out at the viewer. sparks.update()'s
-        // gravity arcs them down.
-        const inv = speed > 0.001 ? 1 / speed : 0;
-        sparkDir.set(moveX * inv * 0.8, 0.9, 1.1).normalize();
-        // Dramatic shower: a constant base so simply hovering the blade always
-        // erupts, plus a big speed-scaled burst so faster brushing throws far
-        // more embers.
-        const BASE_PER_FRAME = 7;
-        const K = 1.4; // additional sparks per px of brush speed
-        const MAX_PER_FRAME = 55;
-        const count = Math.min(MAX_PER_FRAME, BASE_PER_FRAME + Math.round(speed * K));
-        sparkSystem.emit(contactWorld, sparkDir, count);
-        emittingNow = true;
+        // Brush-only: a stationary hover stays quiet — only a moving cursor
+        // grinds sparks. A floor keeps even a slow brush dramatic; faster
+        // brushing throws far more.
+        if (speed > 0.4) {
+          // Spray axis: follow the brush direction, bias up and strongly toward
+          // the camera (+Z) so embers fly out at the viewer. sparks.update()'s
+          // gravity arcs them down.
+          const inv = 1 / speed;
+          sparkDir.set(moveX * inv * 0.8, 0.9, 1.1).normalize();
+          const K = 1.4; // sparks per px of brush speed
+          const MIN_MOVING = 6; // dramatic even on a slow brush
+          const MAX_PER_FRAME = 55;
+          const count = Math.min(MAX_PER_FRAME, Math.max(MIN_MOVING, Math.round(speed * K)));
+          sparkSystem.emit(contactWorld, sparkDir, count);
+          emittingNow = true;
+        }
       }
     }
     // Flare follows brush activity: snaps up while emitting, eases out when idle.

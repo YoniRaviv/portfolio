@@ -17,7 +17,10 @@ export interface SparkSystem {
   dispose(): void;
 }
 
-export function createSparkSystem(opts: { isMobile: boolean }): SparkSystem {
+export function createSparkSystem(opts: {
+  isMobile: boolean;
+  accent: THREE.Color;
+}): SparkSystem {
   const MAX = opts.isMobile ? 300 : 1000;
 
   // GPU attributes
@@ -43,6 +46,7 @@ export function createSparkSystem(opts: { isMobile: boolean }): SparkSystem {
     uniforms: {
       uSize: { value: opts.isMobile ? 90 : 130 },
       uTime: { value: 0 },
+      uAccent: { value: opts.accent },
     },
     transparent: true,
     depthWrite: false,
@@ -55,8 +59,10 @@ export function createSparkSystem(opts: { isMobile: boolean }): SparkSystem {
       uniform float uSize;
       uniform float uTime;
       varying float vLife;
+      varying float vSeed;
       void main() {
         vLife = aLife;
+        vSeed = aSeed;
         vec4 mv = modelViewMatrix * vec4(position, 1.0);
         float flick = 0.7 + 0.3 * sin(uTime * 55.0 + aSeed * 6.2831);
         float sz = uSize * aLife * flick;
@@ -65,15 +71,21 @@ export function createSparkSystem(opts: { isMobile: boolean }): SparkSystem {
       }
     `,
     fragmentShader: /* glsl */ `
+      uniform vec3 uAccent;
       varying float vLife;
+      varying float vSeed;
       void main() {
         vec2 uv = gl_PointCoord - 0.5;
         float d = length(uv);
         if (d > 0.5) discard;
         float soft = smoothstep(0.5, 0.0, d);
-        vec3 hot = vec3(1.0, 0.95, 0.85);
-        vec3 mid = vec3(1.0, 0.5, 0.12);
-        vec3 cold = vec3(0.6, 0.06, 0.0);
+        // Ramp cools from a deep accent ember, through a per-ember blend of the
+        // site accent and a warmer orange, up to a hot near-white core — keeps
+        // the shower in the design's accent/orange family.
+        vec3 orange = vec3(1.0, 0.45, 0.1);
+        vec3 mid = mix(uAccent, orange, vSeed);
+        vec3 hot = mix(uAccent, vec3(1.0), 0.75);
+        vec3 cold = uAccent * 0.4;
         vec3 col = mix(cold, mix(mid, hot, smoothstep(0.5, 1.0, vLife)), vLife);
         float alpha = soft * vLife;
         gl_FragColor = vec4(col * (0.9 + 0.6 * vLife), alpha);
