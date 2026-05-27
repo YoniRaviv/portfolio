@@ -36,7 +36,9 @@ export function mountNavMenu(): void {
     toggle!.setAttribute('aria-expanded', 'true');
     toggle!.setAttribute('aria-label', 'Close menu');
     lockScroll();
-    (focusables()[0] ?? overlay!).focus();
+    // Defer one frame: the overlay isn't focusable until its visibility flips
+    // on the next style flush, so a synchronous focus() would be a no-op.
+    requestAnimationFrame(() => (focusables()[0] ?? overlay!).focus());
     if (!reduced) {
       overlayLabels.forEach((label, i) => {
         const text = label.textContent ?? '';
@@ -69,7 +71,11 @@ export function mountNavMenu(): void {
       closeMenu(false);
       if (anchor) {
         e.preventDefault();
-        scrollToAnchor(anchor);
+        // Lenis (autoToggle) clears its stopped flag on a transitionend one
+        // tick after unlockScroll(); defer two frames so the forced scroll runs.
+        requestAnimationFrame(() =>
+          requestAnimationFrame(() => scrollToAnchor(anchor))
+        );
       }
     })
   );
