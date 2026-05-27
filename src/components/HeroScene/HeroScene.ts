@@ -14,6 +14,7 @@ import { cloneRig, lerpRig } from './scene/rig-math';
 import { HERO_RIG, SECTION_RIGS_DESKTOP, SECTION_RIGS_MOBILE } from './scene/rigs';
 import { createTargetRigComputer } from './scene/section-probe';
 import { createSparkSystem } from './scene/sparks';
+import { swordSpinAngle } from './scene/sword-spin';
 
 export interface HeroSceneHandle {
   destroy: () => void;
@@ -469,24 +470,37 @@ export function init(mount: HTMLElement): HeroSceneHandle {
   // allocate a Vector3 every animate() tick.
   const maskNdc = new THREE.Vector3();
 
-  // Sword spin: rotates around its own length (Y) axis as you scroll —
-  // like the Mina-Massoud style where the handle sweeps left→right→left
-  // while the blade stays roughly vertical. The slight x=2.9 tilt on the
-  // pivot gives the blade visible arc; without the tilt the blade would
-  // barely move (just narrow/widen with no side sweep).
-  const SWORD_REST_ANGLE = 0;
-  const SWORD_REVOLUTIONS = 1.5;
-  // Persistent spin angle for the sword. While inside How (landingProgress=0)
-  // this is re-derived from howProgress every frame. Once landing engages we
-  // *advance* it with a decaying time-based delta so the blade keeps a slow
-  // residual spin during the fall — never unwinds, never snaps to a stop.
-  let swordYawState = 0;
+  // Sword spin: the blade rotates around its own length (Y) axis as you
+  // scroll — the handle sweeps left→right→left while the blade stays roughly
+  // vertical. The angle is a PURE function of scroll position (see
+  // swordSpinAngle in ./scene/sword-spin), so a halted scroll freezes the
+  // blade and the embed always lands at the same orientation. No persistent
+  // spin state is kept — it's recomputed from scroll every frame.
   // Grand-finale landing pose — sword descends out of How and embeds in the
   // bottom social strip (desktop) / top of the GitHub block (mobile). Tilt
   // is a Z rotation (hilt to upper-right, tip into the surface).
   const SWORD_LANDING_POS_DESKTOP = { x: 0, y: -1.4, z: 0.5 };
   const SWORD_LANDING_POS_MOBILE = { x: 0.3, y: -0.3, z: 0.5 };
   const SWORD_LANDING_TILT_Z = -0.42;
+  // Reorientation ("swing into the planted pose") timing. The Y-spin is frozen
+  // by the time howProgress saturates at the Contact boundary (see
+  // SWORD_SPIN_SETTLE_BY in ./scene/sword-spin), so the swing — the rest-pose
+  // slerp + Z-tilt — is deliberately held off until *then* and runs over the
+  // next REORIENT_SPAN_VH of scroll INTO Contact. Swinging the blade
+  // off-vertical only after the spin has stopped is what kills the off-axis
+  // roll/twist that used to appear just before the blade planted. It's keyed
+  // to scroll past contactTop (not the landingProgress fraction) so it stays
+  // put regardless of How's height relative to the viewport.
+  const REORIENT_SPAN_VH = 0.35;
+  // Moonrise timing. The moon rises over the sword's swing window and is fully
+  // in place exactly when the sword finishes settling (its rise ENDS at
+  // REORIENT_SPAN_VH) — so it never needs extra scroll to land. The motion is
+  // deliberately slow/gentle: it starts a small MOON_DELAY_VH beat after the
+  // swing begins (blade leads), ramps with a smoothstep (slow start AND slow
+  // settle), and travels a short MOON_RISE_TRAVEL_VH up from below so it eases
+  // in gradually rather than whooshing. Lower MOON_RISE_TRAVEL_VH = slower.
+  const MOON_DELAY_VH = 0.04;
+  const MOON_RISE_TRAVEL_VH = 0.35;
 
   // Sword rest pose (orientation before the per-frame scroll spin and
   // landing tilt are layered on). Two poses, lerped by landingProgress:
@@ -631,37 +645,43 @@ export function init(mount: HTMLElement): HeroSceneHandle {
       modelGroup.visible = swordOpacity < 0.5;
     }
     if (swordLoaded && swordGroup.visible) {
-      // Compute landing ease once — drives both the rest-pose lerp
-      // below and the descent tilt/position further down.
+      // landEase — gradual descent over the whole landing. Drives the fall
+      // (position) and the dramatic-light intensity ramps below.
       const lp = landingProgress;
       const landEase = lp * lp * (3 - 2 * lp);
 
-      // Rest pose: slerp from SWORD_REST_HOW (helicopter-friendly tilt)
-      // toward SWORD_REST_LAND (original Contact pose) as the sword
-      // embeds. landingProgress=0 holds How exactly; landingProgress=1
-      // reaches the embedded pose verbatim. The scroll-driven Y spin
-      // and landing Z-tilt below are applied on swordGroup, separate
-      // from this rest pose.
-      swordRestQ.copy(SWORD_REST_HOW_Q).slerp(SWORD_REST_LAND_Q, landEase);
-      swordPivot.quaternion.copy(swordRestQ);
-
-      // Spin state: in How (landingProgress=0) the yaw is re-derived from
-      // scroll every frame. Once landing engages we advance the SAME state
-      // with a decaying time delta — never recompute from scroll while
-      // landing or the blade would visibly unwind. settleEase fades the
-      // residual spin smoothly to a stop as the sword embeds.
-      if (landingProgress <= 0) {
-        swordYawState = SWORD_REST_ANGLE + howProgress * Math.PI * 2 * SWORD_REVOLUTIONS;
-      } else if (landingProgress < 1) {
-        const settleEase = 1 - landingProgress;
-        swordYawState += dt * 0.5 * settleEase;
+      // embedEase — the *reorientation* swing, held off until the Contact
+      // boundary (by which point the Y-spin has frozen, see SWORD_SPIN_SETTLE_BY)
+      // and eased over REORIENT_SPAN_VH of scroll into Contact. Keyed to scroll
+      // past contactTop rather than landingProgress so the swing only ever
+      // happens with the spin already stopped — no off-axis roll as it plants.
+      let embedEase = 0;
+      if (contactElForSword) {
+        const re = Math.max(0, Math.min(1,
+          (swordProbe - contactElForSword.offsetTop) /
+          Math.max(1, window.innerHeight * REORIENT_SPAN_VH)));
+        embedEase = re * re * (3 - 2 * re);
       }
 
-      // Landing tilt + position interpolate from 0 (How centre) to the
-      // breakpoint-specific landing pose. smoothstep (via landEase
-      // above) gives the descent an ease-in-ease-out feel.
+      // Rest pose: slerp from SWORD_REST_HOW (helicopter-friendly tilt)
+      // toward SWORD_REST_LAND (planted Contact pose) as the sword swings in.
+      // embedEase=0 holds the How pose exactly (blade vertical while it spins
+      // + falls); embedEase=1 reaches the embedded pose. The scroll-driven Y
+      // spin and landing Z-tilt below are applied on swordGroup, separate from
+      // this rest pose.
+      swordRestQ.copy(SWORD_REST_HOW_Q).slerp(SWORD_REST_LAND_Q, embedEase);
+      swordPivot.quaternion.copy(swordRestQ);
+
+      // Spin yaw — derived purely from scroll position (howProgress in How,
+      // plus a smoothstep'd settle that completes early in the descent). No
+      // time term, so stopping the scroll freezes the blade and the planted
+      // sword always lands at the same orientation.
+      const swordYawState = swordSpinAngle(howProgress, landingProgress);
+
+      // Position drops over the gradual landEase (the fall); the Z-tilt is part
+      // of the planted pose, so it rides embedEase with the rest-pose swing.
       const landingPos = state.isMobile ? SWORD_LANDING_POS_MOBILE : SWORD_LANDING_POS_DESKTOP;
-      swordGroup.rotation.set(0, swordYawState, SWORD_LANDING_TILT_Z * landEase);
+      swordGroup.rotation.set(0, swordYawState, SWORD_LANDING_TILT_Z * embedEase);
       swordGroup.position.set(
         landingPos.x * landEase,
         landingPos.y * landEase,
@@ -1115,9 +1135,10 @@ export function init(mount: HTMLElement): HeroSceneHandle {
     // screen px — the same transform the sparks use — so the moon sits on the
     // sword wherever it lands and the moon covers it. Scroll-lock is automatic:
     // the projection's -overscroll term carries the moon up with the blade
-    // through Contact. Over the final 45% of the landing it rises from below
-    // into place (easeOutCubic) and fades in as it settles — a "moonrise"
-    // revealed by the sword embedding (nothing through How / most of descent).
+    // through Contact. The entrance is held back until just after the blade
+    // plants (see the moonStart calc below), then it rises from below and fades
+    // in — a "moonrise" revealed a beat after the sword settles (nothing
+    // through How or the descent).
     if (moonEl && bladeLocalA && bladeLocalB) {
       const MOON_CENTER_T = 0.4; // 0 = handle end, 1 = tip; <0.5 frames the visible upper blade
       // Sample the blade with the sword's residual Y spin removed so the moon
@@ -1133,12 +1154,19 @@ export function init(mount: HTMLElement): HeroSceneHandle {
       swordPivot.localToWorld(moonMidWorld);
       swordGroup.rotation.y = spinY;
       const c = projectBladePoint(moonMidWorld, camera, mount.clientWidth, mount.clientHeight, overscroll);
-      // Slow "moonrise": spread the entrance across most of the landing
-      // (landingProgress 0.2→1) with a gentle easeOutSine so it drifts up from
-      // well below and eases into place rather than snapping in fast.
-      const t = Math.max(0, Math.min(1, (landingProgress - 0.2) / 0.8));
-      const eased = Math.sin(t * Math.PI / 2); // easeOutSine — gradual, gentle settle
-      const rise = (1 - eased) * window.innerHeight * 0.75; // px below final spot
+      // "Moonrise" that trails the sword's swing and settles WITH it: it starts
+      // a small MOON_DELAY_VH beat past the Contact boundary (blade leads) and
+      // eases up over the rest of the swing window, reaching its place exactly
+      // as the sword finishes settling at REORIENT_SPAN_VH. smoothstep + a short
+      // travel keep the motion slow and gentle; nothing shows through descent.
+      let eased = 0;
+      if (contactElForSword) {
+        const moonStart = contactElForSword.offsetTop + window.innerHeight * MOON_DELAY_VH;
+        const moonEnd = contactElForSword.offsetTop + window.innerHeight * REORIENT_SPAN_VH;
+        const mp = Math.max(0, Math.min(1, (swordProbe - moonStart) / Math.max(1, moonEnd - moonStart)));
+        eased = mp * mp * (3 - 2 * mp); // smoothstep — slow start & gentle settle
+      }
+      const rise = (1 - eased) * window.innerHeight * MOON_RISE_TRAVEL_VH; // px below final spot
       // Round + dedupe writes: once settled the values stop changing, so the
       // moon truly stops updating (no sub-pixel rig-lerp thrash either).
       const cx = Math.round(c.x);
