@@ -335,21 +335,18 @@ export function init(mount: HTMLElement): HeroSceneHandle {
       sword.scale.setScalar(s);
       sword.rotation.set(0, 0, 0);
 
-      // After centring + scaling (the sword has no local rotation of its own),
-      // the geometry's longest box axis maps to +-half along that same axis
-      // from the swordPivot origin. swordPivot.quaternion + parent transforms
-      // then orient this into the blade's world pose. We restrict the active
-      // hover range later (T_MAX) so sparks come off the cutting blade, not
-      // the hilt end.
+      // The katana is a SINGLE mesh whose blade runs on a DIAGONAL inside its
+      // axis-aligned bounding box — the bbox long axis (pure X, Y=Z=0) is NOT
+      // the blade's centerline, so a segment along it reads tilted off the real
+      // edge (sparks fire above the blade at one end, below at the other).
+      // Vertex sampling (mean Y/Z per X-slice) gives the true centerline; these
+      // offsets — fractions of the half-length on the two short axes — place the
+      // endpoints on it so the activator matches the visible blade. Long axis is
+      // X; swordPivot.quaternion + parents then orient this into world space.
       {
-        const dims = [size.x, size.y, size.z];
-        const axisIndex =
-          dims[0] >= dims[1] && dims[0] >= dims[2] ? 0 : dims[1] >= dims[2] ? 1 : 2;
-        const half = (dims[axisIndex] * s) / 2;
-        bladeLocalA = new THREE.Vector3();
-        bladeLocalA.setComponent(axisIndex, half);
-        bladeLocalB = new THREE.Vector3();
-        bladeLocalB.setComponent(axisIndex, -half);
+        const halfX = (size.x * s) / 2;
+        bladeLocalA = new THREE.Vector3(halfX, 0.191 * halfX, -0.148 * halfX); // handle end
+        bladeLocalB = new THREE.Vector3(-halfX, -0.175 * halfX, 0.141 * halfX); // tip end
       }
 
       sword.traverse((obj) => {
@@ -375,6 +372,7 @@ export function init(mount: HTMLElement): HeroSceneHandle {
 
       swordPivot.add(sword);
       swordLoaded = true;
+      (window as unknown as { __swd?: unknown }).__swd = { sword, pivot: swordPivot };
     },
     undefined,
     (err) => {
@@ -777,6 +775,7 @@ export function init(mount: HTMLElement): HeroSceneHandle {
       const a = projectBladePoint(bladeWorldA, camera, w, h, overscroll);
       const b = projectBladePoint(bladeWorldB, camera, w, h, overscroll);
       const seg = pointSegDistance(pointer.px, pointer.py, a.x, a.y, b.x, b.y);
+      (window as unknown as { __sparkDbg?: unknown }).__sparkDbg = { a, b, seg };
 
       const BAND_PX = 28; // hover tolerance around the thin blade line
       // Active range along the blade segment (t=0 = geometric handle end,
