@@ -10,10 +10,12 @@
 import Lenis from 'lenis';
 import 'lenis/dist/lenis.css';
 
+let lenis: Lenis | null = null;
+
 export function mountSmoothScroll(): void {
   const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-  const lenis = new Lenis({
+  lenis = new Lenis({
     autoRaf: true,
     anchors: { offset: 0, duration: 1.0 },
     smoothWheel: !reduced,
@@ -35,7 +37,18 @@ export function mountSmoothScroll(): void {
       const hash = location.hash.replace('#', '');
       if (!hash) return;
       const target = document.getElementById(hash);
-      if (target) lenis.scrollTo(target, { immediate: true });
+      if (target) lenis!.scrollTo(target, { immediate: true });
     });
   });
+}
+
+// Lock/unlock used by the mobile nav overlay. `.stop()` adds the
+// `lenis-stopped` class (overflow: clip), which blocks both smooth and native
+// scrolling behind the full-screen menu.
+export function lockScroll(): void {
+  lenis?.stop();
+}
+
+export function unlockScroll(): void {
+  lenis?.start();
 }
