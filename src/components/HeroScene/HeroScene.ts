@@ -13,6 +13,7 @@ import { MODEL_URL, TARGET_SIZE, SWORD_URL, SWORD_TARGET_SIZE } from './scene/ty
 import { cloneRig, lerpRig } from './scene/rig-math';
 import { HERO_RIG, SECTION_RIGS_DESKTOP, SECTION_RIGS_MOBILE } from './scene/rigs';
 import { createTargetRigComputer } from './scene/section-probe';
+import { createSparkSystem } from './scene/sparks';
 
 export interface HeroSceneHandle {
   destroy: () => void;
@@ -218,6 +219,12 @@ export function init(mount: HTMLElement): HeroSceneHandle {
   const swordPivot = new THREE.Group();
   swordGroup.add(swordPivot);
 
+  // Blade long-axis endpoints in swordPivot-local space, captured once the
+  // sword GLB loads. animate() transforms these to world space each frame for
+  // the Contact hover proximity test. null until the sword finishes loading.
+  let bladeLocalA: THREE.Vector3 | null = null;
+  let bladeLocalB: THREE.Vector3 | null = null;
+
   // Load the GLB
   const loader = new GLTFLoader();
   loader.setMeshoptDecoder(MeshoptDecoder);
@@ -286,6 +293,23 @@ export function init(mount: HTMLElement): HeroSceneHandle {
       sword.scale.setScalar(s);
       sword.rotation.set(0, 0, 0);
 
+      // After centring + scaling (the sword has no local rotation of its own),
+      // the geometry's longest box axis maps to +-half along that same axis
+      // from the swordPivot origin. swordPivot.quaternion + parent transforms
+      // then orient this into the blade's world pose. We restrict the active
+      // hover range later (T_MAX) so sparks come off the cutting blade, not
+      // the hilt end.
+      {
+        const dims = [size.x, size.y, size.z];
+        const axisIndex =
+          dims[0] >= dims[1] && dims[0] >= dims[2] ? 0 : dims[1] >= dims[2] ? 1 : 2;
+        const half = (dims[axisIndex] * s) / 2;
+        bladeLocalA = new THREE.Vector3();
+        bladeLocalA.setComponent(axisIndex, half);
+        bladeLocalB = new THREE.Vector3();
+        bladeLocalB.setComponent(axisIndex, -half);
+      }
+
       sword.traverse((obj) => {
         const mesh = obj as THREE.Mesh;
         if (mesh.isMesh && mesh.material) {
@@ -336,6 +360,11 @@ export function init(mount: HTMLElement): HeroSceneHandle {
   });
   const particles = new THREE.Points(pGeo, particlesMat);
   scene.add(particles);
+
+  // Contact blade-hover sparks (see scene/sparks.ts). Added to the scene now;
+  // emission is driven from animate() only inside embedded Contact.
+  const sparkSystem = createSparkSystem({ isMobile: state.isMobile });
+  scene.add(sparkSystem.points);
 
   // resize handling
   function resize(): void {
@@ -934,6 +963,7 @@ export function init(mount: HTMLElement): HeroSceneHandle {
     // keyframes.
     mount.style.setProperty('--anchor-y', `${-overscroll}px`);
 
+    sparkSystem.update(dt);
     renderer.render(scene, camera);
     raf = requestAnimationFrame(animate);
   }
@@ -945,6 +975,7 @@ export function init(mount: HTMLElement): HeroSceneHandle {
       window.removeEventListener('pointermove', onPointer);
       mql.removeEventListener('change', onBreakpointChange);
       resizeObserver.disconnect();
+      sparkSystem.dispose();
       renderer.dispose();
       if (renderer.domElement.parentElement === mount) mount.removeChild(renderer.domElement);
     },
