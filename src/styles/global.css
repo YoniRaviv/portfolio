@@ -105,13 +105,13 @@ body {
   background: rgba(255, 111, 89, .08);
   border-color: var(--accent);
 }
-/* Reveal cursor: diameter matches the Who quote spotlight mask radius (240px).
+/* Reveal cursor: diameter matches the Who quote spotlight mask radius (200px).
    A solid outer ring + slowly rotating dashed inner ring + small concentric
    reticle give it a HUD/scope feel — signalling that the cursor is actively
    "reading" hidden text beneath the type. */
 .cur-ring.reveal {
-  width: 480px; height: 480px;
-  margin: -240px 0 0 -240px;
+  width: 400px; height: 400px;
+  margin: -200px 0 0 -200px;
   background: radial-gradient(circle,
     rgba(255, 111, 89, .10) 0%,
     rgba(255, 111, 89, .03) 55%,
