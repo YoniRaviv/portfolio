@@ -26,11 +26,15 @@ const year = new Date().getFullYear();
     by Jysn ·
     <a href="https://creativecommons.org/licenses/by-nc-nd/4.0/" target="_blank" rel="noopener noreferrer">CC BY-NC-ND 4.0</a>
   </p>
-  <div class="big" aria-hidden="true">{hero.backName}</div>
+  <a href="#hero" class="big" aria-label="Back to top">{hero.backName}</a>
 </footer>
 
 <style>
   footer {
+    /* flex column lets `order` re-sequence the three blocks per breakpoint:
+       desktop = row → wordmark → credits (credits as a quiet bottom caption),
+       mobile  = row → credits → wordmark (the approved editorial stack) */
+    display: flex; flex-direction: column;
     padding: 40px var(--pad-x) 32px;
     border-top: 1px solid rgba(191, 178, 155, .12);
     font-family: var(--mono); font-size: 11px; letter-spacing: .16em; text-transform: uppercase;
@@ -38,6 +42,7 @@ const year = new Date().getFullYear();
     background-color: var(--main);
   }
   footer .footer-row {
+    order: 1;
     display: flex; align-items: center; justify-content: space-between;
     gap: 40px;
   }
@@ -67,10 +72,12 @@ const year = new Date().getFullYear();
   footer .footer-top:hover::after { transform: scaleX(1); transform-origin: left; }
 
   footer .footer-attrib {
-    margin: 24px 0 0;
-    font-size: 10px;
+    order: 3;
+    margin: 28px 0 0;
+    text-align: center;
+    font-size: 9px; letter-spacing: .07em; line-height: 1.7;
     color: var(--text-dim);
-    opacity: .8;
+    opacity: .75;
   }
   footer .footer-attrib a {
     color: var(--text);
@@ -84,7 +91,9 @@ const year = new Date().getFullYear();
   }
 
   footer .big {
-    width: 100%;
+    order: 2;
+    display: block; width: 100%;
+    text-decoration: none;
     font-family: var(--display); font-weight: 400;
     font-size: clamp(80px, 18vw, 280px);
     line-height: .85; letter-spacing: .005em;
@@ -100,16 +109,35 @@ const year = new Date().getFullYear();
             background-clip: text;
     transition: background-size .8s cubic-bezier(.65,.05,.36,1), -webkit-text-stroke-color .4s;
     cursor: pointer;
+    touch-action: manipulation;
   }
-  footer .big:hover {
+  /* :active gives touch the coral payoff that :hover gives the desktop pointer */
+  footer .big:hover,
+  footer .big:active {
     background-size: 100% 100%;
     -webkit-text-stroke-color: var(--accent);
   }
+  footer .big:focus-visible {
+    outline: 2px solid var(--accent); outline-offset: 6px;
+  }
 
   @media (max-width: 720px) {
-    footer { padding: 40px var(--pad-x) 32px; gap: 20px; }
-    footer .footer-row { flex-direction: column; align-items: flex-start; gap: 24px; }
-    footer .footer-logo :global(img) { height: 56px; }
-    footer .big { font-size: clamp(80px, 32vw, 200px); margin-top: 32px; }
+    footer {
+      padding: 44px var(--pad-x) 40px;
+      /* looser tracking is for the wide desktop row; tighten it so the
+         narrow stack reads cleanly and stops wrapping mid-phrase */
+      letter-spacing: .1em;
+    }
+    footer .footer-row { flex-direction: column; align-items: flex-start; gap: 28px; }
+    /* stack the identity meta; the inline "·" only makes sense on the
+       single-line desktop row, so it's dropped here */
+    footer .footer-meta { flex-direction: column; align-items: flex-start; gap: 6px; }
+    footer .footer-meta .dot { display: none; }
+    footer .footer-logo :global(img) { height: 48px; }
+    footer .footer-top { padding: 12px 0; min-height: 44px; }
+    /* keep the approved stack order (credits sit above the wordmark) and
+       left-align them with the rest of the column */
+    footer .footer-attrib { order: 2; margin-top: 28px; text-align: left; letter-spacing: .05em; line-height: 1.8; }
+    footer .big { order: 3; font-size: clamp(64px, 27vw, 160px); margin-top: 40px; }
   }
 </style>
