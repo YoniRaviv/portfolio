@@ -779,9 +779,14 @@ export function init(mount: HTMLElement): HeroSceneHandle {
       const seg = pointSegDistance(pointer.px, pointer.py, a.x, a.y, b.x, b.y);
 
       const BAND_PX = 28; // hover tolerance around the thin blade line
-      const T_MAX = 0.78; // exclude the hilt end; sparks off the cutting blade
+      // Active range along the blade segment (t=0 = handle end, top-right;
+      // t=1 = geometric tip). The cutting blade visible in the Contact landing
+      // pose spans ~[0.28, 0.80]: below that is the wrapped handle, above it the
+      // tip is embedded "in the ground" (the social strip) and out of view.
+      const T_MIN = 0.28;
+      const T_MAX = 0.8;
       const onBlade =
-        pointer.px >= 0 && seg.dist < BAND_PX && seg.t >= 0 && seg.t <= T_MAX;
+        pointer.px >= 0 && seg.dist < BAND_PX && seg.t >= T_MIN && seg.t <= T_MAX;
 
       if (onBlade) {
         contactWorld.lerpVectors(bladeWorldA, bladeWorldB, seg.t);
