@@ -34,7 +34,7 @@ function splitWords(): void {
   });
 }
 
-function scrambleEl(el: HTMLElement, finalText: string, duration = 1400): void {
+export function scrambleEl(el: HTMLElement, finalText: string, duration = 1400): void {
   const chars = '!<>-_\\/[]{}—=+*^?#01XYZHRVΣ░▒▓';
   const start = performance.now();
   const queue = Array.from(finalText).map((c) => ({
@@ -63,7 +63,7 @@ function scrambleEl(el: HTMLElement, finalText: string, duration = 1400): void {
   requestAnimationFrame(tick);
 }
 
-function bindHoverScramble(trigger: Element | null, target: HTMLElement | null, duration = 1400): void {
+export function bindHoverScramble(trigger: Element | null, target: HTMLElement | null, duration = 1400): void {
   if (!trigger || !target) return;
   const finalText = target.textContent ?? '';
   const lockSize = (): void => {
