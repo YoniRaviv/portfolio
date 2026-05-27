@@ -93,6 +93,16 @@ export function init(mount: HTMLElement): HeroSceneHandle {
   renderer.domElement.style.transition = 'opacity 0.8s cubic-bezier(.2,.7,.2,1)';
   mount.appendChild(renderer.domElement);
 
+  // Contact moon backdrop (markup + styles in index.astro). Driven from
+  // animate(): centred on the sword, opacity ramps with landingProgress. May
+  // be null if the element isn't present.
+  const moonEl = document.getElementById('moon');
+  // Last-written moon CSS values — animate() skips redundant DOM writes so the
+  // moon stops updating entirely once it has settled (no per-frame thrash).
+  let lastMoonCx = NaN;
+  let lastMoonCy = NaN;
+  let lastMoonOp = NaN;
+
   const accentHex = getComputedStyle(document.documentElement)
     .getPropertyValue('--accent')
     .trim() || '#FF6F59';
@@ -415,6 +425,8 @@ export function init(mount: HTMLElement): HeroSceneHandle {
   const bladeWorldB = new THREE.Vector3();
   const contactWorld = new THREE.Vector3();
   const sparkDir = new THREE.Vector3();
+  // Scratch for centering the moon backdrop on the blade midpoint.
+  const moonMidWorld = new THREE.Vector3();
   let prevCursorX = -1;
   let prevCursorY = -1;
   let sparkActivity = 0; // smoothed 0..1, drives the flare intensity
@@ -1098,6 +1110,47 @@ export function init(mount: HTMLElement): HeroSceneHandle {
     // keyframes.
     mount.style.setProperty('--anchor-y', `${-overscroll}px`);
 
+    // Contact moon backdrop. Centred on the sword: project a point along the
+    // blade (MOON_CENTER_T between handle end and tip) to overscroll-corrected
+    // screen px — the same transform the sparks use — so the moon sits on the
+    // sword wherever it lands and the moon covers it. Scroll-lock is automatic:
+    // the projection's -overscroll term carries the moon up with the blade
+    // through Contact. Over the final 45% of the landing it rises from below
+    // into place (easeOutCubic) and fades in as it settles — a "moonrise"
+    // revealed by the sword embedding (nothing through How / most of descent).
+    if (moonEl && bladeLocalA && bladeLocalB) {
+      const MOON_CENTER_T = 0.4; // 0 = handle end, 1 = tip; <0.5 frames the visible upper blade
+      // Sample the blade with the sword's residual Y spin removed so the moon
+      // sits at the *stable* centre of the blade instead of chasing the slow
+      // settle-spin (which made it drift/jitter). Zero the spin, read the
+      // point, restore — the renderer recomputes world matrices from the
+      // restored value, so the visible sword is unaffected.
+      const spinY = swordGroup.rotation.y;
+      swordGroup.rotation.y = 0;
+      swordGroup.updateWorldMatrix(true, false);
+      swordPivot.updateWorldMatrix(false, false);
+      moonMidWorld.lerpVectors(bladeLocalA, bladeLocalB, MOON_CENTER_T);
+      swordPivot.localToWorld(moonMidWorld);
+      swordGroup.rotation.y = spinY;
+      const c = projectBladePoint(moonMidWorld, camera, mount.clientWidth, mount.clientHeight, overscroll);
+      // Slow "moonrise": spread the entrance across most of the landing
+      // (landingProgress 0.2→1) with a gentle easeOutSine so it drifts up from
+      // well below and eases into place rather than snapping in fast.
+      const t = Math.max(0, Math.min(1, (landingProgress - 0.2) / 0.8));
+      const eased = Math.sin(t * Math.PI / 2); // easeOutSine — gradual, gentle settle
+      const rise = (1 - eased) * window.innerHeight * 0.75; // px below final spot
+      // Round + dedupe writes: once settled the values stop changing, so the
+      // moon truly stops updating (no sub-pixel rig-lerp thrash either).
+      const cx = Math.round(c.x);
+      const cy = Math.round(c.y + rise);
+      if (cx !== lastMoonCx) { moonEl.style.setProperty('--moon-cx', `${cx}px`); lastMoonCx = cx; }
+      if (cy !== lastMoonCy) { moonEl.style.setProperty('--moon-cy', `${cy}px`); lastMoonCy = cy; }
+      if (eased !== lastMoonOp) { moonEl.style.opacity = String(eased); lastMoonOp = eased; }
+    } else if (moonEl && lastMoonOp !== 0) {
+      moonEl.style.opacity = '0';
+      lastMoonOp = 0;
+    }
+
     sparkSystem.update(dt);
     renderer.render(scene, camera);
     raf = requestAnimationFrame(animate);
@@ -1112,6 +1165,7 @@ export function init(mount: HTMLElement): HeroSceneHandle {
       resizeObserver.disconnect();
       sparkSystem.dispose();
       renderer.dispose();
+      if (moonEl) moonEl.style.opacity = '0';
       if (renderer.domElement.parentElement === mount) mount.removeChild(renderer.domElement);
     },
   };
