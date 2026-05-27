@@ -13,9 +13,9 @@ import { how, skillGroups } from '@/content';
           <span class="label">{g.label}</span>
           <span class="blurb">{g.blurb}</span>
         </div>
-        <div class="chips">
-          {g.chips.map((c) => (
-            <span class={`chip${c.hero ? ' hero-skill' : ''}`}>
+        <div class="chips reveal-chips">
+          {g.chips.map((c, i) => (
+            <span class={`chip${c.hero ? ' hero-skill' : ''}`} style={`--i:${i}`}>
               {c.name}<span class="lvl">{c.level}</span>
             </span>
           ))}
@@ -64,9 +64,14 @@ import { how, skillGroups } from '@/content';
 
   .how .chips { display: flex; flex-wrap: wrap; gap: 10px; padding-top: 8px; }
   .how .chip {
+    --chip-c: var(--text);
+    --chip-bd: rgba(191, 178, 155, .2);
+    --chip-bg: transparent;
+    --chip-lvl: var(--text-dim);
+    --chip-lvl-bd: rgba(191, 178, 155, .25);
     font-family: var(--mono); font-size: 12px; letter-spacing: .04em;
-    padding: 10px 16px; border: 1px solid rgba(191, 178, 155, .2);
-    background: transparent; color: var(--text);
+    padding: 10px 16px; border: 1px solid var(--chip-bd);
+    background: var(--chip-bg); color: var(--chip-c);
     display: inline-flex; align-items: center; gap: 10px;
     border-radius: 2px;
     position: relative; overflow: hidden;
@@ -81,16 +86,70 @@ import { how, skillGroups } from '@/content';
   .how .chip:hover { border-color: var(--accent); color: #151515; transform: translateY(-2px); }
   .how .chip:hover::before { transform: translateY(0); }
   .how .chip :global(.lvl) {
-    font-size: 10px; color: var(--text-dim); letter-spacing: .12em;
-    padding-left: 10px; border-left: 1px solid rgba(191, 178, 155, .25);
+    font-size: 10px; color: var(--chip-lvl); letter-spacing: .12em;
+    padding-left: 10px; border-left: 1px solid var(--chip-lvl-bd);
     transition: color .3s, border-color .3s;
   }
   .how .chip:hover :global(.lvl) {
     color: rgba(21, 21, 21, .7); border-left-color: rgba(21, 21, 21, .3);
   }
-  .how .chip.hero-skill { background: var(--accent); color: #151515; border-color: var(--accent); }
-  .how .chip.hero-skill :global(.lvl) {
-    color: rgba(21, 21, 21, .7); border-left-color: rgba(21, 21, 21, .3);
+  .how .chip.hero-skill {
+    --chip-c: #151515;
+    --chip-bd: var(--accent);
+    --chip-bg: var(--accent);
+    --chip-lvl: rgba(21, 21, 21, .7);
+    --chip-lvl-bd: rgba(21, 21, 21, .3);
+  }
+
+  /* ─── chip reveal: border draws left→right, then body + level fill in ─── */
+  /* Hidden until the row scrolls in and reveal.ts adds .in to .reveal-chips. */
+  .how .reveal-chips:not(.in) .chip {
+    color: transparent; border-color: transparent; background: transparent;
+  }
+  .how .reveal-chips:not(.in) .chip :global(.lvl) {
+    color: transparent; border-left-color: transparent;
+  }
+  /* The drawing outline (separate from the resting border so it can sweep). */
+  .how .chip::after {
+    content: ""; position: absolute; inset: 0;
+    border: 1px solid var(--accent); border-radius: 2px;
+    clip-path: inset(0 100% 0 0); opacity: 0; pointer-events: none;
+  }
+  @keyframes chipDraw {
+    0%   { clip-path: inset(0 100% 0 0); opacity: 1; }
+    55%  { clip-path: inset(0 0 0 0);    opacity: 1; }
+    100% { clip-path: inset(0 0 0 0);    opacity: 0; }
+  }
+  @keyframes chipFill {
+    from { color: transparent; border-color: transparent; background: transparent; }
+    to   { color: var(--chip-c); border-color: var(--chip-bd); background: var(--chip-bg); }
+  }
+  @keyframes chipLvlFill {
+    from { color: transparent; border-left-color: transparent; }
+    to   { color: var(--chip-lvl); border-left-color: var(--chip-lvl-bd); }
+  }
+  /* Per-chip stagger by index; fill starts as the draw is finishing. */
+  .how .reveal-chips.in .chip::after {
+    animation: chipDraw .5s ease both;
+    animation-delay: calc(var(--i, 0) * 60ms);
+  }
+  /* `backwards` (not forwards): holds the transparent start during the delay,
+     then releases to the resting style so :hover keeps working afterwards. */
+  .how .reveal-chips.in .chip {
+    animation: chipFill .34s ease backwards;
+    animation-delay: calc(var(--i, 0) * 60ms + .22s);
+  }
+  .how .reveal-chips.in .chip :global(.lvl) {
+    animation: chipLvlFill .34s ease backwards;
+    animation-delay: calc(var(--i, 0) * 60ms + .22s);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    /* No sweep, no stagger — chips are simply present at their resting style. */
+    .how .reveal-chips:not(.in) .chip,
+    .how .reveal-chips.in .chip { animation: none; color: var(--chip-c); border-color: var(--chip-bd); background: var(--chip-bg); }
+    .how .reveal-chips .chip :global(.lvl) { animation: none; color: var(--chip-lvl); border-left-color: var(--chip-lvl-bd); }
+    .how .chip::after { display: none; }
   }
 
   @media (max-width: 1100px) {

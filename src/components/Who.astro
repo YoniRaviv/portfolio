@@ -9,9 +9,9 @@ import { who } from '@/content';
     <p class="quote-alt" aria-hidden="true" set:html={who.quoteAlt}></p>
   </div>
 
-  <div class="meta-grid">
-    {who.cells.map((cell) => (
-      <div class="cell fade-up">
+  <div class="meta-grid reveal-cells">
+    {who.cells.map((cell, i) => (
+      <div class="cell" style={`--i:${i}`}>
         <span class="k">{cell.k}</span>
         <span class="v">{cell.v}</span>
         <span class="vs">{cell.vs}</span>
@@ -97,6 +97,7 @@ import { who } from '@/content';
     background: var(--main); padding: 32px 28px;
     display: flex; flex-direction: column; gap: 12px;
     min-height: 180px;
+    position: relative;
   }
   .who .meta-grid .cell .k {
     font-family: var(--mono); font-size: 10px; letter-spacing: .2em; text-transform: uppercase;
@@ -112,6 +113,48 @@ import { who } from '@/content';
     overflow: hidden;
   }
   .who .meta-grid .cell .vs { font-family: var(--sans); font-size: 14px; color: var(--text); line-height: 1.5; }
+
+  /* ─── meta-cell reveal: accent outline sweeps in, then content fills ─── */
+  /* Same cyberpunk treatment as the How chips. reveal.ts adds .in to the grid
+     when it scrolls in; cells stagger left→right by --i. */
+  .who .reveal-cells:not(.in) .cell .k,
+  .who .reveal-cells:not(.in) .cell .v,
+  .who .reveal-cells:not(.in) .cell .vs { opacity: 0; }
+  /* The drawing outline — sweeps across each cell, then fades as content lands. */
+  .who .meta-grid .cell::after {
+    content: ""; position: absolute; inset: 0;
+    border: 1px solid var(--accent);
+    clip-path: inset(0 100% 0 0); opacity: 0; pointer-events: none;
+    z-index: 1;
+  }
+  @keyframes cellDraw {
+    0%   { clip-path: inset(0 100% 0 0); opacity: 1; }
+    55%  { clip-path: inset(0 0 0 0);    opacity: 1; }
+    100% { clip-path: inset(0 0 0 0);    opacity: 0; }
+  }
+  @keyframes cellContentIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .who .reveal-cells.in .cell::after {
+    animation: cellDraw .55s ease both;
+    animation-delay: calc(var(--i, 0) * 110ms);
+  }
+  /* `backwards`: hold the hidden start through the stagger delay, then release
+     to the resting style (content sits at opacity 1, hover untouched). */
+  .who .reveal-cells.in .cell .k,
+  .who .reveal-cells.in .cell .v,
+  .who .reveal-cells.in .cell .vs {
+    animation: cellContentIn .42s cubic-bezier(.2,.7,.2,1) backwards;
+    animation-delay: calc(var(--i, 0) * 110ms + .26s);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .who .reveal-cells .cell .k,
+    .who .reveal-cells .cell .v,
+    .who .reveal-cells .cell .vs { opacity: 1; animation: none; }
+    .who .meta-grid .cell::after { display: none; }
+  }
 
   @media (max-width: 1100px) { .who .meta-grid { grid-template-columns: repeat(2, 1fr); } }
   @media (max-width: 720px) {
