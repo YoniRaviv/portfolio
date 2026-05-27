@@ -2,7 +2,7 @@
 // Mounted once from Base.astro. The overlay markup lives in Nav.astro.
 
 import { scrambleEl, bindHoverScramble } from '@/lib/reveal';
-import { lockScroll, unlockScroll } from '@/lib/smooth-scroll';
+import { lockScroll, unlockScroll, scrollToAnchor } from '@/lib/smooth-scroll';
 
 export function mountNavMenu(): void {
   const toggle = document.querySelector<HTMLButtonElement>('.nav-toggle');
@@ -58,9 +58,21 @@ export function mountNavMenu(): void {
 
   toggle.addEventListener('click', () => (open ? closeMenu() : openMenu()));
 
-  // Close on selection (unlocks scroll); Lenis's document-level anchor handler
-  // fires afterwards in the bubble phase and performs the scroll.
-  overlayLinks.forEach((a) => a.addEventListener('click', () => closeMenu(false)));
+  // Selecting a destination: close the menu (unlocks scroll), then scroll
+  // explicitly. We don't rely on Lenis's own anchor interception because with
+  // autoToggle the stopped flag may not clear in the same tick — scrollToAnchor
+  // uses { force: true } to scroll deterministically. External links (no
+  // data-anchor, e.g. Blog) keep their default navigation.
+  overlayLinks.forEach((a) =>
+    a.addEventListener('click', (e) => {
+      const anchor = a.dataset.anchor;
+      closeMenu(false);
+      if (anchor) {
+        e.preventDefault();
+        scrollToAnchor(anchor);
+      }
+    })
+  );
 
   document.addEventListener('keydown', (e) => {
     if (!open) return;
