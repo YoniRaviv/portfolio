@@ -27,3 +27,4 @@ pnpm-debug.log*
 
 # design source images (large)
 _design/uploads/
+.superpowers/
