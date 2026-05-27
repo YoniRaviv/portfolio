@@ -88,7 +88,7 @@ const externalLinks = navLinks.filter((l) => l.external);
     background-repeat: no-repeat; background-position: 0 100%; background-size: 0 2px;
     transition: opacity .25s, background-size .3s cubic-bezier(.2,.7,.2,1);
   }
-  nav.top ul a:hover { opacity: 1; background-size: 100% 2px; }
+  nav.top ul a:not(.blog):hover { opacity: 1; background-size: 100% 2px; }
   nav.top ul a.active { opacity: 1; color: var(--accent); background-size: 100% 2px; }
   /* brackets reserve space at opacity 0 so activating doesn't shift neighbours */
   nav.top ul a:not(.blog)::before {

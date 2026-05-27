@@ -54,11 +54,25 @@ export function unlockScroll(): void {
 }
 
 // Programmatic smooth-scroll to a section id, used by the overlay's link
-// clicks. `force: true` bypasses Lenis's stopped/locked guard, which (with
-// autoToggle) may not have cleared synchronously right after unlockScroll().
+// clicks. With autoToggle, unlockScroll() (lenis.start) only removes the
+// overflow lock and clears `isStopped` asynchronously on a transitionend — so
+// scrolling in the same tick is silently dropped. We poll `lenis.isStopped`
+// and scroll the moment Lenis actually resumes (capped so we never loop
+// forever; `force` covers the final call regardless).
 export function scrollToAnchor(id: string): void {
   const target = document.getElementById(id);
   if (!target) return;
-  if (lenis) lenis.scrollTo(target, { force: true });
-  else target.scrollIntoView();
+  if (!lenis) {
+    target.scrollIntoView();
+    return;
+  }
+  let frames = 0;
+  const run = (): void => {
+    if (lenis!.isStopped && frames++ < 30) {
+      requestAnimationFrame(run);
+      return;
+    }
+    lenis!.scrollTo(target, { force: true });
+  };
+  run();
 }

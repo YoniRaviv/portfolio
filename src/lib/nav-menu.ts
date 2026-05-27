@@ -60,22 +60,17 @@ export function mountNavMenu(): void {
 
   toggle.addEventListener('click', () => (open ? closeMenu() : openMenu()));
 
-  // Selecting a destination: close the menu (unlocks scroll), then scroll
-  // explicitly. We don't rely on Lenis's own anchor interception because with
-  // autoToggle the stopped flag may not clear in the same tick — scrollToAnchor
-  // uses { force: true } to scroll deterministically. External links (no
-  // data-anchor, e.g. Blog) keep their default navigation.
+  // Selecting a destination: close the menu (which unlocks scroll), then scroll
+  // to the section. scrollToAnchor waits for Lenis to actually resume (its
+  // autoToggle clears `isStopped` asynchronously) before scrolling, so this is
+  // deterministic. External links (no data-anchor, e.g. Blog) navigate normally.
   overlayLinks.forEach((a) =>
     a.addEventListener('click', (e) => {
       const anchor = a.dataset.anchor;
       closeMenu(false);
       if (anchor) {
         e.preventDefault();
-        // Lenis (autoToggle) clears its stopped flag on a transitionend one
-        // tick after unlockScroll(); defer two frames so the forced scroll runs.
-        requestAnimationFrame(() =>
-          requestAnimationFrame(() => scrollToAnchor(anchor))
-        );
+        scrollToAnchor(anchor);
       }
     })
   );
