@@ -18,7 +18,7 @@ export interface SparkSystem {
 }
 
 export function createSparkSystem(opts: { isMobile: boolean }): SparkSystem {
-  const MAX = opts.isMobile ? 120 : 300;
+  const MAX = opts.isMobile ? 300 : 1000;
 
   // GPU attributes
   const positions = new Float32Array(MAX * 3);
@@ -41,7 +41,7 @@ export function createSparkSystem(opts: { isMobile: boolean }): SparkSystem {
 
   const material = new THREE.ShaderMaterial({
     uniforms: {
-      uSize: { value: opts.isMobile ? 40 : 60 },
+      uSize: { value: opts.isMobile ? 90 : 130 },
       uTime: { value: 0 },
     },
     transparent: true,
@@ -76,7 +76,7 @@ export function createSparkSystem(opts: { isMobile: boolean }): SparkSystem {
         vec3 cold = vec3(0.6, 0.06, 0.0);
         vec3 col = mix(cold, mix(mid, hot, smoothstep(0.5, 1.0, vLife)), vLife);
         float alpha = soft * vLife;
-        gl_FragColor = vec4(col * (0.6 + 0.4 * vLife), alpha);
+        gl_FragColor = vec4(col * (0.9 + 0.6 * vLife), alpha);
       }
     `,
   });
@@ -87,7 +87,7 @@ export function createSparkSystem(opts: { isMobile: boolean }): SparkSystem {
   points.frustumCulled = false;
 
   let writeHead = 0;
-  const GRAVITY = 6.5; // scene units / s^2, pulls embers down into the arc
+  const GRAVITY = 8; // scene units / s^2, pulls embers down into the arc
   const DRAG = 0.985; // per-frame velocity damping
 
   function emit(origin: THREE.Vector3, dir: THREE.Vector3, count: number): void {
@@ -99,15 +99,16 @@ export function createSparkSystem(opts: { isMobile: boolean }): SparkSystem {
       positions[i * 3 + 1] = origin.y;
       positions[i * 3 + 2] = origin.z;
 
-      // Tight cone around `dir`. speed = random^2 so most embers are slow and
-      // a few are fast "streakers" — the signature grinding spread.
-      const spread = 0.5;
-      const speed = 1.2 + Math.random() * Math.random() * 4.5;
+      // Wide cone around `dir`. speed has a long tail (random^2 * big) so most
+      // embers fly a healthy distance and a few are fast "streakers" that fling
+      // well off the blade — the dramatic shower spread.
+      const spread = 0.75;
+      const speed = 3 + Math.random() * Math.random() * 10;
       velocities[i * 3] = (dir.x + (Math.random() - 0.5) * spread) * speed;
-      velocities[i * 3 + 1] = (dir.y + (Math.random() - 0.5) * spread) * speed + 0.5;
+      velocities[i * 3 + 1] = (dir.y + (Math.random() - 0.5) * spread) * speed + 1.5;
       velocities[i * 3 + 2] = (dir.z + (Math.random() - 0.5) * spread) * speed;
 
-      const ml = 0.3 + Math.random() * 0.4;
+      const ml = 0.55 + Math.random() * 0.7;
       maxLife[i] = ml;
       life[i] = ml;
       seeds[i] = Math.random();

@@ -424,7 +424,7 @@ export function init(mount: HTMLElement): HeroSceneHandle {
   // Hot-spot flare at the contact point. Scoped to SWORD_LIGHT_LAYER so it
   // only lights the sword (consistent with every other sword light). Starts
   // dark; intensity rises with brush activity and decays when the cursor stops.
-  const sparkFlare = new THREE.PointLight(ACCENT, 0, 4, 1.6);
+  const sparkFlare = new THREE.PointLight(ACCENT, 0, 7, 1.6);
   sparkFlare.layers.set(SWORD_LIGHT_LAYER);
   scene.add(sparkFlare);
 
@@ -476,7 +476,7 @@ export function init(mount: HTMLElement): HeroSceneHandle {
   // is a Z rotation (hilt to upper-right, tip into the surface).
   const SWORD_LANDING_POS_DESKTOP = { x: 0, y: -1.4, z: 0.5 };
   const SWORD_LANDING_POS_MOBILE = { x: 0.3, y: -0.3, z: 0.5 };
-  const SWORD_LANDING_TILT_Z = -0.62;
+  const SWORD_LANDING_TILT_Z = -0.42;
 
   // Sword rest pose (orientation before the per-frame scroll spin and
   // landing tilt are layered on). Two poses, lerped by landingProgress:
@@ -753,9 +753,9 @@ export function init(mount: HTMLElement): HeroSceneHandle {
 
     // ===== Contact: grinding sparks when the cursor brushes the blade =====
     // Project the blade segment to screen (overscroll-corrected), point-to-
-    // segment test against the cursor, emit embers scaled by brush speed.
-    // Motion-driven: a still cursor emits nothing. Gated to embedded Contact,
-    // desktop, fine-pointer devices.
+    // segment test against the cursor, then erupt a shower of embers while the
+    // cursor is on the blade (constant base + speed-scaled burst). Gated to
+    // embedded Contact, desktop, fine-pointer devices.
     let emittingNow = false;
     const sparkActive =
       swordLoaded &&
@@ -795,23 +795,24 @@ export function init(mount: HTMLElement): HeroSceneHandle {
         const moveX = prevCursorX < 0 ? 0 : pointer.px - prevCursorX;
         const moveY = prevCursorY < 0 ? 0 : pointer.py - prevCursorY;
         const speed = Math.hypot(moveX, moveY); // px moved this frame
-        if (speed > 0.5) {
-          // Spray axis: follow the horizontal brush direction, bias up and
-          // toward the camera (+Z). sparks.update()'s gravity arcs them down.
-          const inv = 1 / speed;
-          sparkDir.set(moveX * inv * 0.7, 0.6, 1.0).normalize();
-          const K = 0.3; // sparks per px of brush speed
-          const MAX_PER_FRAME = 12;
-          const count = Math.min(MAX_PER_FRAME, Math.round(speed * K));
-          if (count > 0) {
-            sparkSystem.emit(contactWorld, sparkDir, count);
-            emittingNow = true;
-          }
-        }
+        // Spray axis: follow the brush direction, bias up and strongly toward
+        // the camera (+Z) so embers fly out at the viewer. sparks.update()'s
+        // gravity arcs them down.
+        const inv = speed > 0.001 ? 1 / speed : 0;
+        sparkDir.set(moveX * inv * 0.8, 0.9, 1.1).normalize();
+        // Dramatic shower: a constant base so simply hovering the blade always
+        // erupts, plus a big speed-scaled burst so faster brushing throws far
+        // more embers.
+        const BASE_PER_FRAME = 7;
+        const K = 1.4; // additional sparks per px of brush speed
+        const MAX_PER_FRAME = 55;
+        const count = Math.min(MAX_PER_FRAME, BASE_PER_FRAME + Math.round(speed * K));
+        sparkSystem.emit(contactWorld, sparkDir, count);
+        emittingNow = true;
       }
     }
     // Flare follows brush activity: snaps up while emitting, eases out when idle.
-    const FLARE_MAX = 18;
+    const FLARE_MAX = 40;
     sparkActivity += ((emittingNow ? 1 : 0) - sparkActivity) * (emittingNow ? 0.5 : 0.08);
     sparkFlare.intensity = sparkActivity * FLARE_MAX;
     prevCursorX = pointer.px;
