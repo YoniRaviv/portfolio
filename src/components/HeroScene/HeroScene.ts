@@ -19,6 +19,48 @@ export interface HeroSceneHandle {
   destroy: () => void;
 }
 
+// Reused scratch for projecting blade endpoints — avoids per-frame allocation.
+const projScratch = new THREE.Vector3();
+
+// Project a world point to viewport pixels. The #stage canvas is fixed and
+// full-viewport, so canvas pixels equal client pixels — except once the
+// Contact anchor engages the canvas is CSS-translated up by `overscroll` px
+// (--anchor-y), so the on-screen Y is the canvas Y minus that translation.
+// This mirrors the overscrollNdc correction used for cursor rotation.
+function projectBladePoint(
+  v: THREE.Vector3,
+  camera: THREE.Camera,
+  width: number,
+  height: number,
+  overscroll: number
+): { x: number; y: number } {
+  const p = projScratch.copy(v).project(camera);
+  return {
+    x: (p.x * 0.5 + 0.5) * width,
+    y: (-p.y * 0.5 + 0.5) * height - overscroll,
+  };
+}
+
+// Closest point on segment AB to point P (all in screen px). Returns the
+// clamped parameter t along AB and the distance from P to that point.
+function pointSegDistance(
+  px: number,
+  py: number,
+  ax: number,
+  ay: number,
+  bx: number,
+  by: number
+): { t: number; dist: number } {
+  const dx = bx - ax;
+  const dy = by - ay;
+  const len2 = dx * dx + dy * dy || 1;
+  let t = ((px - ax) * dx + (py - ay) * dy) / len2;
+  t = Math.max(0, Math.min(1, t));
+  const cx = ax + t * dx;
+  const cy = ay + t * dy;
+  return { t, dist: Math.hypot(px - cx, py - cy) };
+}
+
 export function init(mount: HTMLElement): HeroSceneHandle {
   const mql = matchMedia('(max-width: 720px)');
   const state = { isMobile: mql.matches };
@@ -366,6 +408,26 @@ export function init(mount: HTMLElement): HeroSceneHandle {
   const sparkSystem = createSparkSystem({ isMobile: state.isMobile });
   scene.add(sparkSystem.points);
 
+  // Sparks are a hover affordance — only meaningful on devices with a real
+  // pointer (matches cursor.ts). Touch/coarse devices and mobile skip it.
+  const supportsHover = matchMedia('(hover: hover) and (pointer: fine)').matches;
+
+  // Per-frame scratch + hover state (no allocation in animate()).
+  const bladeWorldA = new THREE.Vector3();
+  const bladeWorldB = new THREE.Vector3();
+  const contactWorld = new THREE.Vector3();
+  const sparkDir = new THREE.Vector3();
+  let prevCursorX = -1;
+  let prevCursorY = -1;
+  let sparkActivity = 0; // smoothed 0..1, drives the flare intensity
+
+  // Hot-spot flare at the contact point. Scoped to SWORD_LIGHT_LAYER so it
+  // only lights the sword (consistent with every other sword light). Starts
+  // dark; intensity rises with brush activity and decays when the cursor stops.
+  const sparkFlare = new THREE.PointLight(ACCENT, 0, 4, 1.6);
+  sparkFlare.layers.set(SWORD_LIGHT_LAYER);
+  scene.add(sparkFlare);
+
   // resize handling
   function resize(): void {
     const w = mount.clientWidth;
@@ -379,10 +441,12 @@ export function init(mount: HTMLElement): HeroSceneHandle {
   resizeObserver.observe(mount);
 
   // pointer parallax
-  const pointer = { x: 0, y: 0, tx: 0, ty: 0 };
+  const pointer = { x: 0, y: 0, tx: 0, ty: 0, px: -1, py: -1 };
   const onPointer = (e: PointerEvent): void => {
     pointer.tx = (e.clientX / window.innerWidth - 0.5) * 2;
     pointer.ty = (e.clientY / window.innerHeight - 0.5) * 2;
+    pointer.px = e.clientX;
+    pointer.py = e.clientY;
   };
   window.addEventListener('pointermove', onPointer, { passive: true });
 
@@ -686,6 +750,67 @@ export function init(mount: HTMLElement): HeroSceneHandle {
       swordStage.intensity = 0;
       swordFloor.intensity = 0;
     }
+
+    // ===== Contact: grinding sparks when the cursor brushes the blade =====
+    // Project the blade segment to screen (overscroll-corrected), point-to-
+    // segment test against the cursor, emit embers scaled by brush speed.
+    // Motion-driven: a still cursor emits nothing. Gated to embedded Contact,
+    // desktop, fine-pointer devices.
+    let emittingNow = false;
+    const sparkActive =
+      swordLoaded &&
+      !state.isMobile &&
+      supportsHover &&
+      swordGroup.visible &&
+      landingProgress > 0.9 &&
+      bladeLocalA !== null &&
+      bladeLocalB !== null;
+    if (sparkActive && bladeLocalA && bladeLocalB) {
+      swordPivot.updateWorldMatrix(true, false);
+      bladeWorldA.copy(bladeLocalA);
+      swordPivot.localToWorld(bladeWorldA);
+      bladeWorldB.copy(bladeLocalB);
+      swordPivot.localToWorld(bladeWorldB);
+
+      const w = mount.clientWidth;
+      const h = mount.clientHeight;
+      const a = projectBladePoint(bladeWorldA, camera, w, h, overscroll);
+      const b = projectBladePoint(bladeWorldB, camera, w, h, overscroll);
+      const seg = pointSegDistance(pointer.px, pointer.py, a.x, a.y, b.x, b.y);
+
+      const BAND_PX = 28; // hover tolerance around the thin blade line
+      const T_MAX = 0.78; // exclude the hilt end; sparks off the cutting blade
+      const onBlade =
+        pointer.px >= 0 && seg.dist < BAND_PX && seg.t >= 0 && seg.t <= T_MAX;
+
+      if (onBlade) {
+        contactWorld.lerpVectors(bladeWorldA, bladeWorldB, seg.t);
+        sparkFlare.position.copy(contactWorld);
+
+        const moveX = prevCursorX < 0 ? 0 : pointer.px - prevCursorX;
+        const moveY = prevCursorY < 0 ? 0 : pointer.py - prevCursorY;
+        const speed = Math.hypot(moveX, moveY); // px moved this frame
+        if (speed > 0.5) {
+          // Spray axis: follow the horizontal brush direction, bias up and
+          // toward the camera (+Z). sparks.update()'s gravity arcs them down.
+          const inv = 1 / speed;
+          sparkDir.set(moveX * inv * 0.7, 0.6, 1.0).normalize();
+          const K = 0.3; // sparks per px of brush speed
+          const MAX_PER_FRAME = 12;
+          const count = Math.min(MAX_PER_FRAME, Math.round(speed * K));
+          if (count > 0) {
+            sparkSystem.emit(contactWorld, sparkDir, count);
+            emittingNow = true;
+          }
+        }
+      }
+    }
+    // Flare follows brush activity: snaps up while emitting, eases out when idle.
+    const FLARE_MAX = 18;
+    sparkActivity += ((emittingNow ? 1 : 0) - sparkActivity) * (emittingNow ? 0.5 : 0.08);
+    sparkFlare.intensity = sparkActivity * FLARE_MAX;
+    prevCursorX = pointer.px;
+    prevCursorY = pointer.py;
 
     // Pointer parallax on root — gated by rig.parallaxStrength so we can fully
     // disable cursor sway in sections (What onwards) where it'd fight the
