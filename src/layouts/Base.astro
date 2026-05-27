@@ -31,10 +31,12 @@ const { title, description } = Astro.props;
       import { mountCursor }       from '@/lib/cursor';
       import { mountActiveNav }    from '@/lib/active-nav';
       import { mountSmoothScroll } from '@/lib/smooth-scroll';
+      import { mountNavMenu }      from '@/lib/nav-menu';
       mountSmoothScroll();
       mountReveal();
       mountCursor();
       mountActiveNav();
+      mountNavMenu();
     </script>
   </body>
 </html>
