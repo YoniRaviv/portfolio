@@ -10,10 +10,12 @@
 import Lenis from 'lenis';
 import 'lenis/dist/lenis.css';
 
+let lenis: Lenis | null = null;
+
 export function mountSmoothScroll(): void {
   const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-  const lenis = new Lenis({
+  lenis = new Lenis({
     autoRaf: true,
     anchors: { offset: 0, duration: 1.0 },
     smoothWheel: !reduced,
@@ -35,7 +37,42 @@ export function mountSmoothScroll(): void {
       const hash = location.hash.replace('#', '');
       if (!hash) return;
       const target = document.getElementById(hash);
-      if (target) lenis.scrollTo(target, { immediate: true });
+      if (target) lenis!.scrollTo(target, { immediate: true });
     });
   });
+}
+
+// Lock/unlock used by the mobile nav overlay. `.stop()` adds the
+// `lenis-stopped` class (overflow: clip), which blocks both smooth and native
+// scrolling behind the full-screen menu.
+export function lockScroll(): void {
+  lenis?.stop();
+}
+
+export function unlockScroll(): void {
+  lenis?.start();
+}
+
+// Programmatic smooth-scroll to a section id, used by the overlay's link
+// clicks. With autoToggle, unlockScroll() (lenis.start) only removes the
+// overflow lock and clears `isStopped` asynchronously on a transitionend — so
+// scrolling in the same tick is silently dropped. We poll `lenis.isStopped`
+// and scroll the moment Lenis actually resumes (capped so we never loop
+// forever; `force` covers the final call regardless).
+export function scrollToAnchor(id: string): void {
+  const target = document.getElementById(id);
+  if (!target) return;
+  if (!lenis) {
+    target.scrollIntoView();
+    return;
+  }
+  let frames = 0;
+  const run = (): void => {
+    if (lenis!.isStopped && frames++ < 30) {
+      requestAnimationFrame(run);
+      return;
+    }
+    lenis!.scrollTo(target, { force: true });
+  };
+  run();
 }

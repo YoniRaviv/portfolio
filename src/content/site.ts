@@ -1,7 +1,7 @@
 import type { SiteInfo } from './_types';
 
 export const site: SiteInfo = {
-  url: 'https://yonathanraviv.com',
+  url: 'https://yonathanraviv.dev',
   name: 'Yonathan Raviv',
   shortName: 'YR',
   email: 'hello@yonathanraviv.com',
