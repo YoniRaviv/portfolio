@@ -24,7 +24,7 @@ const externalLinks = navLinks.filter((l) => l.external);
             navLinks.map((link) =>
                 link.external ? (
                     <li>
-                        <a href={link.href} class="blog">
+                        <a href={link.href} class="blog" data-thought-link>
                             {link.label}
                         </a>
                     </li>
@@ -79,7 +79,7 @@ const externalLinks = navLinks.filter((l) => l.external);
     <div class="ov-foot" style={`--i:${internalLinks.length}`}>
         {
             externalLinks.map((link) => (
-                <a class="ov-link ov-blog" href={link.href}>
+                <a class="ov-link ov-blog" href={link.href} data-thought-link>
                     {link.label}
                 </a>
             ))
