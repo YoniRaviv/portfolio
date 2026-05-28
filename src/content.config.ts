@@ -1,14 +1,7 @@
 import { defineCollection, z } from 'astro:content';
 
 const thoughts = defineCollection({
-  loader: async () => {
-    const files = import.meta.glob('./**/*.md', { eager: true });
-    const entries = Object.entries(files).map(([key, mod]) => ({
-      id: key.replace(/^\.\//, '').replace(/\.md$/, ''),
-      data: (mod as any).data || {},
-    }));
-    return entries;
-  },
+  type: 'content',
   schema: ({ image }) =>
     z.object({
       title: z.string().max(80),
