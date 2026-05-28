@@ -8,10 +8,8 @@
 - analytics
 
 
-## Blog
-1. build the page
-2. page transition - cyberpunk effect
-3. create posts
-
 ## contact
 1. keep email?
+
+## deploy
+Cloudlfare - https://docs.astro.build/en/guides/deploy/cloudflare/
