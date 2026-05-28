@@ -11,7 +11,7 @@ import { MeshoptDecoder } from 'three/examples/jsm/libs/meshopt_decoder.module.j
 import type { SectionKey, SectionRig } from './scene/types';
 import { MODEL_URL, TARGET_SIZE, SWORD_URL, SWORD_TARGET_SIZE } from './scene/types';
 import { cloneRig, lerpRig } from './scene/rig-math';
-import { HERO_RIG, SECTION_RIGS_DESKTOP, SECTION_RIGS_MOBILE } from './scene/rigs';
+import { HERO_RIG, HERO_MASK_TARGET_VW, SECTION_RIGS_DESKTOP, SECTION_RIGS_MOBILE } from './scene/rigs';
 import { createTargetRigComputer } from './scene/section-probe';
 import { createSparkSystem } from './scene/sparks';
 import { swordSpinAngle } from './scene/sword-spin';
@@ -456,6 +456,23 @@ export function init(mount: HTMLElement): HeroSceneHandle {
         renderer.setSize(w, h, false);
         camera.aspect = w / h;
         camera.updateProjectionMatrix();
+
+        // Track the HUD bracket centre across aspect ratios. The HUD bracket
+        // centre lives at a fixed vw (HERO_MASK_TARGET_VW) regardless of
+        // aspect, but `pos.x` is in world units — and the world's horizontal
+        // extent at z=0 grows with aspect (halfWidth = 6·tan(21°)·aspect for
+        // the fixed camera: FOV 42°, z 6, look-at origin). So a single
+        // hardcoded pos.x in world units only puts the mask at the bracket
+        // centre on ONE screen aspect; on others it drifts left or right.
+        // Recompute pos.x from the target vw and the live aspect on every
+        // resize so the mask lands at the same vw on every laptop. (Skip on
+        // mobile — the HUD readout/brackets are hidden there, HERO_RIG_MOBILE
+        // has its own centred pos, and the formula doesn't apply.)
+        if (!state.isMobile) {
+            const halfWorldWidth = 6 * Math.tan((Math.PI / 180) * 21) * (w / h);
+            const offsetFromCentre = (HERO_MASK_TARGET_VW - 50) / 50; // -1..1, 0 = viewport centre
+            HERO_RIG.pos.x = offsetFromCentre * halfWorldWidth;
+        }
     }
     resize();
     const resizeObserver = new ResizeObserver(resize);
@@ -566,8 +583,32 @@ export function init(mount: HTMLElement): HeroSceneHandle {
         let overscroll = 0;
         const contactElForAnchor = document.getElementById('contact');
         if (contactElForAnchor) {
-            const ANCHOR_DELAY = window.innerHeight * 0.5;
-            const anchor = contactElForAnchor.offsetTop - window.innerHeight / 1.5 + ANCHOR_DELAY;
+            let anchor: number;
+            // Desktop: tie the anchor to the social grid's doc position so the
+            // sword's frozen viewport spot lands just above the socials on any
+            // viewport height. The headline is clamp(64px, 10vw, 200px), so on
+            // wide laptops it grows and pushes the social grid further from
+            // contactTop — a fixed `contactTop - 0.17·vh` anchor (the previous
+            // formula, still used on mobile below) left a visible gap between
+            // the moon halo and the social cards on tall screens. The sword
+            // projects to roughly 60% down the canvas; freezing the canvas so
+            // that point lands SWORD_SOCIALS_GAP_PX above socials top closes
+            // the gap without overlapping the cards.
+            const socialsEl = state.isMobile
+                ? null
+                : contactElForAnchor.querySelector('.socials') as HTMLElement | null;
+            if (socialsEl) {
+                const socialsDocTop = contactElForAnchor.offsetTop + socialsEl.offsetTop;
+                const swordViewportY = window.innerHeight * 0.6; // sword's approx Y in the canvas
+                const SWORD_SOCIALS_GAP_PX = 340; // breathing room above the social cards
+                anchor = socialsDocTop - swordViewportY - SWORD_SOCIALS_GAP_PX;
+            } else {
+                // Mobile (and DOM-not-ready fallback): original formula. Phones
+                // have shorter sections and a stacked socials grid; the old
+                // tuning still feels right there.
+                const ANCHOR_DELAY = window.innerHeight * 0.5;
+                anchor = contactElForAnchor.offsetTop - window.innerHeight / 1.5 + ANCHOR_DELAY;
+            }
             overscroll = Math.max(0, window.scrollY - anchor);
         }
 

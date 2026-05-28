@@ -6,7 +6,7 @@ import { whereDesktop, whereMobile } from './where';
 import { howDesktop, howMobile } from './how';
 import { contactDesktop, contactMobile } from './contact';
 
-export { HERO_RIG, HERO_RIG_MOBILE } from './hero';
+export { HERO_RIG, HERO_RIG_MOBILE, HERO_MASK_TARGET_VW } from './hero';
 
 export const SECTION_RIGS_DESKTOP: Record<SectionKey, SectionRig> = {
   hero: heroDesktop,
