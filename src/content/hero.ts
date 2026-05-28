@@ -2,7 +2,7 @@ export const hero = {
   firstName: 'Yonathan',
   lastName: 'Raviv',
   backName: 'Raviv',
-  role: "Fullstack engineer and AI engineer. Six years building systems where design meets logic.",
+  role: "Fullstack and AI engineer. Six years shipping the parts that don't get to fail.",
   topMeta: {
     left: {
       label: '// Index',
@@ -16,8 +16,8 @@ export const hero = {
     },
   },
   signature: {
-    primary: "CS · class of '19",
-    accent: 'Currently @ [placeholder co.]',
+    primary: "CS · class of '20",
+    accent: 'Currently @ Tenengroup',
   },
   scrollCue: 'Scroll',
 };
