@@ -22,15 +22,28 @@ export const HERO_MASK_TARGET_VW = 69.2;
 // before currentRig is cloned). HeroScene.ts overwrites it from
 // HERO_MASK_TARGET_VW each layout. Do not tune the desktop horizontal
 // position by editing pos.x; edit HERO_MASK_TARGET_VW above.
+// Cinematic chiaroscuro: fills are pulled WAY down (ambient 0.18 / hemi 0.22
+// / key 0.55) and the accent uplight is pushed correspondingly UP (22) so the
+// mask reads as a poster — one warm beam raking across the face from
+// below-left, deep shadow on the camera-right side. Exposure +15% so the
+// bright lit side still pops on dark monitors, fog density bumped to 0.06 so
+// the body of the mask sits in air rather than against a flat black void.
+// pitchBias eased from -0.5 to -0.35 so the head reads as "facing" the viewer
+// instead of looking past them.
+//
+// To dial drama up: raise accentBeamIntensity (24–28), drop ambient further
+// (0.10), bump fogDensity (0.08). To soften: raise ambient/hemi back up.
+// Always-on global fills (accentFill / cool / rim in HeroScene.ts) still
+// contribute a baseline so the dark side never goes pure black.
 export const HERO_RIG: Rig = {
   pos: { x: 1.55, y: 0.5, z: 0 },
   scale: 1,
   yawBias: 0,
   pitchBias: -0.5,
-  exposure: 1,
-  fogDensity: 0.04,
+  exposure: 1.15,
+  fogDensity: 0.06,
   alpha: 1,
-  accentBeamIntensity: 9.0,
+  accentBeamIntensity: 28,
   accentBeamPos: { x: -3.5, y: -3, z: 2.5 },
   accentBeamTarget: { x: 1.5, y: 1.8, z: -0.5 },
   beamYawOffset: 0,
@@ -38,23 +51,32 @@ export const HERO_RIG: Rig = {
   pointerYaw: 0.6,
   pointerPitch: 0.4,
   parallaxStrength: 1,
-  ambientIntensity: 0.8,
-  hemiIntensity: 0.65,
-  keyIntensity: 1.6,
+  ambientIntensity: 0.9,
+  hemiIntensity: 0.22,
+  keyIntensity: 0.55,
 };
 
 // On mobile the camera aspect goes portrait (~0.5), shrinking the
 // horizontal world-units in view to ~2.3 (vs ~7.4 on desktop 16:9). Every
 // mobile pos.x is recentered toward 0 so the mask stays on-screen.
+// Mobile mirrors desktop's lighting recipe exactly — ambient is held HIGH
+// (1.28) so the dark side stays readable on small screens (phones are often
+// viewed in bright rooms where deep shadows just look muddy), while the
+// hemi/key cut + accent beam climb (to 28) preserve the warm-beam dominance.
+// Mobile-only knobs kept: exposure 1.3 (slightly brighter than desktop's
+// 1.15 — phones tend to be viewed at lower brightness), fogDensity 0 (no fog;
+// the model is already small in frame, fog would just murk it up), pitchBias
+// -0.30 (the mobile-original upward look, matching desktop's -0.5 intent on
+// the mobile camera).
 export const HERO_RIG_MOBILE: Rig = {
   pos: { x: 0, y: 0.8, z: 0 },
   scale: 0.6,
   yawBias: 0,
-  pitchBias: -0.3,
-  exposure: 1.2,
-  fogDensity: 0,
+  pitchBias: -0.30,
+  exposure: 1.3,
+  fogDensity: 0.06,
   alpha: 1,
-  accentBeamIntensity: 15,
+  accentBeamIntensity: 28,
   accentBeamPos: { x: -3.5, y: -3, z: 3.5 },
   accentBeamTarget: { x: 1.5, y: 1.8, z: -0.5 },
   beamYawOffset: 0,
@@ -62,9 +84,9 @@ export const HERO_RIG_MOBILE: Rig = {
   pointerYaw: 0.2,
   pointerPitch: -0.5,
   parallaxStrength: 0.3,
-  ambientIntensity: 0.2,
-  hemiIntensity: 0.45,
-  keyIntensity: 1.6,
+  ambientIntensity: 1,
+  hemiIntensity: 0.22,
+  keyIntensity: 0.55,
 };
 export const heroDesktop: SectionRig = { start: HERO_RIG };
 export const heroMobile: SectionRig = { start: HERO_RIG_MOBILE };

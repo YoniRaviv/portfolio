@@ -70,7 +70,7 @@ export const WHO_RIG_MOBILE_START: Rig = {
   pos: { x: 0, y: 0.5, z: 0 },
   scale: 0.4,
   yawBias: 0,
-  pitchBias: -0.2,
+  pitchBias: -0.6,
   exposure: 0.7,
   fogDensity: 0.05,
   alpha: 1,
