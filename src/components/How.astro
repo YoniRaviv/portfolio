@@ -1,165 +1,303 @@
 ---
-import { how, skillGroups } from '@/content';
+import { how, skillGroups } from "@/content";
 ---
-<section class="sec how" id="how" aria-labelledby="how-title" tabindex="-1">
-  <div class="sec-label"><span class="num">{how.label.num}</span><span class="lbl">{how.label.text}</span></div>
-  <h2 id="how-title" class="reveal-words" data-words set:html={how.heading}></h2>
 
-  <div class="matrix">
-    {skillGroups.map((g) => (
-      <div class="row">
-        <div class="cat fade-up">
-          <span class="idx">{g.idx}</span>
-          <span class="label">{g.label}</span>
-          <span class="blurb">{g.blurb}</span>
-        </div>
-        <div class="chips reveal-chips">
-          {g.chips.map((c, i) => (
-            <span class={`chip${c.hero ? ' hero-skill' : ''}`} style={`--i:${i}`}>
-              {c.name}<span class="lvl">{c.level}</span>
-            </span>
-          ))}
-        </div>
-      </div>
-    ))}
-  </div>
+<section class="sec how" id="how" aria-labelledby="how-title" tabindex="-1">
+    <div class="sec-label">
+        <span class="num">{how.label.num}</span><span class="lbl"
+            >{how.label.text}</span>
+    </div>
+    <h2 id="how-title" class="reveal-words" data-words set:html={how.heading} />
+
+    <div class="matrix">
+        {
+            skillGroups.map((g) => (
+                <div class="row">
+                    <div class="cat fade-up">
+                        <span class="idx">{g.idx}</span>
+                        <span class="label">{g.label}</span>
+                        <span class="blurb">{g.blurb}</span>
+                    </div>
+                    <div class="chips reveal-chips">
+                        {g.chips.map((c, i) => (
+                            <span
+                                class={`chip${c.hero ? " hero-skill" : ""}`}
+                                style={`--i:${i}`}
+                            >
+                                {c.name}
+                                <span class="lvl">{c.level}</span>
+                            </span>
+                        ))}
+                    </div>
+                </div>
+            ))
+        }
+    </div>
 </section>
 
 <style>
-  .how { padding-top: 160px; padding-bottom: 200px; position: relative; }
-  .how h2 {
-    font-family: var(--display); font-weight: 400;
-    font-size: clamp(56px, 8.5vw, 140px); line-height: 1.0; letter-spacing: .005em;
-    color: var(--text-bright);
-    max-width: 1400px;
-    text-transform: uppercase;
-  }
-  .how h2 :global(em) { color: var(--accent); font-style: normal; }
+    .how {
+        padding-top: 160px;
+        padding-bottom: 200px;
+        position: relative;
+    }
+    .how h2 {
+        font-family: var(--display);
+        font-weight: 400;
+        font-size: clamp(56px, 8.5vw, 140px);
+        line-height: 1;
+        letter-spacing: 0.005em;
+        color: var(--text-bright);
+        max-width: 1400px;
+        text-transform: uppercase;
+    }
+    .how h2 :global(em) {
+        color: var(--accent);
+        font-style: normal;
+    }
 
-  .how .matrix { margin-top: 100px; display: flex; flex-direction: column; }
-  .how .row {
-    display: grid; grid-template-columns: 280px 1fr; gap: 60px;
-    padding: 48px 0;
-    border-top: 1px solid rgba(191, 178, 155, .14);
-    align-items: start;
-    transition: background .4s;
-  }
-  .how .row:last-child { border-bottom: 1px solid rgba(191, 178, 155, .14); }
-  .how .row:hover { background: linear-gradient(to right, rgba(255, 111, 89, .04), transparent 60%); }
+    .how .matrix {
+        margin-top: 100px;
+        display: flex;
+        flex-direction: column;
+    }
+    .how .row {
+        display: grid;
+        grid-template-columns: 280px 1fr;
+        gap: 60px;
+        padding: 48px 0;
+        border-top: 1px solid rgba(191, 178, 155, 0.14);
+        align-items: start;
+        transition: background 0.4s;
+    }
+    .how .row:last-child {
+        border-bottom: 1px solid rgba(191, 178, 155, 0.14);
+    }
+    .how .row:hover {
+        background: linear-gradient(
+            to right,
+            rgba(255, 111, 89, 0.04),
+            transparent 60%
+        );
+    }
 
-  .how .row .cat { display: flex; flex-direction: column; gap: 10px; position: sticky; top: 120px; }
-  .how .row .cat .idx {
-    font-family: var(--mono); font-size: 11px; letter-spacing: .2em; color: var(--accent);
-    text-transform: uppercase;
-  }
-  .how .row .cat .label {
-    font-family: var(--display); font-weight: 400;
-    font-size: clamp(32px, 4vw, 56px); line-height: 1; color: var(--text-bright);
-    text-transform: uppercase; letter-spacing: .01em;
-  }
-  .how .row .cat .blurb {
-    font-family: var(--sans); font-size: 13px; color: var(--text-dim); line-height: 1.55;
-    max-width: 240px; margin-top: 8px;
-  }
+    .how .row .cat {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        position: sticky;
+        top: 120px;
+    }
+    .how .row .cat .idx {
+        font-family: var(--mono);
+        font-size: 11px;
+        letter-spacing: 0.2em;
+        color: var(--accent);
+        text-transform: uppercase;
+    }
+    .how .row .cat .label {
+        font-family: var(--display);
+        font-weight: 400;
+        font-size: clamp(32px, 4vw, 56px);
+        line-height: 1;
+        color: var(--text-bright);
+        text-transform: uppercase;
+        letter-spacing: 0.01em;
+    }
+    .how .row .cat .blurb {
+        font-family: var(--sans);
+        font-size: 13px;
+        color: var(--text-dim);
+        line-height: 1.55;
+        max-width: 240px;
+        margin-top: 8px;
+    }
 
-  .how .chips { display: flex; flex-wrap: wrap; gap: 10px; padding-top: 8px; }
-  .how .chip {
-    --chip-c: var(--text);
-    --chip-bd: rgba(191, 178, 155, .2);
-    --chip-bg: transparent;
-    --chip-lvl: var(--text-dim);
-    --chip-lvl-bd: rgba(191, 178, 155, .25);
-    font-family: var(--mono); font-size: 12px; letter-spacing: .04em;
-    padding: 10px 16px; border: 1px solid var(--chip-bd);
-    background: var(--chip-bg); color: var(--chip-c);
-    display: inline-flex; align-items: center; gap: 10px;
-    border-radius: 2px;
-    position: relative; overflow: hidden;
-    transition: border-color .3s, color .3s, transform .3s;
-    cursor: default;
-  }
-  .how .chip::before {
-    content: ""; position: absolute; inset: 0; background: var(--accent);
-    transform: translateY(100%); transition: transform .35s cubic-bezier(.2,.7,.2,1);
-    z-index: -1;
-  }
-  .how .chip:hover { border-color: var(--accent); color: #151515; transform: translateY(-2px); }
-  .how .chip:hover::before { transform: translateY(0); }
-  .how .chip :global(.lvl) {
-    font-size: 10px; color: var(--chip-lvl); letter-spacing: .12em;
-    padding-left: 10px; border-left: 1px solid var(--chip-lvl-bd);
-    transition: color .3s, border-color .3s;
-  }
-  .how .chip:hover :global(.lvl) {
-    color: rgba(21, 21, 21, .7); border-left-color: rgba(21, 21, 21, .3);
-  }
-  .how .chip.hero-skill {
-    --chip-c: #151515;
-    --chip-bd: var(--accent);
-    --chip-bg: var(--accent);
-    --chip-lvl: rgba(21, 21, 21, .7);
-    --chip-lvl-bd: rgba(21, 21, 21, .3);
-  }
+    .how .chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        padding-top: 8px;
+    }
+    .how .chip {
+        --chip-c: var(--text);
+        --chip-bd: rgba(191, 178, 155, 0.2);
+        --chip-bg: transparent;
+        --chip-lvl: var(--text-dim);
+        --chip-lvl-bd: rgba(191, 178, 155, 0.25);
+        font-family: var(--mono);
+        font-size: 12px;
+        letter-spacing: 0.04em;
+        padding: 10px 16px;
+        border: 1px solid var(--chip-bd);
+        background: var(--chip-bg);
+        color: var(--chip-c);
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        border-radius: 2px;
+        position: relative;
+        overflow: hidden;
+        transition:
+            border-color 0.3s,
+            color 0.3s,
+            transform 0.3s;
+        cursor: default;
+    }
+    .how .chip::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: var(--accent);
+        transform: translateY(100%);
+        transition: transform 0.35s cubic-bezier(0.2, 0.7, 0.2, 1);
+        z-index: -1;
+    }
+    .how .chip:hover {
+        border-color: var(--accent);
+        color: #151515;
+        transform: translateY(-2px);
+    }
+    .how .chip:hover::before {
+        transform: translateY(0);
+    }
+    .how .chip :global(.lvl) {
+        font-size: 10px;
+        color: var(--chip-lvl);
+        letter-spacing: 0.12em;
+        padding-left: 10px;
+        border-left: 1px solid var(--chip-lvl-bd);
+        transition:
+            color 0.3s,
+            border-color 0.3s;
+    }
+    .how .chip:hover :global(.lvl) {
+        color: rgba(21, 21, 21, 0.7);
+        border-left-color: rgba(21, 21, 21, 0.3);
+    }
+    .how .chip.hero-skill {
+        --chip-c: #151515;
+        --chip-bd: var(--accent);
+        --chip-bg: var(--accent);
+        --chip-lvl: rgba(21, 21, 21, 0.7);
+        --chip-lvl-bd: rgba(21, 21, 21, 0.3);
+    }
 
-  /* ─── chip reveal: border draws left→right, then body + level fill in ─── */
-  /* Hidden until the row scrolls in and reveal.ts adds .in to .reveal-chips. */
-  .how .reveal-chips:not(.in) .chip {
-    color: transparent; border-color: transparent; background: transparent;
-  }
-  .how .reveal-chips:not(.in) .chip :global(.lvl) {
-    color: transparent; border-left-color: transparent;
-  }
-  /* The drawing outline (separate from the resting border so it can sweep). */
-  .how .chip::after {
-    content: ""; position: absolute; inset: 0;
-    border: 1px solid var(--accent); border-radius: 2px;
-    clip-path: inset(0 100% 0 0); opacity: 0; pointer-events: none;
-  }
-  @keyframes chipDraw {
-    0%   { clip-path: inset(0 100% 0 0); opacity: 1; }
-    55%  { clip-path: inset(0 0 0 0);    opacity: 1; }
-    100% { clip-path: inset(0 0 0 0);    opacity: 0; }
-  }
-  @keyframes chipFill {
-    from { color: transparent; border-color: transparent; background: transparent; }
-    to   { color: var(--chip-c); border-color: var(--chip-bd); background: var(--chip-bg); }
-  }
-  @keyframes chipLvlFill {
-    from { color: transparent; border-left-color: transparent; }
-    to   { color: var(--chip-lvl); border-left-color: var(--chip-lvl-bd); }
-  }
-  /* Per-chip stagger by index; fill starts as the draw is finishing. */
-  .how .reveal-chips.in .chip::after {
-    animation: chipDraw .5s ease both;
-    animation-delay: calc(var(--i, 0) * 60ms);
-  }
-  /* `backwards` (not forwards): holds the transparent start during the delay,
+    /* ─── chip reveal: border draws left→right, then body + level fill in ─── */
+    /* Hidden until the row scrolls in and reveal.ts adds .in to .reveal-chips. */
+    .how .reveal-chips:not(.in) .chip {
+        color: transparent;
+        border-color: transparent;
+        background: transparent;
+    }
+    .how .reveal-chips:not(.in) .chip :global(.lvl) {
+        color: transparent;
+        border-left-color: transparent;
+    }
+    /* The drawing outline (separate from the resting border so it can sweep). */
+    .how .chip::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        border: 1px solid var(--accent);
+        border-radius: 2px;
+        clip-path: inset(0 100% 0 0);
+        opacity: 0;
+        pointer-events: none;
+    }
+    @keyframes chipDraw {
+        0% {
+            clip-path: inset(0 100% 0 0);
+            opacity: 1;
+        }
+        55% {
+            clip-path: inset(0 0 0 0);
+            opacity: 1;
+        }
+        100% {
+            clip-path: inset(0 0 0 0);
+            opacity: 0;
+        }
+    }
+    @keyframes chipFill {
+        from {
+            color: transparent;
+            border-color: transparent;
+            background: transparent;
+        }
+        to {
+            color: var(--chip-c);
+            border-color: var(--chip-bd);
+            background: var(--chip-bg);
+        }
+    }
+    @keyframes chipLvlFill {
+        from {
+            color: transparent;
+            border-left-color: transparent;
+        }
+        to {
+            color: var(--chip-lvl);
+            border-left-color: var(--chip-lvl-bd);
+        }
+    }
+    /* Per-chip stagger by index; fill starts as the draw is finishing. */
+    .how .reveal-chips.in .chip::after {
+        animation: chipDraw 0.5s ease both;
+        animation-delay: calc(var(--i, 0) * 60ms);
+    }
+    /* `backwards` (not forwards): holds the transparent start during the delay,
      then releases to the resting style so :hover keeps working afterwards. */
-  .how .reveal-chips.in .chip {
-    animation: chipFill .34s ease backwards;
-    animation-delay: calc(var(--i, 0) * 60ms + .22s);
-  }
-  .how .reveal-chips.in .chip :global(.lvl) {
-    animation: chipLvlFill .34s ease backwards;
-    animation-delay: calc(var(--i, 0) * 60ms + .22s);
-  }
+    .how .reveal-chips.in .chip {
+        animation: chipFill 0.34s ease backwards;
+        animation-delay: calc(var(--i, 0) * 60ms + 0.22s);
+    }
+    .how .reveal-chips.in .chip :global(.lvl) {
+        animation: chipLvlFill 0.34s ease backwards;
+        animation-delay: calc(var(--i, 0) * 60ms + 0.22s);
+    }
 
-  @media (prefers-reduced-motion: reduce) {
-    /* No sweep, no stagger — chips are simply present at their resting style. */
-    .how .reveal-chips:not(.in) .chip,
-    .how .reveal-chips.in .chip { animation: none; color: var(--chip-c); border-color: var(--chip-bd); background: var(--chip-bg); }
-    .how .reveal-chips .chip :global(.lvl) { animation: none; color: var(--chip-lvl); border-left-color: var(--chip-lvl-bd); }
-    .how .chip::after { display: none; }
-  }
+    @media (prefers-reduced-motion: reduce) {
+        /* No sweep, no stagger — chips are simply present at their resting style. */
+        .how .reveal-chips:not(.in) .chip,
+        .how .reveal-chips.in .chip {
+            animation: none;
+            color: var(--chip-c);
+            border-color: var(--chip-bd);
+            background: var(--chip-bg);
+        }
+        .how .reveal-chips .chip :global(.lvl) {
+            animation: none;
+            color: var(--chip-lvl);
+            border-left-color: var(--chip-lvl-bd);
+        }
+        .how .chip::after {
+            display: none;
+        }
+    }
 
-  @media (max-width: 1100px) {
-    .how .row { grid-template-columns: 1fr; gap: 24px; }
-    .how .row .cat { position: static; }
-  }
-  @media (max-width: 720px) {
-    .how { padding-top: 80px; padding-bottom: 100px; }
-    .how h2 { font-size: clamp(48px, 12vw, 72px); }
-    .how .row { padding: 28px 0; }
-    .how .row .cat .label { font-size: clamp(28px, 8vw, 40px); }
-  }
+    @media (max-width: 1100px) {
+        .how .row {
+            grid-template-columns: 1fr;
+            gap: 24px;
+        }
+        .how .row .cat {
+            position: static;
+        }
+    }
+    @media (max-width: 720px) {
+        .how {
+            padding-top: 80px;
+            padding-bottom: 100px;
+        }
+        .how h2 {
+            font-size: clamp(48px, 12vw, 72px);
+        }
+        .how .row {
+            padding: 28px 0;
+        }
+        .how .row .cat .label {
+            font-size: clamp(28px, 8vw, 40px);
+        }
+    }
 </style>

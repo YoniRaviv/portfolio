@@ -1,21 +1,22 @@
 ---
-import { site, defaultSEO, personSchema, websiteSchema } from '@/content';
+import { site, defaultSEO, personSchema, websiteSchema } from "@/content";
 
 interface Props {
-  title?: string;
-  description?: string;
-  ogImage?: string;
+    title?: string;
+    description?: string;
+    ogImage?: string;
 }
 
 const {
-  title = defaultSEO.title,
-  description = defaultSEO.description,
-  ogImage = defaultSEO.ogImage,
+    title = defaultSEO.title,
+    description = defaultSEO.description,
+    ogImage = defaultSEO.ogImage,
 } = Astro.props;
 
 const canonical = new URL(Astro.url.pathname, site.url).href;
 const absoluteOgImage = new URL(ogImage, site.url).href;
 ---
+
 <title>{title}</title>
 <meta name="description" content={description} />
 <meta name="author" content={site.name} />
@@ -42,5 +43,13 @@ const absoluteOgImage = new URL(ogImage, site.url).href;
 <meta name="theme-color" content="#151515" />
 <meta name="color-scheme" content="dark" />
 
-<script is:inline type="application/ld+json" set:html={JSON.stringify(personSchema)} />
-<script is:inline type="application/ld+json" set:html={JSON.stringify(websiteSchema)} />
+<script
+    is:inline
+    type="application/ld+json"
+    set:html={JSON.stringify(personSchema)}
+/>
+<script
+    is:inline
+    type="application/ld+json"
+    set:html={JSON.stringify(websiteSchema)}
+/>

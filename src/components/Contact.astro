@@ -1,94 +1,182 @@
 ---
-import { contact, socials } from '@/content';
+import { contact, socials } from "@/content";
 ---
-<section class="sec contact" id="contact" aria-labelledby="contact-title" tabindex="-1">
-  <div class="sec-label"><span class="num">{contact.label.num}</span><span class="lbl">{contact.label.text}</span></div>
-  <h2 id="contact-title" class="lead reveal-words" data-words set:html={contact.lead}></h2>
-  <a class="mail" href={`mailto:${contact.email}`}>{contact.email} ↗</a>
 
-  <div class="socials">
-    {socials.map((s) => (
-      <a href={s.href} target="_blank" rel="noopener">
-        <span class="k">{s.kicker}</span>
-        <span class="v">{s.kind} <span class="arrow">↗</span></span>
-        <span class="handle">{s.handle}</span>
-      </a>
-    ))}
-  </div>
+<section
+    class="sec contact"
+    id="contact"
+    aria-labelledby="contact-title"
+    tabindex="-1"
+>
+    <div class="sec-label">
+        <span class="num">{contact.label.num}</span><span class="lbl"
+            >{contact.label.text}</span>
+    </div>
+    <h2
+        id="contact-title"
+        class="lead reveal-words"
+        data-words
+        set:html={contact.lead}
+    />
+    <a class="mail" href={`mailto:${contact.email}`}>{contact.email} ↗</a>
+
+    <div class="socials">
+        {
+            socials.map((s) => (
+                <a href={s.href} target="_blank" rel="noopener">
+                    <span class="k">{s.kicker}</span>
+                    <span class="v">
+                        {s.kind} <span class="arrow">↗</span>
+                    </span>
+                    <span class="handle">{s.handle}</span>
+                </a>
+            ))
+        }
+    </div>
 </section>
 
 <style>
-  .contact { padding-top: 180px; padding-bottom: 140px; position: relative; overflow: hidden; }
-  .contact .lead {
-    font-family: var(--display); font-weight: 400;
-    font-size: clamp(64px, 10vw, 200px); line-height: 1.0; letter-spacing: .005em;
-    color: var(--text-bright);
-    max-width: 1300px;
-    text-transform: uppercase;
-  }
-  .contact .lead :global(em) { color: var(--accent); font-style: normal; }
-  .contact .mail {
-    display: inline-block; margin-top: 48px;
-    font-family: var(--display);
-    font-size: clamp(36px, 5vw, 80px); line-height: 1;
-    color: var(--text-bright); text-decoration: none;
-    position: relative;
-    letter-spacing: .005em;
-    text-transform: lowercase;
-    transition: color .3s;
-  }
-  .contact .mail::after {
-    content: ""; position: absolute; left: 0; right: 0; bottom: .1em; height: 2px;
-    background: var(--accent); transform: scaleX(0); transform-origin: left;
-    transition: transform .5s cubic-bezier(.2,.7,.2,1);
-  }
-  .contact .mail:hover { color: var(--accent); }
-  .contact .mail:hover::after { transform: scaleX(1); }
-
-  .contact .socials {
-    margin-top: 100px;
-    display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px;
-    background: rgba(191, 178, 155, .12);
-    border-top: 1px solid rgba(191, 178, 155, .12);
-    border-bottom: 1px solid rgba(191, 178, 155, .12);
-  }
-  .contact .socials a {
-    background: var(--main);
-    padding: 36px 28px;
-    display: flex; flex-direction: column; gap: 12px;
-    text-decoration: none;
-    position: relative; overflow: hidden;
-    transition: background .4s;
-  }
-  .contact .socials a:hover { background: #1a1a1a; }
-  .contact .socials a .k {
-    font-family: var(--mono); font-size: 10px; letter-spacing: .18em; text-transform: uppercase;
-    color: var(--text-dim);
-  }
-  .contact .socials a .v {
-    font-family: var(--display); font-size: 42px; color: var(--text-bright); line-height: 1;
-    text-transform: uppercase; letter-spacing: .01em;
-    display: flex; align-items: center; gap: 14px;
-  }
-  .contact .socials a .v .arrow { color: var(--accent); font-size: 24px; transition: transform .4s; }
-  .contact .socials a:hover .v .arrow { transform: translate(6px, -6px); }
-  .contact .socials a .handle {
-    font-family: var(--mono); font-size: 11px; color: var(--text);
-    letter-spacing: .04em; margin-top: 4px;
-  }
-
-  @media (max-width: 1100px) { .contact .socials { grid-template-columns: 1fr; } }
-  @media (max-width: 720px) {
-    .contact { padding-top: 100px; padding-bottom: 96px; }
-    .contact::before {
-      content: '';
-      position: absolute; inset: 0;
-      background: linear-gradient(to bottom, rgba(21,21,21,.55) 0%, rgba(21,21,21,.2) 35%, rgba(21,21,21,.95) 95%);
-      z-index: -1;
-      pointer-events: none;
+    .contact {
+        padding-top: 180px;
+        padding-bottom: 140px;
+        position: relative;
+        overflow: hidden;
     }
-    .contact .lead { font-size: clamp(56px, 16vw, 96px); }
-    .contact .mail { font-size: clamp(28px, 7vw, 44px); margin-top: 32px; }
-    .contact .socials a .v { font-size: 32px; }
-  }
+    .contact .lead {
+        font-family: var(--display);
+        font-weight: 400;
+        font-size: clamp(64px, 10vw, 200px);
+        line-height: 1;
+        letter-spacing: 0.005em;
+        color: var(--text-bright);
+        max-width: 1300px;
+        text-transform: uppercase;
+    }
+    .contact .lead :global(em) {
+        color: var(--accent);
+        font-style: normal;
+    }
+    .contact .mail {
+        display: inline-block;
+        margin-top: 48px;
+        font-family: var(--display);
+        font-size: clamp(36px, 5vw, 80px);
+        line-height: 1;
+        color: var(--text-bright);
+        text-decoration: none;
+        position: relative;
+        letter-spacing: 0.005em;
+        text-transform: lowercase;
+        transition: color 0.3s;
+    }
+    .contact .mail::after {
+        content: "";
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0.1em;
+        height: 2px;
+        background: var(--accent);
+        transform: scaleX(0);
+        transform-origin: left;
+        transition: transform 0.5s cubic-bezier(0.2, 0.7, 0.2, 1);
+    }
+    .contact .mail:hover {
+        color: var(--accent);
+    }
+    .contact .mail:hover::after {
+        transform: scaleX(1);
+    }
+
+    .contact .socials {
+        margin-top: 100px;
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1px;
+        background: rgba(191, 178, 155, 0.12);
+        border-top: 1px solid rgba(191, 178, 155, 0.12);
+        border-bottom: 1px solid rgba(191, 178, 155, 0.12);
+    }
+    .contact .socials a {
+        background: var(--main);
+        padding: 36px 28px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        text-decoration: none;
+        position: relative;
+        overflow: hidden;
+        transition: background 0.4s;
+    }
+    .contact .socials a:hover {
+        background: #1a1a1a;
+    }
+    .contact .socials a .k {
+        font-family: var(--mono);
+        font-size: 10px;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        color: var(--text-dim);
+    }
+    .contact .socials a .v {
+        font-family: var(--display);
+        font-size: 42px;
+        color: var(--text-bright);
+        line-height: 1;
+        text-transform: uppercase;
+        letter-spacing: 0.01em;
+        display: flex;
+        align-items: center;
+        gap: 14px;
+    }
+    .contact .socials a .v .arrow {
+        color: var(--accent);
+        font-size: 24px;
+        transition: transform 0.4s;
+    }
+    .contact .socials a:hover .v .arrow {
+        transform: translate(6px, -6px);
+    }
+    .contact .socials a .handle {
+        font-family: var(--mono);
+        font-size: 11px;
+        color: var(--text);
+        letter-spacing: 0.04em;
+        margin-top: 4px;
+    }
+
+    @media (max-width: 1100px) {
+        .contact .socials {
+            grid-template-columns: 1fr;
+        }
+    }
+    @media (max-width: 720px) {
+        .contact {
+            padding-top: 100px;
+            padding-bottom: 96px;
+        }
+        .contact::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(
+                to bottom,
+                rgba(21, 21, 21, 0.55) 0%,
+                rgba(21, 21, 21, 0.2) 35%,
+                rgba(21, 21, 21, 0.95) 95%
+            );
+            z-index: -1;
+            pointer-events: none;
+        }
+        .contact .lead {
+            font-size: clamp(56px, 16vw, 96px);
+        }
+        .contact .mail {
+            font-size: clamp(28px, 7vw, 44px);
+            margin-top: 32px;
+        }
+        .contact .socials a .v {
+            font-size: 32px;
+        }
+    }
 </style>

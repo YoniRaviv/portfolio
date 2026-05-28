@@ -1,167 +1,259 @@
 ---
-import { who } from '@/content';
+import { who } from "@/content";
 ---
-<section class="sec who" id="who" aria-labelledby="who-title" tabindex="-1">
-  <div class="sec-label"><span class="num">{who.label.num}</span><span class="lbl">{who.label.text}</span></div>
-  <h2 id="who-title" class="visually-hidden">{who.label.text}</h2>
-  <div class="quote-stack" data-quote-reveal data-cursor="reveal">
-    <p class="quote reveal-words" data-words set:html={who.quote}></p>
-    <p class="quote-alt" aria-hidden="true" set:html={who.quoteAlt}></p>
-  </div>
 
-  <div class="meta-grid reveal-cells">
-    {who.cells.map((cell, i) => (
-      <div class="cell" style={`--i:${i}`}>
-        <span class="k">{cell.k}</span>
-        <span class="v">{cell.v}</span>
-        <span class="vs">{cell.vs}</span>
-      </div>
-    ))}
-  </div>
+<section class="sec who" id="who" aria-labelledby="who-title" tabindex="-1">
+    <div class="sec-label">
+        <span class="num">{who.label.num}</span><span class="lbl"
+            >{who.label.text}</span>
+    </div>
+    <h2 id="who-title" class="visually-hidden">{who.label.text}</h2>
+    <div class="quote-stack" data-quote-reveal data-cursor="reveal">
+        <p class="quote reveal-words" data-words set:html={who.quote} />
+        <p class="quote-alt" aria-hidden="true" set:html={who.quoteAlt} />
+    </div>
+
+    <div class="meta-grid reveal-cells">
+        {
+            who.cells.map((cell, i) => (
+                <div class="cell" style={`--i:${i}`}>
+                    <span class="k">{cell.k}</span>
+                    <span class="v">{cell.v}</span>
+                    <span class="vs">{cell.vs}</span>
+                </div>
+            ))
+        }
+    </div>
 </section>
 
 <style>
-  .visually-hidden {
-    position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
-    overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0;
-  }
-  .who { padding-top: 200px; padding-bottom: 200px; position: relative; }
-  /* Two stacked paragraphs share the same metrics. The cream original is
+    .visually-hidden {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border: 0;
+    }
+    .who {
+        padding-top: 200px;
+        padding-bottom: 200px;
+        position: relative;
+    }
+    /* Two stacked paragraphs share the same metrics. The cream original is
      punched out within a soft radial mask centred on the cursor; the alt
      paragraph (a candid, off-the-record version of the same statement) is
      visible only within that same mask — so the cursor "reveals" a hidden
      story beneath the polished one. */
-  .who .quote-stack {
-    position: relative;
-    max-width: 1400px;
-    --qx: -1000px;
-    --qy: -1000px;
-    --reveal-radius: 200px;
-  }
-  .who .quote,
-  .who .quote-alt {
-    font-family: var(--display); font-weight: 400;
-    font-size: clamp(40px, 5.5vw, 90px);
-    line-height: 1.15;
-    letter-spacing: .01em;
-    text-transform: uppercase;
-    max-width: 1400px;
-  }
-  .who .quote { color: var(--text-bright); }
-  .who .quote :global(em) {
-    color: var(--accent);
-    font-style: normal;
-    display: inline-block;
-    font-variant-numeric: tabular-nums;
-  }
-  .who .quote-alt {
-    position: absolute; inset: 0;
-    color: var(--text);
-    pointer-events: none;
-    opacity: 0;
-    transition: opacity .25s ease;
-    -webkit-mask-image: radial-gradient(
-      circle var(--reveal-radius) at var(--qx) var(--qy),
-      black 0%, black 92%, transparent 100%
-    );
-            mask-image: radial-gradient(
-      circle var(--reveal-radius) at var(--qx) var(--qy),
-      black 0%, black 92%, transparent 100%
-    );
-  }
-  .who .quote-alt :global(em) {
-    color: var(--accent);
-    font-style: normal;
-    display: inline-block;
-    font-variant-numeric: tabular-nums;
-  }
-  .who .quote-stack:hover .quote-alt { opacity: 1; }
-  .who .quote-stack:hover .quote {
-    -webkit-mask-image: radial-gradient(
-      circle var(--reveal-radius) at var(--qx) var(--qy),
-      transparent 0%, transparent 92%, black 100%
-    );
-            mask-image: radial-gradient(
-      circle var(--reveal-radius) at var(--qx) var(--qy),
-      transparent 0%, transparent 92%, black 100%
-    );
-  }
-  .who .meta-grid {
-    margin-top: 120px;
-    display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px;
-    background: rgba(191, 178, 155, .12);
-    border-top: 1px solid rgba(191, 178, 155, .12);
-    border-bottom: 1px solid rgba(191, 178, 155, .12);
-  }
-  .who .meta-grid .cell {
-    background: var(--main); padding: 32px 28px;
-    display: flex; flex-direction: column; gap: 12px;
-    min-height: 180px;
-    position: relative;
-  }
-  .who .meta-grid .cell .k {
-    font-family: var(--mono); font-size: 10px; letter-spacing: .2em; text-transform: uppercase;
-    color: var(--text-dim);
-  }
-  .who .meta-grid .cell .v {
-    font-family: var(--display); font-weight: 400; font-size: 48px; color: var(--text-bright);
-    line-height: 1; text-transform: uppercase; letter-spacing: .01em;
-    display: inline-block;
-    min-width: 4ch;
-    font-variant-numeric: tabular-nums;
-    white-space: nowrap;
-    overflow: hidden;
-  }
-  .who .meta-grid .cell .vs { font-family: var(--sans); font-size: 14px; color: var(--text); line-height: 1.5; }
+    .who .quote-stack {
+        position: relative;
+        max-width: 1400px;
+        --qx: -1000px;
+        --qy: -1000px;
+        --reveal-radius: 200px;
+    }
+    .who .quote,
+    .who .quote-alt {
+        font-family: var(--display);
+        font-weight: 400;
+        font-size: clamp(40px, 5.5vw, 90px);
+        line-height: 1.15;
+        letter-spacing: 0.01em;
+        text-transform: uppercase;
+        max-width: 1400px;
+    }
+    .who .quote {
+        color: var(--text-bright);
+    }
+    .who .quote :global(em) {
+        color: var(--accent);
+        font-style: normal;
+        display: inline-block;
+        font-variant-numeric: tabular-nums;
+    }
+    .who .quote-alt {
+        position: absolute;
+        inset: 0;
+        color: var(--text);
+        pointer-events: none;
+        opacity: 0;
+        transition: opacity 0.25s ease;
+        -webkit-mask-image: radial-gradient(
+            circle var(--reveal-radius) at var(--qx) var(--qy),
+            black 0%,
+            black 92%,
+            transparent 100%
+        );
+        mask-image: radial-gradient(
+            circle var(--reveal-radius) at var(--qx) var(--qy),
+            black 0%,
+            black 92%,
+            transparent 100%
+        );
+    }
+    .who .quote-alt :global(em) {
+        color: var(--accent);
+        font-style: normal;
+        display: inline-block;
+        font-variant-numeric: tabular-nums;
+    }
+    .who .quote-stack:hover .quote-alt {
+        opacity: 1;
+    }
+    .who .quote-stack:hover .quote {
+        -webkit-mask-image: radial-gradient(
+            circle var(--reveal-radius) at var(--qx) var(--qy),
+            transparent 0%,
+            transparent 92%,
+            black 100%
+        );
+        mask-image: radial-gradient(
+            circle var(--reveal-radius) at var(--qx) var(--qy),
+            transparent 0%,
+            transparent 92%,
+            black 100%
+        );
+    }
+    .who .meta-grid {
+        margin-top: 120px;
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 1px;
+        background: rgba(191, 178, 155, 0.12);
+        border-top: 1px solid rgba(191, 178, 155, 0.12);
+        border-bottom: 1px solid rgba(191, 178, 155, 0.12);
+    }
+    .who .meta-grid .cell {
+        background: var(--main);
+        padding: 32px 28px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        min-height: 180px;
+        position: relative;
+    }
+    .who .meta-grid .cell .k {
+        font-family: var(--mono);
+        font-size: 10px;
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+        color: var(--text-dim);
+    }
+    .who .meta-grid .cell .v {
+        font-family: var(--display);
+        font-weight: 400;
+        font-size: 48px;
+        color: var(--text-bright);
+        line-height: 1;
+        text-transform: uppercase;
+        letter-spacing: 0.01em;
+        display: inline-block;
+        min-width: 4ch;
+        font-variant-numeric: tabular-nums;
+        white-space: nowrap;
+        overflow: hidden;
+    }
+    .who .meta-grid .cell .vs {
+        font-family: var(--sans);
+        font-size: 14px;
+        color: var(--text);
+        line-height: 1.5;
+    }
 
-  /* ─── meta-cell reveal: accent outline sweeps in, then content fills ─── */
-  /* Same cyberpunk treatment as the How chips. reveal.ts adds .in to the grid
+    /* ─── meta-cell reveal: accent outline sweeps in, then content fills ─── */
+    /* Same cyberpunk treatment as the How chips. reveal.ts adds .in to the grid
      when it scrolls in; cells stagger left→right by --i. */
-  .who .reveal-cells:not(.in) .cell .k,
-  .who .reveal-cells:not(.in) .cell .v,
-  .who .reveal-cells:not(.in) .cell .vs { opacity: 0; }
-  /* The drawing outline — sweeps across each cell, then fades as content lands. */
-  .who .meta-grid .cell::after {
-    content: ""; position: absolute; inset: 0;
-    border: 1px solid var(--accent);
-    clip-path: inset(0 100% 0 0); opacity: 0; pointer-events: none;
-    z-index: 1;
-  }
-  @keyframes cellDraw {
-    0%   { clip-path: inset(0 100% 0 0); opacity: 1; }
-    55%  { clip-path: inset(0 0 0 0);    opacity: 1; }
-    100% { clip-path: inset(0 0 0 0);    opacity: 0; }
-  }
-  @keyframes cellContentIn {
-    from { opacity: 0; transform: translateY(8px); }
-    to   { opacity: 1; transform: translateY(0); }
-  }
-  .who .reveal-cells.in .cell::after {
-    animation: cellDraw .55s ease both;
-    animation-delay: calc(var(--i, 0) * 110ms);
-  }
-  /* `backwards`: hold the hidden start through the stagger delay, then release
+    .who .reveal-cells:not(.in) .cell .k,
+    .who .reveal-cells:not(.in) .cell .v,
+    .who .reveal-cells:not(.in) .cell .vs {
+        opacity: 0;
+    }
+    /* The drawing outline — sweeps across each cell, then fades as content lands. */
+    .who .meta-grid .cell::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        border: 1px solid var(--accent);
+        clip-path: inset(0 100% 0 0);
+        opacity: 0;
+        pointer-events: none;
+        z-index: 1;
+    }
+    @keyframes cellDraw {
+        0% {
+            clip-path: inset(0 100% 0 0);
+            opacity: 1;
+        }
+        55% {
+            clip-path: inset(0 0 0 0);
+            opacity: 1;
+        }
+        100% {
+            clip-path: inset(0 0 0 0);
+            opacity: 0;
+        }
+    }
+    @keyframes cellContentIn {
+        from {
+            opacity: 0;
+            transform: translateY(8px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    .who .reveal-cells.in .cell::after {
+        animation: cellDraw 0.55s ease both;
+        animation-delay: calc(var(--i, 0) * 110ms);
+    }
+    /* `backwards`: hold the hidden start through the stagger delay, then release
      to the resting style (content sits at opacity 1, hover untouched). */
-  .who .reveal-cells.in .cell .k,
-  .who .reveal-cells.in .cell .v,
-  .who .reveal-cells.in .cell .vs {
-    animation: cellContentIn .42s cubic-bezier(.2,.7,.2,1) backwards;
-    animation-delay: calc(var(--i, 0) * 110ms + .26s);
-  }
+    .who .reveal-cells.in .cell .k,
+    .who .reveal-cells.in .cell .v,
+    .who .reveal-cells.in .cell .vs {
+        animation: cellContentIn 0.42s cubic-bezier(0.2, 0.7, 0.2, 1) backwards;
+        animation-delay: calc(var(--i, 0) * 110ms + 0.26s);
+    }
 
-  @media (prefers-reduced-motion: reduce) {
-    .who .reveal-cells .cell .k,
-    .who .reveal-cells .cell .v,
-    .who .reveal-cells .cell .vs { opacity: 1; animation: none; }
-    .who .meta-grid .cell::after { display: none; }
-  }
+    @media (prefers-reduced-motion: reduce) {
+        .who .reveal-cells .cell .k,
+        .who .reveal-cells .cell .v,
+        .who .reveal-cells .cell .vs {
+            opacity: 1;
+            animation: none;
+        }
+        .who .meta-grid .cell::after {
+            display: none;
+        }
+    }
 
-  @media (max-width: 1100px) { .who .meta-grid { grid-template-columns: repeat(2, 1fr); } }
-  @media (max-width: 720px) {
-    .who { padding-top: 100px; padding-bottom: 100px; }
-    .who .meta-grid { grid-template-columns: 1fr; }
-    .who .meta-grid .cell { min-height: 140px; padding: 24px 20px; }
-    .who .meta-grid .cell .v { font-size: 40px; }
-    .who .quote { font-size: clamp(32px, 8vw, 52px); line-height: 1.1; }
-  }
+    @media (max-width: 1100px) {
+        .who .meta-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+    @media (max-width: 720px) {
+        .who {
+            padding-top: 100px;
+            padding-bottom: 100px;
+        }
+        .who .meta-grid {
+            grid-template-columns: 1fr;
+        }
+        .who .meta-grid .cell {
+            min-height: 140px;
+            padding: 24px 20px;
+        }
+        .who .meta-grid .cell .v {
+            font-size: 40px;
+        }
+        .who .quote {
+            font-size: clamp(32px, 8vw, 52px);
+            line-height: 1.1;
+        }
+    }
 </style>

@@ -14,294 +14,298 @@ import Placeholder from "./Placeholder.astro";
 ---
 
 <div class="hud" aria-hidden="true">
-  <span class="bracket tl"></span>
-  <span class="bracket tr"></span>
-  <span class="bracket bl"></span>
-  <span class="bracket br"></span>
+    <span class="bracket tl"></span>
+    <span class="bracket tr"></span>
+    <span class="bracket bl"></span>
+    <span class="bracket br"></span>
 
-  <!-- Recalibration sweep (the old scanline, kept — it's atmosphere, not data). -->
-  <span class="scanline"></span>
+    <!-- Recalibration sweep (the old scanline, kept — it's atmosphere, not data). -->
+    <span class="scanline"></span>
 
-  <Placeholder />
+    <Placeholder />
 
-  <!-- The one honest readout: mask attitude, driven live by HeroScene.ts.
+    <!-- The one honest readout: mask attitude, driven live by HeroScene.ts.
        Defaults read 0.0° for the pre-load / reduced-motion state (where the
        scene never runs and these never update). -->
-  <div class="readout">
-    <span class="r-label">// Track</span>
-    <span class="r-row"
-      ><span class="k">Yaw</span><span class="v" id="hud-yaw">0.0°</span></span
-    >
-    <span class="r-row"
-      ><span class="k">Pitch</span><span class="v" id="hud-pitch">0.0°</span
-      ></span
-    >
-    <span class="r-row live"><span class="dot"></span><span>Live</span></span>
-  </div>
+    <div class="readout">
+        <span class="r-label">// Track</span>
+        <span class="r-row"
+            ><span class="k">Yaw</span><span class="v" id="hud-yaw">0.0°</span
+            ></span
+        >
+        <span class="r-row"
+            ><span class="k">Pitch</span><span class="v" id="hud-pitch"
+                >0.0°</span
+            ></span
+        >
+        <span class="r-row live"
+            ><span class="dot"></span><span>Live</span></span
+        >
+    </div>
 </div>
 
 <script>
-  // Mouse parallax: pushes --mx/--my into the .hud element. Each HUD layer
-  // multiplies these by a different magnitude to create a sense of depth.
-  const hud = document.querySelector(".hud") as HTMLElement | null;
-  if (hud && !matchMedia("(prefers-reduced-motion: reduce)").matches) {
-    let tx = 0,
-      ty = 0,
-      mx = 0,
-      my = 0;
-    let raf = 0;
-    const loop = (): void => {
-      mx += (tx - mx) * 0.06;
-      my += (ty - my) * 0.06;
-      hud.style.setProperty("--mx", mx.toFixed(3));
-      hud.style.setProperty("--my", my.toFixed(3));
-      if (Math.abs(tx - mx) > 0.0005 || Math.abs(ty - my) > 0.0005) {
-        raf = requestAnimationFrame(loop);
-      } else {
-        raf = 0;
-      }
-    };
-    window.addEventListener(
-      "pointermove",
-      (e) => {
-        tx = (e.clientX / window.innerWidth - 0.5) * 2;
-        ty = (e.clientY / window.innerHeight - 0.5) * 2;
-        if (!raf) raf = requestAnimationFrame(loop);
-      },
-      { passive: true },
-    );
-  }
+    // Mouse parallax: pushes --mx/--my into the .hud element. Each HUD layer
+    // multiplies these by a different magnitude to create a sense of depth.
+    const hud = document.querySelector(".hud") as HTMLElement | null;
+    if (hud && !matchMedia("(prefers-reduced-motion: reduce)").matches) {
+        let tx = 0,
+            ty = 0,
+            mx = 0,
+            my = 0;
+        let raf = 0;
+        const loop = (): void => {
+            mx += (tx - mx) * 0.06;
+            my += (ty - my) * 0.06;
+            hud.style.setProperty("--mx", mx.toFixed(3));
+            hud.style.setProperty("--my", my.toFixed(3));
+            if (Math.abs(tx - mx) > 0.0005 || Math.abs(ty - my) > 0.0005) {
+                raf = requestAnimationFrame(loop);
+            } else {
+                raf = 0;
+            }
+        };
+        window.addEventListener(
+            "pointermove",
+            (e) => {
+                tx = (e.clientX / window.innerWidth - 0.5) * 2;
+                ty = (e.clientY / window.innerHeight - 0.5) * 2;
+                if (!raf) raf = requestAnimationFrame(loop);
+            },
+            { passive: true },
+        );
+    }
 </script>
 
 <style>
-  /* .hud spans the SAME region as the 3D stage (left:30% on desktop), so
+    /* .hud spans the SAME region as the 3D stage (left:30% on desktop), so
      every % inside is relative to the mask area instead of the whole hero.
      That keeps brackets and labels glued to the mask at any viewport size,
      and removes the need for per-breakpoint position overrides. */
-  .hud {
-    position: absolute;
-    top: 0;
-    right: 0;
-    bottom: 0;
-    left: 30%;
-    z-index: 3;
-    pointer-events: none;
-    /* Containment context — lets child `cqh` units (scanline travel, rail
+    .hud {
+        position: absolute;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        left: 30%;
+        z-index: 3;
+        pointer-events: none;
+        /* Containment context — lets child `cqh` units (scanline travel, rail
        height) scale with the HUD's own height without per-breakpoint overrides. */
-    container-type: size;
-    --hud-top: 10%;
-    --hud-bottom: 20%;
-    --hud-left: 18%;
-    --hud-right: 6%;
-    --mx: 0;
-    --my: 0;
-    color: var(--text-dim);
-    font-family: var(--mono);
-    font-size: clamp(9px, 0.9vw, 11px);
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
-  }
+        container-type: size;
+        --hud-top: 10%;
+        --hud-bottom: 20%;
+        --hud-left: 18%;
+        --hud-right: 6%;
+        --mx: 0;
+        --my: 0;
+        color: var(--text-dim);
+        font-family: var(--mono);
+        font-size: clamp(9px, 0.9vw, 11px);
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+    }
 
-  /* ── Corner brackets (deepest parallax layer) ────────────────── */
-  .bracket {
-    position: absolute;
-    width: 22px;
-    height: 22px;
-    border: 1px solid rgba(191, 178, 155, 0.35);
-    opacity: 0;
-    animation: hudFadeIn 0.9s cubic-bezier(0.2, 0.7, 0.2, 1) forwards;
-    animation-delay: 1s;
-    translate: calc(var(--mx) * -4px) calc(var(--my) * -3px);
-    transition: translate 0.12s linear;
-  }
-  .bracket.tl {
-    top: var(--hud-top);
-    left: var(--hud-left);
-    border-right: 0;
-    border-bottom: 0;
-  }
-  .bracket.tr {
-    top: var(--hud-top);
-    right: var(--hud-right);
-    border-left: 0;
-    border-bottom: 0;
-    animation-delay: 1.05s;
-  }
-  .bracket.bl {
-    bottom: var(--hud-bottom);
-    left: var(--hud-left);
-    border-right: 0;
-    border-top: 0;
-    animation-delay: 1.1s;
-  }
-  .bracket.br {
-    bottom: var(--hud-bottom);
-    right: var(--hud-right);
-    border-left: 0;
-    border-top: 0;
-    animation-delay: 1.15s;
-  }
+    /* ── Corner brackets (deepest parallax layer) ────────────────── */
+    .bracket {
+        position: absolute;
+        width: 22px;
+        height: 22px;
+        border: 1px solid rgba(191, 178, 155, 0.35);
+        opacity: 0;
+        animation: hudFadeIn 0.9s cubic-bezier(0.2, 0.7, 0.2, 1) forwards;
+        animation-delay: 1s;
+        translate: calc(var(--mx) * -4px) calc(var(--my) * -3px);
+        transition: translate 0.12s linear;
+    }
+    .bracket.tl {
+        top: var(--hud-top);
+        left: var(--hud-left);
+        border-right: 0;
+        border-bottom: 0;
+    }
+    .bracket.tr {
+        top: var(--hud-top);
+        right: var(--hud-right);
+        border-left: 0;
+        border-bottom: 0;
+        animation-delay: 1.05s;
+    }
+    .bracket.bl {
+        bottom: var(--hud-bottom);
+        left: var(--hud-left);
+        border-right: 0;
+        border-top: 0;
+        animation-delay: 1.1s;
+    }
+    .bracket.br {
+        bottom: var(--hud-bottom);
+        right: var(--hud-right);
+        border-left: 0;
+        border-top: 0;
+        animation-delay: 1.15s;
+    }
 
-  /* ── Recalibration sweep (no parallax — its own animation owns transform) ── */
-  .scanline {
-    position: absolute;
-    left: var(--hud-left);
-    right: var(--hud-right);
-    top: var(--hud-top);
-    height: 1px;
-    background: linear-gradient(
-      to right,
-      transparent 0%,
-      rgba(255, 111, 89, 0.45) 25%,
-      rgba(255, 111, 89, 0.65) 50%,
-      rgba(255, 111, 89, 0.45) 75%,
-      transparent 100%
-    );
-    box-shadow: 0 0 6px rgba(255, 111, 89, 0.35);
-    opacity: 0;
-    animation: scanSweep 7s cubic-bezier(0.5, 0, 0.5, 1) infinite;
-    animation-delay: 2s;
-    /* 70% of HUD height — matches the bracket frame (100 - hud-top - hud-bottom).
+    /* ── Recalibration sweep (no parallax — its own animation owns transform) ── */
+    .scanline {
+        position: absolute;
+        left: var(--hud-left);
+        right: var(--hud-right);
+        top: var(--hud-top);
+        height: 1px;
+        background: linear-gradient(
+            to right,
+            transparent 0%,
+            rgba(255, 111, 89, 0.45) 25%,
+            rgba(255, 111, 89, 0.65) 50%,
+            rgba(255, 111, 89, 0.45) 75%,
+            transparent 100%
+        );
+        box-shadow: 0 0 6px rgba(255, 111, 89, 0.35);
+        opacity: 0;
+        animation: scanSweep 7s cubic-bezier(0.5, 0, 0.5, 1) infinite;
+        animation-delay: 2s;
+        /* 70% of HUD height — matches the bracket frame (100 - hud-top - hud-bottom).
        cqh = % of nearest container; scales automatically with HUD on any viewport. */
-    --scan-travel: 70cqh;
-  }
-  @keyframes scanSweep {
-    0% {
-      transform: translateY(0);
-      opacity: 0;
+        --scan-travel: 70cqh;
     }
-    8% {
-      opacity: 0.8;
+    @keyframes scanSweep {
+        0% {
+            transform: translateY(0);
+            opacity: 0;
+        }
+        8% {
+            opacity: 0.8;
+        }
+        50% {
+            transform: translateY(var(--scan-travel));
+            opacity: 0.8;
+        }
+        92% {
+            opacity: 0.8;
+        }
+        100% {
+            transform: translateY(0);
+            opacity: 0;
+        }
     }
-    50% {
-      transform: translateY(var(--scan-travel));
-      opacity: 0.8;
-    }
-    92% {
-      opacity: 0.8;
-    }
-    100% {
-      transform: translateY(0);
-      opacity: 0;
-    }
-  }
 
-  /* ── Honest readout (closest layer) ──────────────────────────── */
-  .readout {
-    position: absolute;
-    bottom: calc(var(--hud-bottom) + 32px);
-    right: calc(var(--hud-right) + 32px);
-    display: flex;
-    flex-direction: column;
-    gap: 5px;
-    align-items: flex-end;
-    text-align: right;
-    opacity: 0;
-    transform: translateY(6px);
-    transition:
-      opacity 0.7s ease,
-      transform 0.7s cubic-bezier(0.2, 0.7, 0.2, 1),
-      translate 0.12s linear;
-    translate: calc(var(--mx) * -8px) calc(var(--my) * -6px);
-  }
-  .readout .r-label {
-    color: var(--text-dim);
-    letter-spacing: 0.2em;
-    margin-bottom: 2px;
-  }
-  .readout .r-row {
-    display: flex;
-    gap: 12px;
-    justify-content: flex-end;
-    align-items: center;
-  }
-  .readout .k {
-    color: var(--text-dim);
-  }
-  .readout .v {
-    color: var(--text);
-    font-variant-numeric: tabular-nums;
-    min-width: 6ch;
-    text-align: right;
-  }
-  .readout .live {
-    color: var(--text-dim);
-    gap: 8px;
-  }
-  .readout .live .dot {
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background: var(--accent);
-    box-shadow: 0 0 6px var(--accent);
-    animation: dotPulse 2.2s ease-in-out infinite;
-  }
+    /* ── Honest readout (closest layer) ──────────────────────────── */
+    .readout {
+        position: absolute;
+        bottom: calc(var(--hud-bottom) + 32px);
+        right: calc(var(--hud-right) + 32px);
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+        align-items: flex-end;
+        text-align: right;
+        opacity: 0;
+        transform: translateY(6px);
+        transition:
+            opacity 0.7s ease,
+            transform 0.7s cubic-bezier(0.2, 0.7, 0.2, 1),
+            translate 0.12s linear;
+        translate: calc(var(--mx) * -8px) calc(var(--my) * -6px);
+    }
+    .readout .r-label {
+        color: var(--text-dim);
+        letter-spacing: 0.2em;
+        margin-bottom: 2px;
+    }
+    .readout .r-row {
+        display: flex;
+        gap: 12px;
+        justify-content: flex-end;
+        align-items: center;
+    }
+    .readout .k {
+        color: var(--text-dim);
+    }
+    .readout .v {
+        color: var(--text);
+        font-variant-numeric: tabular-nums;
+        min-width: 6ch;
+        text-align: right;
+    }
+    .readout .live {
+        color: var(--text-dim);
+        gap: 8px;
+    }
+    .readout .live .dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: var(--accent);
+        box-shadow: 0 0 6px var(--accent);
+        animation: dotPulse 2.2s ease-in-out infinite;
+    }
 
-  /* ── Keyframes ───────────────────────────────────────────────── */
-  @keyframes hudFadeIn {
-    from {
-      opacity: 0;
-      transform: translateY(4px);
+    /* ── Keyframes ───────────────────────────────────────────────── */
+    @keyframes hudFadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(4px);
+        }
+        to {
+            opacity: 1;
+            transform: none;
+        }
     }
-    to {
-      opacity: 1;
-      transform: none;
+    @keyframes dotPulse {
+        0%,
+        100% {
+            opacity: 1;
+            transform: scale(1);
+        }
+        50% {
+            opacity: 0.35;
+            transform: scale(0.6);
+        }
     }
-  }
-  @keyframes dotPulse {
-    0%,
-    100% {
-      opacity: 1;
-      transform: scale(1);
-    }
-    50% {
-      opacity: 0.35;
-      transform: scale(0.6);
-    }
-  }
 
-  /* Gate the readout on "mask is loaded" — it holds its hidden initial state
+    /* Gate the readout on "mask is loaded" — it holds its hidden initial state
      while the boot terminal shows, then settles in once HeroScene.ts mirrors
      the load flag onto <html>. Brackets and the scanline are intentionally
      NOT gated: they frame the loader from the start. */
-  :global([data-hero-loaded="true"]) .readout {
-    opacity: 1;
-    transform: none;
-    transition-delay: 0.35s;
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    .bracket,
-    .scanline,
-    .readout,
-    .readout .live .dot {
-      animation-duration: 0.01s !important;
-      animation-iteration-count: 1 !important;
-      transition-duration: 0.01s !important;
+    :global([data-hero-loaded="true"]) .readout {
+        opacity: 1;
+        transform: none;
+        transition-delay: 0.35s;
     }
-    .bracket,
-    .readout {
-      translate: 0 !important;
-    }
-  }
 
-  @media (max-width: 720px) {
-    /* On mobile the .stage is position:relative and sits at the top of the
+    @media (prefers-reduced-motion: reduce) {
+        .bracket,
+        .scanline,
+        .readout,
+        .readout .live .dot {
+            animation-duration: 0.01s !important;
+            animation-iteration-count: 1 !important;
+            transition-duration: 0.01s !important;
+        }
+        .bracket,
+        .readout {
+            translate: 0 !important;
+        }
+    }
+
+    @media (max-width: 720px) {
+        /* On mobile the .stage is position:relative and sits at the top of the
        hero after .hero's 100px padding-top. Pin the HUD over that same
        region so the brackets keep framing the mask. */
-    .hud {
-      --hud-top: 0%;
-      --hud-left: 6%;
-      top: 100px;
-      bottom: auto;
-      left: 0;
-      right: 0;
-      height: max(55vh, 380px);
-    }
-    /* Keep just the brackets + scanline; drop the readout (it has no live
+        .hud {
+            --hud-top: 0%;
+            --hud-left: 6%;
+            top: 100px;
+            bottom: auto;
+            left: 0;
+            right: 0;
+            height: max(55vh, 380px);
+        }
+        /* Keep just the brackets + scanline; drop the readout (it has no live
        scene to track at this scale anyway). */
-    .hud .readout {
-      display: none;
+        .hud .readout {
+            display: none;
+        }
     }
-  }
 </style>

@@ -6,7 +6,7 @@ export const site: SiteInfo = {
   shortName: 'YR',
   email: 'hello@yonathanraviv.com',
   jobTitle: 'Fullstack & AI Engineer',
-  location: 'Tel Aviv — Remote',
+  location: 'Tel Aviv',
   coords: '32.0853° N · 34.7818° E',
   twitter: '@yonathan_raviv',
   github: 'https://github.com/YoniRaviv',
