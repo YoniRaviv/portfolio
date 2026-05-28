@@ -39,16 +39,18 @@ const { title, description, route = 'home' } = Astro.props;
     <slot />
 
     <script>
-      import { mountReveal }       from '@/lib/reveal';
-      import { mountCursor }       from '@/lib/cursor';
-      import { mountActiveNav }    from '@/lib/active-nav';
-      import { mountSmoothScroll } from '@/lib/smooth-scroll';
-      import { mountNavMenu }      from '@/lib/nav-menu';
+      import { mountReveal }              from '@/lib/reveal';
+      import { mountCursor }              from '@/lib/cursor';
+      import { mountActiveNav }           from '@/lib/active-nav';
+      import { mountSmoothScroll }        from '@/lib/smooth-scroll';
+      import { mountNavMenu }             from '@/lib/nav-menu';
+      import { mountThoughtsTransition } from '@/lib/thoughts-transition';
       mountSmoothScroll();
       mountReveal();
       mountCursor();
       mountActiveNav();
       mountNavMenu();
+      mountThoughtsTransition();
     </script>
   </body>
 </html>
