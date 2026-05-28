@@ -3,7 +3,7 @@ import { site } from './site';
 
 export const contact = {
   label: { num: '05 / ', text: 'Contact' },
-  lead: "Let's <em>build</em> something.",
+  lead: "Let's <em>ship</em> something.",
   email: site.email,
 };
 
