@@ -62,7 +62,7 @@ const isoUpdated = (post.data.updated ?? post.data.date).toISOString();
             <time class="val" datetime={post.data.updated.toISOString()}>{fmtDate(post.data.updated)}</time>
           </>
         )}
-        <span class="label">// PROGRESS</span>
+        <span class="label label-progress">// PROGRESS</span>
         <div class="progress-track"><div class="progress-fill" data-thought-progress></div></div>
       </aside>
 
@@ -150,13 +150,16 @@ const isoUpdated = (post.data.updated ?? post.data.date).toISOString();
   }
 
   /* ── 2-col body (rail + content) on desktop ────────────────────── */
+  /* `minmax(0, 1fr)` instead of `1fr` lets the content column shrink
+     below its intrinsic width — without this, a long <pre> or unbroken
+     inline token blows the grid wider than the viewport on mobile. */
   .thought-body {
     display: grid;
-    grid-template-columns: 140px 32px 1fr;
+    grid-template-columns: 140px 32px minmax(0, 1fr);
     margin-top: 24px;
   }
   @media (max-width: 900px) {
-    .thought-body { grid-template-columns: 1fr; }
+    .thought-body { grid-template-columns: minmax(0, 1fr); }
   }
 
   .rail {
@@ -216,20 +219,27 @@ const isoUpdated = (post.data.updated ?? post.data.date).toISOString();
       align-items: baseline;
     }
     .rail .label { margin-top: 0; }
-    .rail .progress-track { display: none; }
+    /* Hide the progress UI on mobile: the track is gone, and the lone
+       "// PROGRESS" label was just dead weight crowding the meta row. */
+    .rail .progress-track,
+    .rail .label-progress { display: none; }
   }
 
   .prose {
     grid-column: 3 / 4;
     max-width: 80ch;
+    /* min-width: 0 is a safety belt — even with minmax(0, 1fr) on the
+       grid track, grid items default to min-width: auto which can still
+       blow out with long pre/code content. */
+    min-width: 0;
     /* Centre within the wider grid column so the reading line stays
        comfortable while the page itself fills more of the viewport. */
     margin: 0 auto;
   }
   @media (max-width: 900px) {
-    .prose { 
-        grid-column: 1 / 2;
-        max-width: 40ch;
+    .prose {
+      grid-column: 1 / 2;
+      max-width: 100%;
     }
   }
 
@@ -339,6 +349,15 @@ const isoUpdated = (post.data.updated ?? post.data.date).toISOString();
     color: var(--accent);
     padding: 2px 5px;
     border-radius: 2px;
+    /* Long inline tokens like `<canvas id="stage">` shouldn't push the
+       column wider on narrow viewports — let them break anywhere. */
+    overflow-wrap: anywhere;
+  }
+  /* Paragraphs and list items: belt-and-suspenders break on absurdly
+     long unbroken words so nothing leaks past the column edge. */
+  .prose :global(p),
+  .prose :global(li) {
+    overflow-wrap: anywhere;
   }
 
   /* code blocks (Astro emits <pre class="astro-code" ...>) */
@@ -349,6 +368,7 @@ const isoUpdated = (post.data.updated ?? post.data.date).toISOString();
     padding: 14px 16px;
     margin: 18px 0;
     overflow-x: auto;
+    max-width: 100%;
     font-size: 13px;
     line-height: 1.55;
   }

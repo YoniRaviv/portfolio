@@ -52,7 +52,6 @@ const jsonLd = [blogIndexSchema(posts)];
                                 href={`/thoughts/${post.id}`}
                                 class="thi-row"
                                 data-thought-link
-                                data-cursor="reveal"
                             >
                                 <div class="meta-line">
                                     <span class="idx">
@@ -144,11 +143,41 @@ const jsonLd = [blogIndexSchema(posts)];
         border-top: 1px dashed rgba(191, 178, 155, 0.16);
     }
     .thi-row {
+        position: relative;
         display: block;
-        padding: 22px 0;
+        padding: 22px 16px 22px 16px;
+        margin: 0 -16px;
         border-bottom: 1px dashed rgba(191, 178, 155, 0.16);
         text-decoration: none;
         color: inherit;
+        transition: background-color 0.25s ease;
+    }
+    /* Thin accent stripe on the left edge, hidden at rest. Slides + fades
+       in on hover; cheaper-looking but louder than nothing. Reserved at
+       opacity 0 so the row doesn't shift on hover. */
+    .thi-row::before {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: 22px;
+        bottom: 22px;
+        width: 2px;
+        background: var(--accent);
+        opacity: 0;
+        transform: scaleY(0.4);
+        transform-origin: center;
+        transition:
+            opacity 0.25s ease,
+            transform 0.3s cubic-bezier(0.2, 0.7, 0.2, 1);
+    }
+    .thi-row:hover,
+    .thi-row:focus-visible {
+        background-color: rgba(255, 111, 89, 0.04);
+    }
+    .thi-row:hover::before,
+    .thi-row:focus-visible::before {
+        opacity: 1;
+        transform: scaleY(1);
     }
     .meta-line {
         display: flex;
