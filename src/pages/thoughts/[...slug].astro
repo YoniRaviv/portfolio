@@ -34,7 +34,7 @@ const isoUpdated = (post.data.updated ?? post.data.date).toISOString();
   <Nav />
   <article class="thought">
     <header class="thought-head">
-      <p class="crumb"><a href="/thoughts" data-thought-link>← THOUGHTS</a></p>
+      <p class="crumb"><a href="/thoughts" data-thought-link>THOUGHTS</a></p>
       <h1>{post.data.title}</h1>
       <p class="lede">{post.data.description}</p>
     </header>
@@ -72,7 +72,7 @@ const isoUpdated = (post.data.updated ?? post.data.date).toISOString();
     </div>
 
     <footer class="thought-foot">
-      <a href="/thoughts" class="back" data-thought-link>← MORE THOUGHTS</a>
+      <a href="/thoughts" class="back" data-thought-link>MORE THOUGHTS</a>
     </footer>
   </article>
   <Footer />
@@ -84,7 +84,7 @@ const isoUpdated = (post.data.updated ?? post.data.date).toISOString();
     position: relative;
     z-index: 10;
     padding: 160px var(--pad-x) 96px;
-    max-width: 1200px;
+    max-width: 1080px;
     margin: 0 auto;
   }
   @media (max-width: 900px) {
@@ -102,8 +102,23 @@ const isoUpdated = (post.data.updated ?? post.data.date).toISOString();
   .crumb a {
     color: var(--accent);
     text-decoration: none;
+    display: inline-flex;
+    align-items: baseline;
+    gap: 8px;
+  }
+  /* Render the back-arrow as a CSS prefix so we can give it explicit weight
+     and a bigger optical size — at 11px+0.18em letter-spacing the inline
+     U+2190 glyph in JetBrains Mono looks ghosted next to uppercase letters. */
+  .crumb a::before {
+    content: "\2190"; /* ← */
+    font-weight: 500;
+    font-size: 14px;
+    letter-spacing: 0;
+    line-height: 1;
+    color: var(--accent);
   }
   .crumb a:hover { color: var(--text-bright); }
+  .crumb a:hover::before { color: var(--text-bright); }
   h1 {
     font-family: var(--display);
     font-size: clamp(36px, 6.5vw, 56px);
@@ -206,13 +221,16 @@ const isoUpdated = (post.data.updated ?? post.data.date).toISOString();
 
   .prose {
     grid-column: 3 / 4;
-    max-width: 68ch;
+    max-width: 80ch;
     /* Centre within the wider grid column so the reading line stays
        comfortable while the page itself fills more of the viewport. */
     margin: 0 auto;
   }
   @media (max-width: 900px) {
-    .prose { grid-column: 1 / 2; }
+    .prose { 
+        grid-column: 1 / 2;
+        max-width: 40ch;
+    }
   }
 
   /* ── prose (markdown-rendered content) ─────────────────────────── */
@@ -356,6 +374,18 @@ const isoUpdated = (post.data.updated ?? post.data.date).toISOString();
     text-transform: uppercase;
     color: var(--accent);
     text-decoration: none;
+    display: inline-flex;
+    align-items: baseline;
+    gap: 8px;
+  }
+  .thought-foot .back::before {
+    content: "\2190"; /* ← */
+    font-weight: 500;
+    font-size: 15px;
+    letter-spacing: 0;
+    line-height: 1;
+    color: var(--accent);
   }
   .thought-foot .back:hover { color: var(--text-bright); }
+  .thought-foot .back:hover::before { color: var(--text-bright); }
 </style>
