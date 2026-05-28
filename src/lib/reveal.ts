@@ -142,7 +142,7 @@ function mountQuoteReveal(): void {
 export function mountReveal(): void {
   splitWords();
 
-  const revealEls = [...document.querySelectorAll<HTMLElement>('.reveal-words, .fade-up')];
+  const revealEls = [...document.querySelectorAll<HTMLElement>('.reveal-words, .fade-up, .reveal-chips, .reveal-cells')];
   const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   if (reduced) {

@@ -15,7 +15,7 @@ export const WHAT_RIG_START: Rig = {
   pos: { x: 0, y: 0.4, z: 0 },
   scale: 0.5,
   yawBias: 0,
-  pitchBias: 0.01,
+  pitchBias: -0.3,
   exposure: 1,
   fogDensity: 0.04,
   alpha: 1,

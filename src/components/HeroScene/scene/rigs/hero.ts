@@ -1,12 +1,29 @@
 import type { Rig, SectionRig } from '../types';
 
-// Canvas is full-viewport. The mask sits in the right portion of the
-// scene via stageGroup.position.x so the visible composition matches the
-// original right-70% framing while particles span the full page width.
-// At 16:9 a world-x of ~1.23 places the mask near viewport-65vw (the old
-// canvas centre); pos.x of 0 places it at viewport-50vw.
+// Where the mask centre should land in the viewport, in vw. The HUD
+// container is `left:30%; right:0` (70vw wide) with internal margins of
+// 18%/6%, so the HUD bracket centre sits at 30vw + ((18+94)/2)% × 70vw
+// = 69.2vw — independent of aspect (it's all percentages). World units
+// are NOT independent of aspect: a wider viewport fits more world units
+// horizontally, so a single hardcoded `pos.x` in world units can only
+// land the mask at the right vw on ONE screen aspect (this is why 1.23
+// looked centred on a 1700-wide laptop but felt off on a 1900-wide one).
+//
+// HeroScene.ts resize() recomputes `HERO_RIG.pos.x` from this target vw
+// and the live camera aspect on every layout — so the mask sits on the
+// HUD bracket on every laptop. Tune the placement by editing this
+// constant: lower = mask further LEFT in the viewport, higher = further
+// RIGHT. 69.2 = exact bracket centre; 72 nudges it slightly right of
+// centre.
+export const HERO_MASK_TARGET_VW = 69.2;
+
+// `pos.x` below is the fallback value used only before the first resize
+// fires (effectively never — resize() runs synchronously at scene init,
+// before currentRig is cloned). HeroScene.ts overwrites it from
+// HERO_MASK_TARGET_VW each layout. Do not tune the desktop horizontal
+// position by editing pos.x; edit HERO_MASK_TARGET_VW above.
 export const HERO_RIG: Rig = {
-  pos: { x: 1.23, y: 0.5, z: 0 },
+  pos: { x: 1.55, y: 0.5, z: 0 },
   scale: 1,
   yawBias: 0,
   pitchBias: -0.5,

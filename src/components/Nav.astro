@@ -1,194 +1,452 @@
 ---
-import { Image } from 'astro:assets';
-import logo from '@/assets/logo-yr-orange.png';
-import { navLinks } from '@/content';
+import { Image } from "astro:assets";
+import logo from "@/assets/logo-yr-orange.png";
+import { navLinks } from "@/content";
 
 const internalLinks = navLinks.filter((l) => !l.external);
 const externalLinks = navLinks.filter((l) => l.external);
 ---
+
 <nav class="top">
-  <a href="#hero" class="logo" aria-label="Home">
-    <Image src={logo} alt="YR monogram" class="logo-img" width={112} height={112} loading="eager" />
-    <span class="logo-text">Raviv.io</span>
-  </a>
-  <ul>
-    {navLinks.map((link) =>
-      link.external ? (
-        <li><a href={link.href} class="blog">{link.label}</a></li>
-      ) : (
-        <li><a href={link.href} data-anchor={link.anchor}>{link.label}</a></li>
-      )
-    )}
-  </ul>
-  <button
-    class="nav-toggle"
-    type="button"
-    aria-label="Open menu"
-    aria-expanded="false"
-    aria-controls="nav-overlay"
-  >
-    <span class="nt-glyph" aria-hidden="true"><i></i><i></i><i></i></span>
-  </button>
+    <a href="#hero" class="logo" aria-label="Home">
+        <Image
+            src={logo}
+            alt="YR monogram"
+            class="logo-img"
+            width={112}
+            height={112}
+            loading="eager"
+        />
+        <span class="logo-text">Raviv.io</span>
+    </a>
+    <ul>
+        {
+            navLinks.map((link) =>
+                link.external ? (
+                    <li>
+                        <a href={link.href} class="blog">
+                            {link.label}
+                        </a>
+                    </li>
+                ) : (
+                    <li>
+                        <a href={link.href} data-anchor={link.anchor}>
+                            {link.label}
+                        </a>
+                    </li>
+                ),
+            )
+        }
+    </ul>
+    <button
+        class="nav-toggle"
+        type="button"
+        aria-label="Open menu"
+        aria-expanded="false"
+        aria-controls="nav-overlay"
+    >
+        <span class="nt-glyph" aria-hidden="true"><i></i><i></i><i></i></span>
+    </button>
 </nav>
 
-<div class="nav-overlay" id="nav-overlay" role="dialog" aria-modal="true" aria-label="Site navigation" tabindex="-1" aria-hidden="true">
-  <ul class="ov-list">
-    {internalLinks.map((link, i) => (
-      <li style={`--i:${i}`}>
-        <a class="ov-link" href={link.href} data-anchor={link.anchor}>
-          <span class="ov-num">{String(i + 1).padStart(2, '0')}</span>
-          <span class="ov-label">{link.label}</span>
-        </a>
-      </li>
-    ))}
-  </ul>
-  <div class="ov-foot" style={`--i:${internalLinks.length}`}>
-    {externalLinks.map((link) => (
-      <a class="ov-link ov-blog" href={link.href}>{link.label}</a>
-    ))}
-    <div class="ov-status"><span class="cur">&gt;</span> SELECT_DESTINATION_</div>
-  </div>
+<div
+    class="nav-overlay"
+    id="nav-overlay"
+    role="dialog"
+    aria-modal="true"
+    aria-label="Site navigation"
+    tabindex="-1"
+    aria-hidden="true"
+>
+    <ul class="ov-list">
+        {
+            internalLinks.map((link, i) => (
+                <li style={`--i:${i}`}>
+                    <a
+                        class="ov-link"
+                        href={link.href}
+                        data-anchor={link.anchor}
+                    >
+                        <span class="ov-num">
+                            {String(i + 1).padStart(2, "0")}
+                        </span>
+                        <span class="ov-label">{link.label}</span>
+                    </a>
+                </li>
+            ))
+        }
+    </ul>
+    <div class="ov-foot" style={`--i:${internalLinks.length}`}>
+        {
+            externalLinks.map((link) => (
+                <a class="ov-link ov-blog" href={link.href}>
+                    {link.label}
+                </a>
+            ))
+        }
+        <div class="ov-status">
+            <span class="cur">&gt;</span> SELECT_DESTINATION_
+        </div>
+    </div>
 </div>
 
 <style>
-  nav.top {
-    position: fixed; top: 0; left: 0; right: 0; z-index: 50;
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 14px var(--pad-x);
-    font-family: var(--mono); font-size: 14px; letter-spacing: .14em; text-transform: uppercase;
-    background: rgba(21, 21, 21, .55);
-    -webkit-backdrop-filter: blur(14px) saturate(140%);
-            backdrop-filter: blur(14px) saturate(140%);
-    border-bottom: 1px solid rgba(191, 178, 155, .08);
-    animation: navIn 1.2s cubic-bezier(.2,.7,.2,1) both;
-    animation-delay: .1s;
-  }
-  @keyframes navIn {
-    from { transform: translateY(-100%); opacity: 0; }
-    to   { transform: translateY(0);     opacity: 1; }
-  }
-  nav.top .logo {
-    color: var(--text-bright); display: flex; align-items: center; gap: 12px;
-    font-weight: 500; white-space: nowrap; text-decoration: none;
-  }
-  nav.top .logo :global(.logo-img) {
-    height: 48px; width: auto; display: block;
-    filter: drop-shadow(0 0 6px rgba(0,0,0,.4));
-  }
-  nav.top .logo .logo-text {
-    font-family: var(--mono); font-size: 13px; letter-spacing: .14em; text-transform: uppercase;
-    color: var(--text-bright); opacity: .85;
-  }
+    nav.top {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        z-index: 50;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 14px var(--pad-x);
+        font-family: var(--mono);
+        font-size: 14px;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        background: rgba(21, 21, 21, 0.55);
+        -webkit-backdrop-filter: blur(14px) saturate(140%);
+        backdrop-filter: blur(14px) saturate(140%);
+        border-bottom: 1px solid rgba(191, 178, 155, 0.08);
+        animation: navIn 1.2s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+        animation-delay: 0.1s;
+    }
+    @keyframes navIn {
+        from {
+            transform: translateY(-100%);
+            opacity: 0;
+        }
+        to {
+            transform: translateY(0);
+            opacity: 1;
+        }
+    }
+    nav.top .logo {
+        color: var(--text-bright);
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-weight: 500;
+        white-space: nowrap;
+        text-decoration: none;
+    }
+    nav.top .logo :global(.logo-img) {
+        height: 48px;
+        width: auto;
+        display: block;
+        filter: drop-shadow(0 0 6px rgba(0, 0, 0, 0.4));
+    }
+    nav.top .logo .logo-text {
+        font-family: var(--mono);
+        font-size: 13px;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: var(--text-bright);
+        opacity: 0.85;
+    }
 
-  /* ── desktop links (D1: animated underline + active brackets + hover) ── */
-  nav.top ul { list-style: none; display: flex; gap: 36px; align-items: center; }
-  nav.top ul a {
-    color: var(--text-bright); text-decoration: none; opacity: .7; position: relative; padding: 6px 0;
-    background-image: linear-gradient(var(--accent), var(--accent));
-    background-repeat: no-repeat; background-position: 0 100%; background-size: 0 2px;
-    transition: opacity .25s, background-size .3s cubic-bezier(.2,.7,.2,1);
-  }
-  nav.top ul a:not(.blog):hover { opacity: 1; background-size: 100% 2px; }
-  nav.top ul a.active { opacity: 1; color: var(--accent); background-size: 100% 2px; }
-  /* brackets reserve space at opacity 0 so activating doesn't shift neighbours */
-  nav.top ul a:not(.blog)::before {
-    content: "["; opacity: 0; margin-right: 4px; color: var(--accent); transition: opacity .25s;
-  }
-  nav.top ul a:not(.blog)::after {
-    content: "]"; opacity: 0; margin-left: 4px; color: var(--accent); transition: opacity .25s;
-  }
-  nav.top ul a.active:not(.blog)::before,
-  nav.top ul a.active:not(.blog)::after { opacity: 1; }
-  nav.top ul a.blog { color: var(--accent); opacity: 1; }
-  nav.top ul a.blog::after { content: "↗"; margin-left: 4px; display: inline-block; }
+    /* ── desktop links (D1: animated underline + active brackets + hover) ── */
+    nav.top ul {
+        list-style: none;
+        display: flex;
+        gap: 36px;
+        align-items: center;
+    }
+    nav.top ul a {
+        color: var(--text-bright);
+        text-decoration: none;
+        opacity: 0.7;
+        position: relative;
+        padding: 6px 0;
+        background-image: linear-gradient(var(--accent), var(--accent));
+        background-repeat: no-repeat;
+        background-position: 0 100%;
+        background-size: 0 2px;
+        transition:
+            opacity 0.25s,
+            background-size 0.3s cubic-bezier(0.2, 0.7, 0.2, 1);
+    }
+    nav.top ul a:not(.blog):hover {
+        opacity: 1;
+        background-size: 100% 2px;
+    }
+    nav.top ul a.active {
+        opacity: 1;
+        color: var(--accent);
+        background-size: 100% 2px;
+    }
+    /* brackets reserve space at opacity 0 so activating doesn't shift neighbours */
+    nav.top ul a:not(.blog)::before {
+        content: "[";
+        opacity: 0;
+        margin-right: 4px;
+        color: var(--accent);
+        transition: opacity 0.25s;
+    }
+    nav.top ul a:not(.blog)::after {
+        content: "]";
+        opacity: 0;
+        margin-left: 4px;
+        color: var(--accent);
+        transition: opacity 0.25s;
+    }
+    nav.top ul a.active:not(.blog)::before,
+    nav.top ul a.active:not(.blog)::after {
+        opacity: 1;
+    }
+    nav.top ul a.blog {
+        color: var(--accent);
+        opacity: 1;
+    }
+    nav.top ul a.blog::after {
+        content: "↗";
+        margin-left: 4px;
+        display: inline-block;
+    }
 
-  /* ── mobile trigger glyph (hidden on desktop) ── */
-  .nav-toggle {
-    display: none;
-    position: relative; width: 44px; height: 44px; padding: 0; margin-right: -8px;
-    align-items: center; justify-content: center;
-    background: none; border: none; cursor: pointer;
-  }
-  .nav-toggle::before, .nav-toggle::after {
-    content: "["; color: var(--accent); font-family: var(--mono); font-size: 18px; line-height: 1;
-  }
-  .nav-toggle::after { content: "]"; }
-  .nav-toggle:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 2px; }
-  .nt-glyph { position: relative; width: 18px; height: 14px; margin: 0 5px; }
-  .nt-glyph i {
-    position: absolute; left: 0; height: 2px; background: var(--text-bright);
-    transition: transform .3s ease, opacity .2s ease, width .3s ease;
-  }
-  .nt-glyph i:nth-child(1) { top: 0;  width: 100%; }
-  .nt-glyph i:nth-child(2) { top: 6px; width: 65%; }
-  .nt-glyph i:nth-child(3) { top: 12px; width: 85%; }
-  .nav-toggle[aria-expanded="true"] .nt-glyph i:nth-child(1) { top: 6px; width: 100%; transform: rotate(45deg); }
-  .nav-toggle[aria-expanded="true"] .nt-glyph i:nth-child(2) { opacity: 0; }
-  .nav-toggle[aria-expanded="true"] .nt-glyph i:nth-child(3) { top: 6px; width: 100%; transform: rotate(-45deg); }
+    /* ── mobile trigger glyph (hidden on desktop) ── */
+    .nav-toggle {
+        display: none;
+        position: relative;
+        width: 44px;
+        height: 44px;
+        padding: 0;
+        margin-right: -8px;
+        align-items: center;
+        justify-content: center;
+        background: none;
+        border: none;
+        cursor: pointer;
+    }
+    .nav-toggle::before,
+    .nav-toggle::after {
+        content: "[";
+        color: var(--accent);
+        font-family: var(--mono);
+        font-size: 18px;
+        line-height: 1;
+    }
+    .nav-toggle::after {
+        content: "]";
+    }
+    .nav-toggle:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+        border-radius: 2px;
+    }
+    .nt-glyph {
+        position: relative;
+        width: 18px;
+        height: 14px;
+        margin: 0 5px;
+    }
+    .nt-glyph i {
+        position: absolute;
+        left: 0;
+        height: 2px;
+        background: var(--text-bright);
+        transition:
+            transform 0.3s ease,
+            opacity 0.2s ease,
+            width 0.3s ease;
+    }
+    .nt-glyph i:nth-child(1) {
+        top: 0;
+        width: 100%;
+    }
+    .nt-glyph i:nth-child(2) {
+        top: 6px;
+        width: 65%;
+    }
+    .nt-glyph i:nth-child(3) {
+        top: 12px;
+        width: 85%;
+    }
+    .nav-toggle[aria-expanded="true"] .nt-glyph i:nth-child(1) {
+        top: 6px;
+        width: 100%;
+        transform: rotate(45deg);
+    }
+    .nav-toggle[aria-expanded="true"] .nt-glyph i:nth-child(2) {
+        opacity: 0;
+    }
+    .nav-toggle[aria-expanded="true"] .nt-glyph i:nth-child(3) {
+        top: 6px;
+        width: 100%;
+        transform: rotate(-45deg);
+    }
 
-  /* ── full-screen terminal overlay (mobile only) ── */
-  /* z-index 40 keeps the overlay below nav.top (z-50) so the toggle stays
+    /* ── full-screen terminal overlay (mobile only) ── */
+    /* z-index 40 keeps the overlay below nav.top (z-50) so the toggle stays
      clickable. Both are children of <body>'s stacking context — do not add
      transform/filter/isolation to a shared ancestor or this relationship breaks. */
-  .nav-overlay {
-    position: fixed; inset: 0; z-index: 40;
-    display: none;
-    flex-direction: column; justify-content: center;
-    padding: 0 var(--pad-x);
-    background: rgba(12, 12, 12, .96);
-    -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
-    opacity: 0; visibility: hidden; pointer-events: none;
-    transition: opacity .35s ease, visibility .35s;
-  }
-  .nav-overlay::after {
-    content: ""; position: absolute; inset: 0; pointer-events: none;
-    background: repeating-linear-gradient(to bottom, rgba(255,255,255,.05) 0 1px, transparent 1px 3px);
-    mix-blend-mode: overlay;
-  }
-  .nav-overlay.is-open { opacity: 1; visibility: visible; pointer-events: auto; }
-  .nav-overlay:focus { outline: none; }
+    .nav-overlay {
+        position: fixed;
+        inset: 0;
+        z-index: 40;
+        display: none;
+        flex-direction: column;
+        justify-content: center;
+        padding: 0 var(--pad-x);
+        background: rgba(12, 12, 12, 0.96);
+        -webkit-backdrop-filter: blur(6px);
+        backdrop-filter: blur(6px);
+        opacity: 0;
+        visibility: hidden;
+        pointer-events: none;
+        transition:
+            opacity 0.35s ease,
+            visibility 0.35s;
+    }
+    .nav-overlay::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        background: repeating-linear-gradient(
+            to bottom,
+            rgba(255, 255, 255, 0.05) 0 1px,
+            transparent 1px 3px
+        );
+        mix-blend-mode: overlay;
+    }
+    .nav-overlay.is-open {
+        opacity: 1;
+        visibility: visible;
+        pointer-events: auto;
+    }
+    .nav-overlay:focus {
+        outline: none;
+    }
 
-  .ov-list { list-style: none; display: flex; flex-direction: column; gap: clamp(4px, 1.6vh, 14px); }
-  .ov-link {
-    display: flex; align-items: baseline; gap: 16px; text-decoration: none;
-    font-family: var(--display); font-size: clamp(40px, 12vw, 76px); line-height: 1.05;
-    letter-spacing: .02em; text-transform: uppercase; color: var(--text-bright);
-    padding: 4px 0; min-height: 44px;
-  }
-  .ov-num { font-family: var(--mono); font-size: clamp(12px, 3vw, 15px); color: var(--accent); opacity: .8; }
-  .ov-label { display: inline-block; }
-  .ov-link.active .ov-label { color: var(--accent); }
-  .ov-link.active .ov-label::before { content: "[ "; color: var(--accent); }
-  .ov-link.active .ov-label::after  { content: " ]"; color: var(--accent); }
-  .ov-link:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
+    .ov-list {
+        list-style: none;
+        display: flex;
+        flex-direction: column;
+        gap: clamp(4px, 1.6vh, 14px);
+    }
+    .ov-link {
+        display: flex;
+        align-items: baseline;
+        gap: 16px;
+        text-decoration: none;
+        font-family: var(--display);
+        font-size: clamp(40px, 12vw, 76px);
+        line-height: 1.05;
+        letter-spacing: 0.02em;
+        text-transform: uppercase;
+        color: var(--text-bright);
+        padding: 4px 0;
+        min-height: 44px;
+    }
+    .ov-num {
+        font-family: var(--mono);
+        font-size: clamp(12px, 3vw, 15px);
+        color: var(--accent);
+        opacity: 0.8;
+    }
+    .ov-label {
+        display: inline-block;
+    }
+    .ov-link.active .ov-label {
+        color: var(--accent);
+    }
+    .ov-link.active .ov-label::before {
+        content: "[ ";
+        color: var(--accent);
+    }
+    .ov-link.active .ov-label::after {
+        content: " ]";
+        color: var(--accent);
+    }
+    .ov-link:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 4px;
+    }
 
-  .ov-foot { margin-top: clamp(22px, 6vh, 48px); display: flex; flex-direction: column; gap: 16px; }
-  .ov-blog {
-    font-family: var(--mono); font-size: 13px; letter-spacing: .16em; text-transform: uppercase;
-    color: var(--accent); text-decoration: none; min-height: 44px; display: inline-flex; align-items: center;
-  }
-  .ov-blog::after { content: " ↗"; }
-  .ov-status { font-family: var(--mono); font-size: 11px; letter-spacing: .16em; text-transform: uppercase; color: var(--text-dim); }
-  .ov-status .cur { color: var(--accent); animation: navBlink 1.1s steps(1) infinite; }
-  @keyframes navBlink { 0%, 50% { opacity: 1; } 50.01%, 100% { opacity: 0; } }
+    .ov-foot {
+        margin-top: clamp(22px, 6vh, 48px);
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+    }
+    .ov-blog {
+        font-family: var(--mono);
+        font-size: 13px;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: var(--accent);
+        text-decoration: none;
+        min-height: 44px;
+        display: inline-flex;
+        align-items: center;
+    }
+    .ov-blog::after {
+        content: " ↗";
+    }
+    .ov-status {
+        font-family: var(--mono);
+        font-size: 11px;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: var(--text-dim);
+    }
+    .ov-status .cur {
+        color: var(--accent);
+        animation: navBlink 1.1s steps(1) infinite;
+    }
+    @keyframes navBlink {
+        0%,
+        50% {
+            opacity: 1;
+        }
+        50.01%,
+        100% {
+            opacity: 0;
+        }
+    }
 
-  /* staggered entrance — each item delayed by its --i; reduced-motion makes
+    /* staggered entrance — each item delayed by its --i; reduced-motion makes
      the global transition ~0ms so items just appear */
-  .ov-list li, .ov-foot {
-    opacity: 0; transform: translateY(16px);
-    transition: opacity .4s ease, transform .5s cubic-bezier(.2,.7,.2,1);
-    transition-delay: calc(var(--i, 0) * 45ms);
-  }
-  .nav-overlay.is-open .ov-list li,
-  .nav-overlay.is-open .ov-foot { opacity: 1; transform: none; }
+    .ov-list li,
+    .ov-foot {
+        opacity: 0;
+        transform: translateY(16px);
+        transition:
+            opacity 0.4s ease,
+            transform 0.5s cubic-bezier(0.2, 0.7, 0.2, 1);
+        transition-delay: calc(var(--i, 0) * 45ms);
+    }
+    .nav-overlay.is-open .ov-list li,
+    .nav-overlay.is-open .ov-foot {
+        opacity: 1;
+        transform: none;
+    }
 
-  @media (max-width: 1100px) { nav.top ul { gap: 24px; } }
-  @media (max-width: 720px) {
-    nav.top { padding: 10px var(--pad-x); }
-    nav.top .logo :global(.logo-img) { height: 40px; }
-    nav.top .logo .logo-text { display: none; }
-    nav.top ul { display: none; }
-    .nav-toggle { display: flex; }
-    .nav-overlay { display: flex; }
-  }
+    @media (max-width: 1100px) {
+        nav.top ul {
+            gap: 24px;
+        }
+    }
+    @media (max-width: 720px) {
+        nav.top {
+            padding: 10px var(--pad-x);
+        }
+        nav.top .logo :global(.logo-img) {
+            height: 40px;
+        }
+        nav.top .logo .logo-text {
+            display: none;
+        }
+        nav.top ul {
+            display: none;
+        }
+        .nav-toggle {
+            display: flex;
+        }
+        .nav-overlay {
+            display: flex;
+        }
+    }
 </style>

@@ -1,115 +1,242 @@
 ---
-import { Image } from 'astro:assets';
-import logo from '@/assets/logo-yr-orange.png';
-import { site, hero } from '@/content';
+import { Image } from "astro:assets";
+import logo from "@/assets/logo-yr-orange.png";
+import { site, hero } from "@/content";
 const year = new Date().getFullYear();
 ---
+
 <footer>
-  <div class="footer-row">
-    <a href="#hero" class="footer-logo" aria-label="Back to top">
-      <Image src={logo} alt="YR monogram" width={112} height={112} loading="lazy" />
-    </a>
-    <div class="footer-meta">
-      <span class="copy">© {site.name} · {year}</span>
-      <span class="dot">·</span>
-      <span>Built with Astro &amp; Three.js</span>
+    <div class="footer-row">
+        <a href="#hero" class="footer-logo" aria-label="Back to top">
+            <Image
+                src={logo}
+                alt="YR monogram"
+                width={112}
+                height={112}
+                loading="lazy"
+            />
+        </a>
+        <div class="footer-meta">
+            <span class="copy">© {site.name} · {year}</span>
+            <span class="dot">·</span>
+            <span>Built with Astro &amp; Three.js</span>
+        </div>
+        <a href="#hero" class="footer-top">Back to top ↑</a>
     </div>
-    <a href="#hero" class="footer-top">Back to top ↑</a>
-  </div>
-  <p class="footer-attrib">
-    Mask: <a href="https://skfb.ly/6Y9SA" target="_blank" rel="noopener noreferrer">&ldquo;Soulless&rdquo;</a>
-    by Ali Rahimi ·
-    <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener noreferrer">CC BY 4.0</a>
-    · Modified
-    <br />
-    Katana: <a href="https://skfb.ly/ptK8t" target="_blank" rel="noopener noreferrer">&ldquo;Cyberpunk Enigma - Katana&rdquo;</a>
-    by Jysn ·
-    <a href="https://creativecommons.org/licenses/by-nc-nd/4.0/" target="_blank" rel="noopener noreferrer">CC BY-NC-ND 4.0</a>
-  </p>
-  <div class="big" aria-hidden="true">{hero.backName}</div>
+    <p class="footer-attrib">
+        Mask: <a
+            href="https://skfb.ly/6Y9SA"
+            target="_blank"
+            rel="noopener noreferrer">&ldquo;Soulless&rdquo;</a
+        >
+        by Ali Rahimi ·
+        <a
+            href="https://creativecommons.org/licenses/by/4.0/"
+            target="_blank"
+            rel="noopener noreferrer">CC BY 4.0</a
+        >
+        · Modified
+        <br />
+        Katana: <a
+            href="https://skfb.ly/ptK8t"
+            target="_blank"
+            rel="noopener noreferrer">&ldquo;Cyberpunk Enigma - Katana&rdquo;</a
+        >
+        by Jysn ·
+        <a
+            href="https://creativecommons.org/licenses/by-nc-nd/4.0/"
+            target="_blank"
+            rel="noopener noreferrer">CC BY-NC-ND 4.0</a
+        >
+    </p>
+    <a href="#hero" class="big" aria-label="Back to top">{hero.backName}</a>
 </footer>
 
 <style>
-  footer {
-    padding: 40px var(--pad-x) 32px;
-    border-top: 1px solid rgba(191, 178, 155, .12);
-    font-family: var(--mono); font-size: 11px; letter-spacing: .16em; text-transform: uppercase;
-    color: var(--text-dim); position: relative; z-index: 10;
-    background-color: var(--main);
-  }
-  footer .footer-row {
-    display: flex; align-items: center; justify-content: space-between;
-    gap: 40px;
-  }
-  footer .footer-logo {
-    display: flex; align-items: center;
-    text-decoration: none;
-    transition: opacity .25s;
-  }
-  footer .footer-logo:hover { opacity: .7; }
-  footer .footer-logo :global(img) { height: 56px; width: auto; opacity: .95; }
-  footer .footer-meta { display: flex; align-items: center; gap: 14px; color: var(--text-dim); }
-  footer .footer-meta .copy { color: var(--text); }
-  footer .footer-meta .dot { opacity: .4; }
-  footer .footer-top {
-    text-decoration: none; color: var(--text);
-    display: inline-flex; align-items: center; gap: 8px;
-    padding: 10px 0;
-    position: relative;
-    transition: color .25s;
-  }
-  footer .footer-top::after {
-    content: ""; position: absolute; left: 0; right: 0; bottom: 6px; height: 1px;
-    background: var(--accent); transform: scaleX(0); transform-origin: right;
-    transition: transform .35s cubic-bezier(.2,.7,.2,1);
-  }
-  footer .footer-top:hover { color: var(--accent); }
-  footer .footer-top:hover::after { transform: scaleX(1); transform-origin: left; }
+    footer {
+        /* flex column lets `order` re-sequence the three blocks per breakpoint:
+       desktop = row → wordmark → credits (credits as a quiet bottom caption),
+       mobile  = row → credits → wordmark (the approved editorial stack) */
+        display: flex;
+        flex-direction: column;
+        padding: 40px var(--pad-x) 32px;
+        border-top: 1px solid rgba(191, 178, 155, 0.12);
+        font-family: var(--mono);
+        font-size: 11px;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: var(--text-dim);
+        position: relative;
+        z-index: 10;
+        background-color: var(--main);
+    }
+    footer .footer-row {
+        order: 1;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 40px;
+    }
+    footer .footer-logo {
+        display: flex;
+        align-items: center;
+        text-decoration: none;
+        transition: opacity 0.25s;
+    }
+    footer .footer-logo:hover {
+        opacity: 0.7;
+    }
+    footer .footer-logo :global(img) {
+        height: 56px;
+        width: auto;
+        opacity: 0.95;
+    }
+    footer .footer-meta {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        color: var(--text-dim);
+    }
+    footer .footer-meta .copy {
+        color: var(--text);
+    }
+    footer .footer-meta .dot {
+        opacity: 0.4;
+    }
+    footer .footer-top {
+        text-decoration: none;
+        color: var(--text);
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 0;
+        position: relative;
+        transition: color 0.25s;
+    }
+    footer .footer-top::after {
+        content: "";
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 6px;
+        height: 1px;
+        background: var(--accent);
+        transform: scaleX(0);
+        transform-origin: right;
+        transition: transform 0.35s cubic-bezier(0.2, 0.7, 0.2, 1);
+    }
+    footer .footer-top:hover {
+        color: var(--accent);
+    }
+    footer .footer-top:hover::after {
+        transform: scaleX(1);
+        transform-origin: left;
+    }
 
-  footer .footer-attrib {
-    margin: 24px 0 0;
-    font-size: 10px;
-    color: var(--text-dim);
-    opacity: .8;
-  }
-  footer .footer-attrib a {
-    color: var(--text);
-    text-decoration: none;
-    border-bottom: 1px solid rgba(191, 178, 155, .25);
-    transition: color .25s, border-color .25s;
-  }
-  footer .footer-attrib a:hover {
-    color: var(--accent);
-    border-color: var(--accent);
-  }
+    footer .footer-attrib {
+        order: 3;
+        margin: 28px 0 0;
+        text-align: center;
+        font-size: 9px;
+        letter-spacing: 0.07em;
+        line-height: 1.7;
+        color: var(--text-dim);
+        opacity: 0.75;
+    }
+    footer .footer-attrib a {
+        color: var(--text);
+        text-decoration: none;
+        border-bottom: 1px solid rgba(191, 178, 155, 0.25);
+        transition:
+            color 0.25s,
+            border-color 0.25s;
+    }
+    footer .footer-attrib a:hover {
+        color: var(--accent);
+        border-color: var(--accent);
+    }
 
-  footer .big {
-    width: 100%;
-    font-family: var(--display); font-weight: 400;
-    font-size: clamp(80px, 18vw, 280px);
-    line-height: .85; letter-spacing: .005em;
-    color: transparent;
-    -webkit-text-stroke: 1px rgba(191, 178, 155, .14);
-    text-transform: uppercase; text-align: center;
-    margin-top: 48px; user-select: none;
-    background-image: linear-gradient(to top, var(--accent), var(--accent));
-    background-repeat: no-repeat;
-    background-size: 100% 0%;
-    background-position: bottom center;
-    -webkit-background-clip: text;
-            background-clip: text;
-    transition: background-size .8s cubic-bezier(.65,.05,.36,1), -webkit-text-stroke-color .4s;
-    cursor: pointer;
-  }
-  footer .big:hover {
-    background-size: 100% 100%;
-    -webkit-text-stroke-color: var(--accent);
-  }
+    footer .big {
+        order: 2;
+        display: block;
+        width: 100%;
+        text-decoration: none;
+        font-family: var(--display);
+        font-weight: 400;
+        font-size: clamp(80px, 18vw, 280px);
+        line-height: 0.85;
+        letter-spacing: 0.005em;
+        color: transparent;
+        -webkit-text-stroke: 1px rgba(191, 178, 155, 0.14);
+        text-transform: uppercase;
+        text-align: center;
+        margin-top: 48px;
+        user-select: none;
+        background-image: linear-gradient(to top, var(--accent), var(--accent));
+        background-repeat: no-repeat;
+        background-size: 100% 0%;
+        background-position: bottom center;
+        -webkit-background-clip: text;
+        background-clip: text;
+        transition:
+            background-size 0.8s cubic-bezier(0.65, 0.05, 0.36, 1),
+            -webkit-text-stroke-color 0.4s;
+        cursor: pointer;
+        touch-action: manipulation;
+    }
+    /* :active gives touch the coral payoff that :hover gives the desktop pointer */
+    footer .big:hover,
+    footer .big:active {
+        background-size: 100% 100%;
+        -webkit-text-stroke-color: var(--accent);
+    }
+    footer .big:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 6px;
+    }
 
-  @media (max-width: 720px) {
-    footer { padding: 40px var(--pad-x) 32px; gap: 20px; }
-    footer .footer-row { flex-direction: column; align-items: flex-start; gap: 24px; }
-    footer .footer-logo :global(img) { height: 56px; }
-    footer .big { font-size: clamp(80px, 32vw, 200px); margin-top: 32px; }
-  }
+    @media (max-width: 720px) {
+        footer {
+            padding: 44px var(--pad-x) 40px;
+            /* looser tracking is for the wide desktop row; tighten it so the
+         narrow stack reads cleanly and stops wrapping mid-phrase */
+            letter-spacing: 0.1em;
+        }
+        footer .footer-row {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 28px;
+        }
+        /* stack the identity meta; the inline "·" only makes sense on the
+       single-line desktop row, so it's dropped here */
+        footer .footer-meta {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 6px;
+        }
+        footer .footer-meta .dot {
+            display: none;
+        }
+        footer .footer-logo :global(img) {
+            height: 48px;
+        }
+        footer .footer-top {
+            padding: 12px 0;
+            min-height: 44px;
+        }
+        /* keep the approved stack order (credits sit above the wordmark) and
+       left-align them with the rest of the column */
+        footer .footer-attrib {
+            order: 2;
+            margin-top: 28px;
+            text-align: left;
+            letter-spacing: 0.05em;
+            line-height: 1.8;
+        }
+        footer .big {
+            order: 3;
+            font-size: clamp(64px, 27vw, 160px);
+            margin-top: 40px;
+        }
+    }
 </style>
