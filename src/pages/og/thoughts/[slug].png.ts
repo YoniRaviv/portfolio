@@ -3,7 +3,7 @@ import satori from 'satori';
 import { Resvg } from '@resvg/resvg-js';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import { resolve } from 'node:path';
+import { resolve, dirname } from 'node:path';
 import { getPublishedThoughts, fmtDate } from '@/lib/thoughts';
 
 export async function getStaticPaths() {
@@ -15,11 +15,11 @@ export async function getStaticPaths() {
 }
 
 // Resolve a font path under node_modules relative to the project root.
+// dirname(fileURLToPath(import.meta.url)) gives the directory of THIS file;
+// from src/pages/og/thoughts/  →  3 ups reaches the project root.
 function fontPath(rel: string): string {
-  // import.meta.url points at this file; project root is 4 levels up:
-  //   src/pages/og/thoughts/[slug].png.ts  →  ../../../..  →  project root
-  const here = fileURLToPath(import.meta.url);
-  return resolve(here, '../../../..', rel);
+  const here = dirname(fileURLToPath(import.meta.url));
+  return resolve(here, '../../..', rel);
 }
 
 const ACCENT = '#FF6F59';

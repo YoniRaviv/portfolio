@@ -103,6 +103,11 @@ function onClick(e: MouseEvent): void {
   if (!link) return;
   if (shouldBypass(e)) return;
 
+  // If a transition is already in flight, ignore subsequent clicks. Avoids
+  // double-fire on rapid double-clicks corrupting state.
+  const txEl = document.getElementById('tx');
+  if (txEl && txEl.dataset.txState && txEl.dataset.txState !== 'idle') return;
+
   const href = link.getAttribute('href');
   if (!href) return;
   // Only intercept same-origin navigations.
