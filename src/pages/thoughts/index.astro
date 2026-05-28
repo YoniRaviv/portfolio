@@ -3,13 +3,16 @@ import Base from '@/layouts/Base.astro';
 import Nav from '@/components/Nav.astro';
 import Footer from '@/components/Footer.astro';
 import { getPublishedThoughts, readingTimeMinutes, fmtDate } from '@/lib/thoughts';
+import { blogIndexSchema } from '@/content';
 
 const posts = await getPublishedThoughts();
+const jsonLd = [blogIndexSchema(posts)];
 ---
 <Base
   route="thoughts"
   title="Thoughts — Yonathan Raviv"
   description="Workflow notes, project deep-dives, and the occasional opinion."
+  {jsonLd}
 >
   <Nav />
   <main class="thoughts-index">

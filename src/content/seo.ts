@@ -1,3 +1,4 @@
+import type { CollectionEntry } from 'astro:content';
 import { site } from './site';
 
 export const defaultSEO = {
@@ -54,3 +55,47 @@ export const websiteSchema = {
   inLanguage: 'en',
   author: { '@id': `${site.url}/#person` },
 };
+
+export function blogPostingSchema(
+  post: CollectionEntry<'thoughts'>,
+  readMin: number
+) {
+  const slug = post.id;
+  const body = post.body ?? '';
+  const wordCount = body.trim().split(/\s+/).filter(Boolean).length;
+  const published = post.data.date.toISOString();
+  const modified = (post.data.updated ?? post.data.date).toISOString();
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'BlogPosting',
+    '@id': `${site.url}/thoughts/${slug}#post`,
+    mainEntityOfPage: `${site.url}/thoughts/${slug}`,
+    headline: post.data.title,
+    description: post.data.description,
+    datePublished: published,
+    dateModified: modified,
+    author: { '@id': `${site.url}/#person` },
+    publisher: { '@id': `${site.url}/#person` },
+    image: `${site.url}/og/thoughts/${slug}.png`,
+    inLanguage: 'en',
+    timeRequired: `PT${readMin}M`,
+    wordCount,
+  };
+}
+
+export function blogIndexSchema(posts: CollectionEntry<'thoughts'>[]) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'Blog',
+    '@id': `${site.url}/thoughts/#blog`,
+    url: `${site.url}/thoughts/`,
+    name: 'Thoughts — Yonathan Raviv',
+    author: { '@id': `${site.url}/#person` },
+    blogPost: posts.map((p) => ({
+      '@type': 'BlogPosting',
+      headline: p.data.title,
+      url: `${site.url}/thoughts/${p.id}`,
+      datePublished: p.data.date.toISOString(),
+    })),
+  };
+}
