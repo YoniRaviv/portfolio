@@ -5,8 +5,9 @@ import '@/styles/global.css';
 interface Props {
   title?: string;
   description?: string;
+  route?: 'home' | 'thoughts';
 }
-const { title, description } = Astro.props;
+const { title, description, route = 'home' } = Astro.props;
 ---
 <!doctype html>
 <html lang="en">
@@ -16,7 +17,7 @@ const { title, description } = Astro.props;
     <link rel="icon" type="image/png" href="/favicon.png" />
     <SEO {title} {description} />
   </head>
-  <body>
+  <body data-route={route}>
     <div class="grain" aria-hidden="true"></div>
     <div class="scanlines" aria-hidden="true"></div>
     <div class="vignette" aria-hidden="true"></div>
