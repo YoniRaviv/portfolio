@@ -250,7 +250,9 @@ Desktop grid: `[rail 140px] [gutter 32px] [content 1fr]`, page max-width 960px c
 
 Mobile (< 900px): rail collapses into a single horizontal mono line under the lede — `READ · PUBLISHED · [progress dot]` — and the article body fills the full content width. No vertical progress track on mobile.
 
-## Page transition: blade-sweep
+## Page transition: scanline wipe + terminal boot
+
+> **2026-05-28 pivot.** Originally specced as a blade-sweep tied to the existing katana motif. After implementing Phase 0 we tested live and decided the blade-sweep was visually too loud for routine page changes. Pivoted to a quieter "scanline wipe + terminal boot" — dark panel wipes top→bottom with stepped accent scanlines, a centred mono `> TRANSMITTING_` line with a blinking cursor during the hold, panel wipes off the bottom on arrival. The runtime, state machine (`idle | enter | hold | exit`), FOUC-prevention head script, and sessionStorage flag (`tx-arrive`) all remained unchanged from the blade-sweep design — only `src/components/ThoughtsTransition.astro` (DOM + CSS) was rewritten. The remainder of this section is preserved as it accurately describes the *mechanism*; only the visual choreography differs.
 
 The transition is a custom JS overlay; **not** using `<ClientRouter />` / Astro View Transitions API. Reasoning: we need a precise hold phase mid-transition while async prefetch finishes, which doesn't express cleanly in VT.
 
