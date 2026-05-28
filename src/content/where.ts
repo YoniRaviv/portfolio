@@ -15,15 +15,9 @@ export const roles: Role[] = [
     current: true,
   },
   {
-    range: '2025 — 2026',
+    range: '2021 — 2026',
     company: 'Tenengroup',
-    title: 'Fullstack Engineer',
-    city: 'Tel Aviv · IL',
-  },
-  {
-    range: '2021 — 2025',
-    company: 'Tenengroup',
-    title: 'Frontend Engineer',
+    title: 'Frontend → Fullstack Engineer',
     city: 'Tel Aviv · IL',
   },
   {
