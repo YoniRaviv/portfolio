@@ -84,7 +84,7 @@ const isoUpdated = (post.data.updated ?? post.data.date).toISOString();
     position: relative;
     z-index: 10;
     padding: 160px var(--pad-x) 96px;
-    max-width: 960px;
+    max-width: 1200px;
     margin: 0 auto;
   }
   @media (max-width: 900px) {
@@ -206,7 +206,10 @@ const isoUpdated = (post.data.updated ?? post.data.date).toISOString();
 
   .prose {
     grid-column: 3 / 4;
-    max-width: 64ch;
+    max-width: 68ch;
+    /* Centre within the wider grid column so the reading line stays
+       comfortable while the page itself fills more of the viewport. */
+    margin: 0 auto;
   }
   @media (max-width: 900px) {
     .prose { grid-column: 1 / 2; }
