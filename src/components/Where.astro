@@ -27,11 +27,13 @@ import { where, roles } from "@/content";
             roles.map((r) => (
                 <div class="role fade-up">
                     <span class="date">{r.range}</span>
-                    <span class="company">
-                        {r.company}
-                        {r.current && <span class="current">Now</span>}
-                    </span>
-                    <span class="title">{r.title}</span>
+                    <div class="role-name">
+                        <span class="company">
+                            {r.company}
+                            {r.current && <span class="current">Now</span>}
+                        </span>
+                        <span class="title">{r.title}</span>
+                    </div>
                     <span class="city">{r.city}</span>
                 </div>
             ))
@@ -97,7 +99,7 @@ import { where, roles } from "@/content";
     }
     .where .role {
         display: grid;
-        grid-template-columns: 180px 1fr 240px 80px;
+        grid-template-columns: 180px 1fr 80px;
         gap: 48px;
         align-items: baseline;
         padding: 36px var(--pad-x);
@@ -107,6 +109,12 @@ import { where, roles } from "@/content";
         overflow: hidden;
         isolation: isolate;
         transition: color 0.35s;
+    }
+    .where .role-name {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        min-width: 0;
     }
     .where .role:last-child {
         border-bottom: 1px solid rgba(191, 178, 155, 0.16);
@@ -198,12 +206,8 @@ import { where, roles } from "@/content";
             gap: 24px;
         }
         .where .role {
-            grid-template-columns: 160px 1fr 200px;
+            grid-template-columns: 160px 1fr 80px;
             gap: 24px;
-        }
-        .where .role .city {
-            grid-column: 1 / -1;
-            text-align: left;
         }
     }
     @media (max-width: 720px) {

@@ -9,20 +9,20 @@ export const where = {
 export const roles: Role[] = [
   {
     range: '2026 — Present',
-    company: 'Tenengroup',
+    company: '[Tenengroup]',
     title: 'AI Engineer',
     city: 'Tel Aviv · IL',
     current: true,
   },
   {
     range: '2021 — 2026',
-    company: 'Tenengroup',
+    company: '[Tenengroup]',
     title: 'Frontend → Fullstack Engineer',
     city: 'Tel Aviv · IL',
   },
   {
     range: '2018 — 2019',
-    company: 'Dodi-hosting',
+    company: '[Dodi-hosting]',
     title: 'Freelance Developer',
     city: 'Remote',
   },
