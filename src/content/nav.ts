@@ -6,5 +6,5 @@ export const navLinks: NavLink[] = [
   { href: '#where',   label: 'Where',   anchor: 'where' },
   { href: '#how',     label: 'How',     anchor: 'how' },
   { href: '#contact', label: 'Contact', anchor: 'contact' },
-  { href: '#blog',    label: 'Blog',    external: true },
+  { href: '/thoughts', label: 'Thoughts', external: true },
 ];
