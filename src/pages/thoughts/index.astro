@@ -1,0 +1,66 @@
+---
+import Base from '@/layouts/Base.astro';
+import Nav from '@/components/Nav.astro';
+import Footer from '@/components/Footer.astro';
+---
+<Base
+  route="thoughts"
+  title="Thoughts — Yonathan Raviv"
+  description="Workflow notes, project deep-dives, and the occasional opinion."
+>
+  <Nav />
+  <main class="thoughts-stub">
+    <p class="crumb">// THOUGHTS</p>
+    <h1>Thoughts</h1>
+    <p class="lede">Placeholder for the transition spike. The real index lands in Phase 1.</p>
+    <p class="back"><a href="/" data-thought-link>← back home</a></p>
+  </main>
+  <Footer />
+</Base>
+
+<style>
+  main.thoughts-stub {
+    position: relative;
+    z-index: 10;
+    padding: 160px var(--pad-x) 160px;
+    max-width: 960px;
+    margin: 0 auto;
+  }
+  .crumb {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--accent);
+  }
+  h1 {
+    font-family: var(--display);
+    font-size: clamp(40px, 8vw, 64px);
+    color: var(--text-bright);
+    letter-spacing: 0.04em;
+    margin: 12px 0 14px;
+  }
+  .lede {
+    color: var(--text);
+    font-size: 16px;
+    line-height: 1.6;
+    max-width: 60ch;
+  }
+  .back {
+    margin-top: 32px;
+  }
+  .back a {
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--accent);
+    text-decoration: none;
+  }
+  .back a:hover {
+    color: var(--text-bright);
+  }
+  @media (max-width: 720px) {
+    main.thoughts-stub { padding: 96px var(--pad-x) 96px; }
+  }
+</style>
