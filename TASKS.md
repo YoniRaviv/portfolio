@@ -4,9 +4,9 @@
 
 ## global
 2. content refinment
-3. favicon 
-4. navigation improvments mainly on MB
 6. more hidden text in copy later
+- analytics
+
 
 ## Blog
 1. build the page
