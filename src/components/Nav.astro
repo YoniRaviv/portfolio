@@ -5,10 +5,12 @@ import { navLinks } from "@/content";
 
 const internalLinks = navLinks.filter((l) => !l.external);
 const externalLinks = navLinks.filter((l) => l.external);
+const isHome = Astro.url.pathname === '/' || Astro.url.pathname === '/index.html';
+const toHref = (href: string) => (isHome || !href.startsWith('#') ? href : `/${href}`);
 ---
 
 <nav class="top">
-    <a href="#hero" class="logo" aria-label="Home">
+    <a href={toHref('#hero')} class="logo" aria-label="Home">
         <Image
             src={logo}
             alt="YR monogram"
@@ -30,7 +32,7 @@ const externalLinks = navLinks.filter((l) => l.external);
                     </li>
                 ) : (
                     <li>
-                        <a href={link.href} data-anchor={link.anchor}>
+                        <a href={toHref(link.href)} data-anchor={link.anchor}>
                             {link.label}
                         </a>
                     </li>
@@ -64,7 +66,7 @@ const externalLinks = navLinks.filter((l) => l.external);
                 <li style={`--i:${i}`}>
                     <a
                         class="ov-link"
-                        href={link.href}
+                        href={toHref(link.href)}
                         data-anchor={link.anchor}
                     >
                         <span class="ov-num">

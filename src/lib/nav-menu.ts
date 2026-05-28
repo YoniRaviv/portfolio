@@ -64,11 +64,16 @@ export function mountNavMenu(): void {
   // to the section. scrollToAnchor waits for Lenis to actually resume (its
   // autoToggle clears `isStopped` asynchronously) before scrolling, so this is
   // deterministic. External links (no data-anchor, e.g. Blog) navigate normally.
+  // On home, intercept anchor clicks to smooth-scroll. On non-home routes,
+  // close the menu and let the browser navigate to /#anchor — the initial-hash
+  // scroll handler in smooth-scroll.ts will jump to the section after load.
+  const isHome =
+    window.location.pathname === '/' || window.location.pathname === '/index.html';
   overlayLinks.forEach((a) =>
     a.addEventListener('click', (e) => {
       const anchor = a.dataset.anchor;
       closeMenu(false);
-      if (anchor) {
+      if (isHome && anchor) {
         e.preventDefault();
         scrollToAnchor(anchor);
       }
