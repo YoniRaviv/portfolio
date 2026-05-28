@@ -1,6 +1,7 @@
 ---
 import SEO from '@/components/SEO.astro';
 import ThoughtsTransition from '@/components/ThoughtsTransition.astro';
+import { site } from '@/content';
 import '@/styles/global.css';
 
 interface Props {
@@ -47,6 +48,22 @@ const {
           document.documentElement.classList.add('tx-arriving');
         }
       } catch (e) { /* sessionStorage may throw in private mode */ }
+    </script>
+    <script is:inline define:vars={{ contact: site.email }}>
+      // Console signature — for the engineers who open DevTools first.
+      // Colours mirror tokens.css: --accent / --text / --text-dim.
+      console.log(
+        '%chello.',
+        'font: 600 16px/1.6 "JetBrains Mono", ui-monospace, monospace; color: #FF6F59;'
+      );
+      console.log(
+        '%cYou opened DevTools first. That instinct is mine too.',
+        'font: 13px/1.6 ui-monospace, monospace; color: #BFB29B;'
+      );
+      console.log(
+        '%c— yoni · ' + contact,
+        'font: 12px/1.6 ui-monospace, monospace; color: #857a68;'
+      );
     </script>
   </head>
   <body data-route={route}>
