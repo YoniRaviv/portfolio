@@ -52,6 +52,8 @@ export const skillGroups: SkillGroup[] = [
     chips: [
       { name: 'LLM agents',         level: '2 yr', hero: true },
       { name: 'RAG',                level: 'shipped', hero: true },
+      { name: 'Anthropic SDK',      level: 'daily', hero: true },
+      { name: 'OpenAI SDK',         level: 'shipped' },
       { name: 'Embeddings',         level: 'shipped' },
       { name: 'Eval & guardrails', level: 'shipped' },
       { name: 'PyTorch',            level: 'working' },
