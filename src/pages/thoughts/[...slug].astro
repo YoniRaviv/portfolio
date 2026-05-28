@@ -1,0 +1,358 @@
+---
+import Base from '@/layouts/Base.astro';
+import Nav from '@/components/Nav.astro';
+import Footer from '@/components/Footer.astro';
+import { Image } from 'astro:assets';
+import type { CollectionEntry } from 'astro:content';
+import { render } from 'astro:content';
+import { getPublishedThoughts, readingTimeMinutes, fmtDate } from '@/lib/thoughts';
+import { blogPostingSchema } from '@/content';
+
+export async function getStaticPaths() {
+  const posts = await getPublishedThoughts();
+  return posts.map((post) => ({ params: { slug: post.id }, props: { post } }));
+}
+
+interface Props { post: CollectionEntry<'thoughts'>; }
+const { post } = Astro.props as Props;
+const { Content } = await render(post);
+const readMin = readingTimeMinutes(post.body ?? '');
+const jsonLd = [blogPostingSchema(post, readMin)];
+const isoDate = post.data.date.toISOString();
+const isoUpdated = (post.data.updated ?? post.data.date).toISOString();
+---
+<Base
+  route="thoughts"
+  title={`${post.data.title} — Yonathan Raviv`}
+  description={post.data.description}
+  ogImage={`/og/thoughts/${post.id}.png`}
+  ogType="article"
+  articlePublished={isoDate}
+  articleModified={isoUpdated}
+  {jsonLd}
+>
+  <Nav />
+  <article class="thought">
+    <header class="thought-head">
+      <p class="crumb"><a href="/thoughts" data-thought-link>← THOUGHTS</a></p>
+      <h1>{post.data.title}</h1>
+      <p class="lede">{post.data.description}</p>
+    </header>
+
+    {post.data.cover && (
+      <figure class="thought-cover">
+        <Image
+          src={post.data.cover}
+          alt=""
+          widths={[720, 1080, 1440]}
+          sizes="(min-width: 900px) 720px, 100vw"
+        />
+      </figure>
+    )}
+
+    <div class="thought-body">
+      <aside class="rail">
+        <span class="label">// READ</span>
+        <span class="val">{readMin} min</span>
+        <span class="label">// PUBLISHED</span>
+        <time class="val" datetime={isoDate}>{fmtDate(post.data.date)}</time>
+        {post.data.updated && (
+          <>
+            <span class="label">// UPDATED</span>
+            <time class="val" datetime={post.data.updated.toISOString()}>{fmtDate(post.data.updated)}</time>
+          </>
+        )}
+        <span class="label">// PROGRESS</span>
+        <div class="progress-track"><div class="progress-fill" data-thought-progress></div></div>
+      </aside>
+
+      <div class="prose">
+        <Content />
+      </div>
+    </div>
+
+    <footer class="thought-foot">
+      <a href="/thoughts" class="back" data-thought-link>← MORE THOUGHTS</a>
+    </footer>
+  </article>
+  <Footer />
+</Base>
+
+<style>
+  /* ── article shell ─────────────────────────────────────────────── */
+  article.thought {
+    position: relative;
+    z-index: 10;
+    padding: 160px var(--pad-x) 96px;
+    max-width: 960px;
+    margin: 0 auto;
+  }
+  @media (max-width: 900px) {
+    article.thought { padding: 96px var(--pad-x) 64px; }
+  }
+
+  /* ── header ────────────────────────────────────────────────────── */
+  .thought-head { margin-bottom: 28px; }
+  .crumb {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+  }
+  .crumb a {
+    color: var(--accent);
+    text-decoration: none;
+  }
+  .crumb a:hover { color: var(--text-bright); }
+  h1 {
+    font-family: var(--display);
+    font-size: clamp(36px, 6.5vw, 56px);
+    line-height: 1.02;
+    letter-spacing: 0.03em;
+    color: var(--text-bright);
+    margin: 14px 0 12px;
+    max-width: 22ch;
+  }
+  .lede {
+    color: var(--text);
+    font-size: 16px;
+    line-height: 1.55;
+    max-width: 64ch;
+  }
+
+  /* ── cover image ───────────────────────────────────────────────── */
+  .thought-cover {
+    margin: 32px 0;
+  }
+  .thought-cover :global(img) {
+    width: 100%;
+    height: auto;
+    max-height: 440px;
+    object-fit: cover;
+    border-radius: 4px;
+    border: 1px solid rgba(191, 178, 155, 0.08);
+    display: block;
+  }
+
+  /* ── 2-col body (rail + content) on desktop ────────────────────── */
+  .thought-body {
+    display: grid;
+    grid-template-columns: 140px 32px 1fr;
+    margin-top: 24px;
+  }
+  @media (max-width: 900px) {
+    .thought-body { grid-template-columns: 1fr; }
+  }
+
+  .rail {
+    grid-column: 1 / 2;
+    position: sticky;
+    top: 96px;
+    align-self: start;
+    padding-right: 0;
+    border-right: 1px dashed rgba(191, 178, 155, 0.16);
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .rail .label { color: var(--accent); margin-top: 14px; }
+  .rail .label:first-child { margin-top: 0; }
+  .rail .val {
+    color: var(--text);
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    text-transform: none;
+    font-variant-numeric: tabular-nums;
+  }
+  .rail .progress-track {
+    margin-top: 8px;
+    width: 2px;
+    height: 120px;
+    background: rgba(191, 178, 155, 0.1);
+    position: relative;
+  }
+  .rail .progress-fill {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 0%;
+    background: var(--accent);
+    transition: height 0.15s linear;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .rail .progress-fill { transition: none; }
+  }
+
+  @media (max-width: 900px) {
+    .rail {
+      position: static;
+      border-right: 0;
+      border-bottom: 1px dashed rgba(191, 178, 155, 0.16);
+      padding-bottom: 16px;
+      margin-bottom: 24px;
+      flex-direction: row;
+      flex-wrap: wrap;
+      gap: 14px;
+      align-items: baseline;
+    }
+    .rail .label { margin-top: 0; }
+    .rail .progress-track { display: none; }
+  }
+
+  .prose {
+    grid-column: 3 / 4;
+    max-width: 64ch;
+  }
+  @media (max-width: 900px) {
+    .prose { grid-column: 1 / 2; }
+  }
+
+  /* ── prose (markdown-rendered content) ─────────────────────────── */
+  .prose :global(p) {
+    color: var(--text);
+    font-size: 16px;
+    line-height: 1.65;
+    margin: 12px 0;
+  }
+  @media (max-width: 720px) {
+    .prose :global(p) { font-size: 15px; }
+  }
+  .prose :global(h2) {
+    font-family: var(--display);
+    font-size: 28px;
+    letter-spacing: 0.04em;
+    color: var(--text-bright);
+    margin: 36px 0 8px;
+  }
+  .prose :global(h2)::before {
+    content: "// ";
+    font-family: var(--mono);
+    font-size: 18px;
+    letter-spacing: 0;
+    color: var(--accent);
+  }
+  .prose :global(h3) {
+    font-family: var(--display);
+    font-size: 20px;
+    letter-spacing: 0.04em;
+    color: var(--text-bright);
+    margin: 24px 0 6px;
+  }
+  .prose :global(ul),
+  .prose :global(ol) {
+    margin: 12px 0;
+    padding-left: 24px;
+    color: var(--text);
+  }
+  .prose :global(li) {
+    margin: 6px 0;
+    line-height: 1.6;
+  }
+  .prose :global(li::marker) { color: var(--accent); }
+
+  .prose :global(a) {
+    color: var(--text-bright);
+    text-decoration: none;
+    background-image: linear-gradient(var(--accent), var(--accent));
+    background-repeat: no-repeat;
+    background-position: 0 100%;
+    background-size: 100% 1px;
+    transition: color 0.25s, background-size 0.3s cubic-bezier(0.2, 0.7, 0.2, 1);
+    padding-bottom: 1px;
+  }
+  .prose :global(a:hover) {
+    color: var(--accent);
+    background-size: 100% 2px;
+  }
+  .prose :global(a[href^="http"]:not([href*="yonathanraviv.dev"]))::after {
+    content: " ↗";
+    color: var(--accent);
+  }
+
+  .prose :global(blockquote) {
+    border-left: 2px solid var(--accent);
+    padding-left: 16px;
+    margin: 18px 0;
+    color: var(--text-bright);
+    font-style: italic;
+  }
+  .prose :global(blockquote p) {
+    color: var(--text-bright);
+  }
+
+  .prose :global(img) {
+    width: 100%;
+    height: auto;
+    border-radius: 4px;
+    border: 1px solid rgba(191, 178, 155, 0.08);
+    margin: 18px 0 6px;
+    display: block;
+  }
+  .prose :global(img + em) {
+    display: block;
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    font-style: normal;
+    margin: 0 0 18px;
+  }
+
+  .prose :global(hr) {
+    border: 0;
+    border-top: 1px dashed rgba(191, 178, 155, 0.16);
+    margin: 32px 0;
+  }
+
+  /* inline code */
+  .prose :global(:not(pre) > code) {
+    font-family: var(--mono);
+    font-size: 0.92em;
+    background: rgba(255, 111, 89, 0.08);
+    color: var(--accent);
+    padding: 2px 5px;
+    border-radius: 2px;
+  }
+
+  /* code blocks (Astro emits <pre class="astro-code" ...>) */
+  .prose :global(pre.astro-code) {
+    background: rgba(244, 238, 226, 0.03) !important;
+    border-left: 2px solid var(--accent);
+    border-radius: 0;
+    padding: 14px 16px;
+    margin: 18px 0;
+    overflow-x: auto;
+    font-size: 13px;
+    line-height: 1.55;
+  }
+  .prose :global(pre.astro-code code) {
+    font-family: var(--mono);
+  }
+  .prose :global(pre.astro-code .line .comment),
+  .prose :global(pre.astro-code .line .punctuation.definition.comment) {
+    color: var(--text-dim) !important;
+    font-style: italic;
+  }
+
+  /* ── footer link ───────────────────────────────────────────────── */
+  .thought-foot {
+    margin-top: 64px;
+    padding-top: 24px;
+    border-top: 1px dashed rgba(191, 178, 155, 0.16);
+  }
+  .thought-foot .back {
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--accent);
+    text-decoration: none;
+  }
+  .thought-foot .back:hover { color: var(--text-bright); }
+</style>

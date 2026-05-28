@@ -12,6 +12,12 @@ export default defineConfig({
   build: {
     inlineStylesheets: 'auto',
   },
+  markdown: {
+    shikiConfig: {
+      theme: 'material-theme-palenight',
+      wrap: false,
+    },
+  },
   vite: {
     build: {
       cssMinify: 'lightningcss',
