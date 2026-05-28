@@ -1,0 +1,151 @@
+---
+// Page-transition overlay: scanline wipe + terminal boot.
+//
+// State machine is driven by data-tx-state on this element. The companion
+// JS (`src/lib/thoughts-transition.ts`) sets the state on outgoing click,
+// awaits the prefetch, and the `tx-arrive` sessionStorage flag triggers
+// the exit animation on the destination page. An inline <script is:inline>
+// in Base.astro adds `tx-arriving` to <html> BEFORE first paint so the
+// destination page boots with the overlay already covering — no FOUC.
+---
+<div class="tx" id="tx" aria-hidden="true" data-tx-state="idle">
+  <div class="tx-panel"></div>
+  <div class="tx-scan"></div>
+  <div class="tx-term">
+    <span class="tx-term-line">&gt; TRANSMITTING</span>
+    <span class="tx-cur">_</span>
+  </div>
+</div>
+
+<style is:global>
+  /* z-index 9999 sits above nav (50) and cursor (9998); pointer-events:none
+     so the idle overlay never blocks clicks. */
+  .tx {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    pointer-events: none;
+    overflow: hidden;
+  }
+
+  /* Panel: the dark cover. clip-path starts fully clipped from the top
+     (inset(100% 0 0 0) = visible area collapsed at top edge), animates
+     to fully visible, then on exit to fully clipped from the bottom
+     (inset(0 0 100% 0) = visible area collapsed at top edge again, so
+     the bottom edge rises up). */
+  .tx-panel {
+    position: absolute;
+    inset: 0;
+    background: #0a0a0a;
+    clip-path: inset(100% 0 0 0);
+    opacity: 0;
+    will-change: clip-path, opacity;
+  }
+
+  /* Scan texture matches the global .scanlines flavor but uses the accent
+     colour and is slightly stronger so it's legible against the dark panel. */
+  .tx-scan {
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(
+      to bottom,
+      rgba(255, 111, 89, 0.08) 0 2px,
+      transparent 2px 5px
+    );
+    clip-path: inset(100% 0 0 0);
+    opacity: 0;
+    will-change: clip-path, opacity;
+    mix-blend-mode: overlay;
+  }
+
+  /* Terminal line, centred. Fades in mid-enter; out mid-exit. */
+  .tx-term {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    font-family: var(--mono);
+    font-size: 14px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--accent);
+    opacity: 0;
+    will-change: opacity;
+  }
+  .tx-cur {
+    animation: tx-cur-blink 0.6s steps(1) infinite;
+  }
+  @keyframes tx-cur-blink {
+    0%, 50% { opacity: 1; }
+    50.01%, 100% { opacity: 0; }
+  }
+
+  /* ─── ENTER (panel + scan wipe in from top; text fades in late) ─── */
+  .tx[data-tx-state="enter"] .tx-panel,
+  .tx[data-tx-state="enter"] .tx-scan {
+    animation: tx-cover-enter 620ms cubic-bezier(0.65, 0, 0.2, 1) forwards;
+  }
+  .tx[data-tx-state="enter"] .tx-term {
+    animation: tx-term-in 620ms ease-out forwards;
+  }
+  @keyframes tx-cover-enter {
+    0%   { clip-path: inset(100% 0 0 0); opacity: 1; }
+    100% { clip-path: inset(0 0 0 0);    opacity: 1; }
+  }
+  @keyframes tx-term-in {
+    0%, 40% { opacity: 0; }
+    100%    { opacity: 1; }
+  }
+
+  /* ─── HOLD (panel fully covers, text fully visible) ─── */
+  .tx[data-tx-state="hold"] .tx-panel,
+  .tx[data-tx-state="hold"] .tx-scan {
+    clip-path: inset(0 0 0 0);
+    opacity: 1;
+  }
+  .tx[data-tx-state="hold"] .tx-term {
+    opacity: 1;
+  }
+
+  /* ─── EXIT (panel wipes off — bottom edge rises; text fades out early) ─── */
+  .tx[data-tx-state="exit"] .tx-panel,
+  .tx[data-tx-state="exit"] .tx-scan {
+    animation: tx-cover-exit 700ms cubic-bezier(0.65, 0, 0.2, 1) forwards;
+  }
+  .tx[data-tx-state="exit"] .tx-term {
+    animation: tx-term-out 700ms ease-in forwards;
+  }
+  @keyframes tx-cover-exit {
+    0%   { clip-path: inset(0 0 0 0);    opacity: 1; }
+    100% { clip-path: inset(0 0 100% 0); opacity: 1; }
+  }
+  @keyframes tx-term-out {
+    0%      { opacity: 1; }
+    50%, 100% { opacity: 0; }
+  }
+
+  /* FOUC-prevention: when arriving via the transition, the inline head
+     script adds `tx-arriving` to <html> before first paint. CSS then renders
+     the overlay covering the destination page from frame 0. The JS in
+     thoughts-transition.ts swaps the state to `exit` on the next RAF so
+     the exit keyframes animate from this static covered pose. */
+  html.tx-arriving .tx {
+    pointer-events: auto;
+  }
+  html.tx-arriving .tx .tx-panel,
+  html.tx-arriving .tx .tx-scan {
+    clip-path: inset(0 0 0 0);
+    opacity: 1;
+  }
+  html.tx-arriving .tx .tx-term {
+    opacity: 1;
+  }
+
+  /* Reduced motion: skip the overlay entirely. global.css already drops
+     animations/transitions to 0.001ms, so this is belt and suspenders. */
+  @media (prefers-reduced-motion: reduce) {
+    .tx { display: none !important; }
+  }
+</style>

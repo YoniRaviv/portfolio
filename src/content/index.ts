@@ -6,5 +6,11 @@ export { what, projects } from './what';
 export { where, roles } from './where';
 export { how, skillGroups } from './how';
 export { contact, socials } from './contact';
-export { defaultSEO, personSchema, websiteSchema } from './seo';
+export {
+  defaultSEO,
+  personSchema,
+  websiteSchema,
+  blogPostingSchema,
+  blogIndexSchema,
+} from './seo';
 export type * from './_types';

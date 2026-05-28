@@ -1,12 +1,28 @@
 ---
 import SEO from '@/components/SEO.astro';
+import ThoughtsTransition from '@/components/ThoughtsTransition.astro';
 import '@/styles/global.css';
 
 interface Props {
   title?: string;
   description?: string;
+  route?: 'home' | 'thoughts';
+  ogImage?: string;
+  ogType?: 'profile' | 'article' | 'website';
+  articlePublished?: string;
+  articleModified?: string;
+  jsonLd?: object[];
 }
-const { title, description } = Astro.props;
+const {
+  title,
+  description,
+  route = 'home',
+  ogImage,
+  ogType,
+  articlePublished,
+  articleModified,
+  jsonLd,
+} = Astro.props;
 ---
 <!doctype html>
 <html lang="en">
@@ -14,29 +30,51 @@ const { title, description } = Astro.props;
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
     <link rel="icon" type="image/png" href="/favicon.png" />
-    <SEO {title} {description} />
+    <SEO
+      {title}
+      {description}
+      {ogImage}
+      {ogType}
+      {articlePublished}
+      {articleModified}
+      {jsonLd}
+    />
+    <script is:inline>
+      // FOUC-prevention for the blade-sweep arrival: applied BEFORE first paint
+      // so the overlay covers the destination page from frame 0.
+      try {
+        if (sessionStorage.getItem('tx-arrive') === '1') {
+          document.documentElement.classList.add('tx-arriving');
+        }
+      } catch (e) { /* sessionStorage may throw in private mode */ }
+    </script>
   </head>
-  <body>
+  <body data-route={route}>
     <div class="grain" aria-hidden="true"></div>
     <div class="scanlines" aria-hidden="true"></div>
     <div class="vignette" aria-hidden="true"></div>
     <div class="crt-pulse" aria-hidden="true"></div>
     <div class="cur-ring" id="curRing" aria-hidden="true"></div>
     <div class="cur-dot" id="curDot" aria-hidden="true"></div>
+    <ThoughtsTransition />
 
     <slot />
 
     <script>
-      import { mountReveal }       from '@/lib/reveal';
-      import { mountCursor }       from '@/lib/cursor';
-      import { mountActiveNav }    from '@/lib/active-nav';
-      import { mountSmoothScroll } from '@/lib/smooth-scroll';
-      import { mountNavMenu }      from '@/lib/nav-menu';
+      import { mountReveal }              from '@/lib/reveal';
+      import { mountCursor }              from '@/lib/cursor';
+      import { mountActiveNav }           from '@/lib/active-nav';
+      import { mountSmoothScroll }        from '@/lib/smooth-scroll';
+      import { mountNavMenu }             from '@/lib/nav-menu';
+      import { mountThoughtsTransition } from '@/lib/thoughts-transition';
+      import { mountReadingProgress }    from '@/lib/reading-progress';
       mountSmoothScroll();
       mountReveal();
       mountCursor();
       mountActiveNav();
       mountNavMenu();
+      mountThoughtsTransition();
+      mountReadingProgress();
     </script>
   </body>
 </html>

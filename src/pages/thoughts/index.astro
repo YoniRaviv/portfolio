@@ -1,0 +1,257 @@
+---
+import Base from "@/layouts/Base.astro";
+import Nav from "@/components/Nav.astro";
+import Footer from "@/components/Footer.astro";
+import {
+    getPublishedThoughts,
+    readingTimeMinutes,
+    fmtDate,
+} from "@/lib/thoughts";
+import { blogIndexSchema } from "@/content";
+
+const posts = await getPublishedThoughts();
+const jsonLd = [blogIndexSchema(posts)];
+---
+
+<Base
+    route="thoughts"
+    ogType="website"
+    title="Thoughts — Yonathan Raviv"
+    description="Workflow notes, project deep-dives, and the occasional opinion."
+    {jsonLd}
+>
+    <Nav />
+    <main class="thoughts-index">
+        <header class="thi-head">
+            <p class="crumb">// THOUGHTS</p>
+            <h1>Thoughts</h1>
+            <p class="lede">
+                Workflow notes, project deep-dives, and the occasional opinion.
+                Updated when something is worth writing about.
+            </p>
+            <p class="hdr-meta">
+                [ {String(posts.length).padStart(2, "0")} / POSTS ]
+                <span aria-hidden="true">·</span>
+                <a href="/rss.xml">RSS</a>
+            </p>
+        </header>
+
+        {
+            posts.length === 0 ? (
+                <p class="empty">
+                    &gt; NO_TRANSMISSIONS_YET_
+                    <span class="cur" aria-hidden="true">
+                        _
+                    </span>
+                </p>
+            ) : (
+                <ol class="thi-list">
+                    {posts.map((post, i) => (
+                        <li>
+                            <a
+                                href={`/thoughts/${post.id}`}
+                                class="thi-row"
+                                data-thought-link
+                            >
+                                <div class="meta-line">
+                                    <span class="idx">
+                                        {String(i + 1).padStart(2, "0")}
+                                    </span>
+                                    <time
+                                        datetime={post.data.date.toISOString()}
+                                    >
+                                        {fmtDate(post.data.date)}
+                                    </time>
+                                    <span class="read">
+                                        {readingTimeMinutes(post.body ?? "")}{" "}
+                                        MIN
+                                    </span>
+                                </div>
+                                <h2>{post.data.title}</h2>
+                                <p class="excerpt">{post.data.description}</p>
+                            </a>
+                        </li>
+                    ))}
+                </ol>
+            )
+        }
+    </main>
+    <Footer />
+</Base>
+
+<style>
+    main.thoughts-index {
+        position: relative;
+        z-index: 10;
+        padding: 160px var(--pad-x) 160px;
+        max-width: 1080px;
+        margin: 0 auto;
+    }
+    @media (max-width: 720px) {
+        main.thoughts-index {
+            padding: 96px var(--pad-x) 96px;
+        }
+    }
+
+    .thi-head {
+        margin-bottom: 56px;
+    }
+    .crumb {
+        font-family: var(--mono);
+        font-size: 11px;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        color: var(--accent);
+    }
+    h1 {
+        font-family: var(--display);
+        font-size: clamp(40px, 8vw, 64px);
+        line-height: 1.02;
+        letter-spacing: 0.04em;
+        color: var(--text-bright);
+        margin: 12px 0 14px;
+    }
+    .lede {
+        color: var(--text);
+        font-size: 16px;
+        line-height: 1.6;
+        max-width: 60ch;
+    }
+    .hdr-meta {
+        margin-top: 18px;
+        font-family: var(--mono);
+        font-size: 11px;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: var(--text-dim);
+        display: flex;
+        gap: 10px;
+        align-items: center;
+    }
+    .hdr-meta a {
+        color: var(--accent);
+        text-decoration: none;
+    }
+    .hdr-meta a:hover {
+        color: var(--text-bright);
+    }
+
+    .thi-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        border-top: 1px dashed rgba(191, 178, 155, 0.16);
+    }
+    .thi-row {
+        position: relative;
+        display: block;
+        padding: 22px 16px 22px 16px;
+        margin: 0 -16px;
+        border-bottom: 1px dashed rgba(191, 178, 155, 0.16);
+        text-decoration: none;
+        color: inherit;
+        transition: background-color 0.25s ease;
+    }
+    /* Thin accent stripe on the left edge, hidden at rest. Slides + fades
+       in on hover; cheaper-looking but louder than nothing. Reserved at
+       opacity 0 so the row doesn't shift on hover. */
+    .thi-row::before {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: 22px;
+        bottom: 22px;
+        width: 2px;
+        background: var(--accent);
+        opacity: 0;
+        transform: scaleY(0.4);
+        transform-origin: center;
+        transition:
+            opacity 0.25s ease,
+            transform 0.3s cubic-bezier(0.2, 0.7, 0.2, 1);
+    }
+    .thi-row:hover,
+    .thi-row:focus-visible {
+        background-color: rgba(255, 111, 89, 0.04);
+    }
+    .thi-row:hover::before,
+    .thi-row:focus-visible::before {
+        opacity: 1;
+        transform: scaleY(1);
+    }
+    .meta-line {
+        display: flex;
+        gap: 16px;
+        font-family: var(--mono);
+        font-size: 10px;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: var(--text-dim);
+        margin-bottom: 8px;
+    }
+    .meta-line .idx {
+        color: var(--accent);
+    }
+    .meta-line time {
+        font-variant-numeric: tabular-nums;
+    }
+
+    .thi-row h2 {
+        font-family: var(--display);
+        font-size: clamp(22px, 3.4vw, 30px);
+        line-height: 1.05;
+        letter-spacing: 0.04em;
+        color: var(--text-bright);
+        margin: 0 0 6px;
+        /* bracket reveal on hover (reserve space at opacity 0) */
+        position: relative;
+        transition: color 0.25s;
+    }
+    .thi-row h2::before,
+    .thi-row h2::after {
+        color: var(--accent);
+        opacity: 0;
+        transition: opacity 0.25s;
+    }
+    .thi-row h2::before {
+        content: "[ ";
+        margin-right: 2px;
+    }
+    .thi-row h2::after {
+        content: " ]";
+        margin-left: 2px;
+    }
+    .thi-row:hover h2,
+    .thi-row:focus-visible h2 {
+        color: var(--accent);
+    }
+    .thi-row:hover h2::before,
+    .thi-row:hover h2::after,
+    .thi-row:focus-visible h2::before,
+    .thi-row:focus-visible h2::after {
+        opacity: 1;
+    }
+    .thi-row:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 6px;
+        border-radius: 2px;
+    }
+
+    .excerpt {
+        color: var(--text);
+        font-size: 14px;
+        line-height: 1.55;
+        max-width: 70ch;
+    }
+
+    .empty {
+        font-family: var(--mono);
+        font-size: 13px;
+        letter-spacing: 0.16em;
+        color: var(--text-dim);
+    }
+    .empty .cur {
+        color: var(--accent);
+        animation: pulse 1.1s steps(1) infinite;
+    }
+</style>
