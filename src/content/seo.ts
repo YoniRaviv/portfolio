@@ -4,7 +4,7 @@ import { site } from './site';
 export const defaultSEO = {
   title: `${site.name} — ${site.jobTitle}`,
   description:
-    'Yonathan Raviv — fullstack and AI engineer based in Tel Aviv. Six years shipping production systems; currently building with LLM agents, RAG, and evals.',
+    'Yonathan Raviv — fullstack and AI engineer in Tel Aviv. Six years shipping production systems; now treating AI as engineering: specs, evals, guardrails.',
   ogImage: '/og.png',
 };
 
@@ -41,6 +41,9 @@ export const personSchema = {
     'Large Language Models',
     'Retrieval-Augmented Generation',
     'AI Agents',
+    'Evaluation & Guardrails',
+    'Anthropic SDK',
+    'OpenAI SDK',
     'PostgreSQL',
   ],
 };
