@@ -40,7 +40,7 @@ export const WHERE_RIG_START: Rig = {
 // so the scale/pos change doesn't affect any visible mask geometry.
 export const WHERE_RIG_END: Rig = {
   pos: { x: 0, y: 0, z: 0 },
-  scale: 1,
+  scale: 0.5,
   yawBias: Math.PI * 2,
   pitchBias: 0.01,
   exposure: 1,

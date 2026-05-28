@@ -104,6 +104,16 @@ export function init(mount: HTMLElement): HeroSceneHandle {
   let lastMoonCy = NaN;
   let lastMoonOp = NaN;
 
+  // Hero calibration HUD: the mask's live rotation, surfaced to HeroHud's
+  // "honest readout" so it shows real yaw/pitch (no fake telemetry). Refs are
+  // grabbed once and may be null (markup absent / future blog pages). last*
+  // throttle the writes — we only touch the DOM when the angle changes enough
+  // to matter, mirroring the moon-write guard above.
+  const hudYawEl = document.getElementById('hud-yaw');
+  const hudPitchEl = document.getElementById('hud-pitch');
+  let lastYawDeg = NaN;
+  let lastPitchDeg = NaN;
+
   const accentHex = getComputedStyle(document.documentElement)
     .getPropertyValue('--accent')
     .trim() || '#FF6F59';
@@ -480,7 +490,7 @@ export function init(mount: HTMLElement): HeroSceneHandle {
   // bottom social strip (desktop) / top of the GitHub block (mobile). Tilt
   // is a Z rotation (hilt to upper-right, tip into the surface).
   const SWORD_LANDING_POS_DESKTOP = { x: 0, y: -1.4, z: 0.5 };
-  const SWORD_LANDING_POS_MOBILE = { x: 0.3, y: -0.3, z: 0.5 };
+  const SWORD_LANDING_POS_MOBILE = { x: 0, y: -0.3, z: 0.5 };
   const SWORD_LANDING_TILT_Z = -0.42;
   // Reorientation ("swing into the planted pose") timing. The Y-spin is frozen
   // by the time howProgress saturates at the Contact boundary (see
@@ -886,6 +896,28 @@ export function init(mount: HTMLElement): HeroSceneHandle {
       modelGroup.rotation.y = yaw;
       modelGroup.rotation.x = pitch;
       modelGroup.rotation.z = 0;
+
+      // Feed the calibration HUD readout. Only while the hero is on screen
+      // (the HUD scrolls away after the first viewport), and only on a real
+      // change — same "don't thrash the DOM every frame" discipline as the
+      // moon writes. The minus glyph is U+2212 to sit cleanly in the mono row.
+      if ((hudYawEl || hudPitchEl) && window.scrollY < window.innerHeight) {
+        const yawDeg = yaw * (180 / Math.PI);
+        const pitchDeg = pitch * (180 / Math.PI);
+        // NaN guard forces the first write (last* start NaN, and NaN
+        // comparisons are always false — which would otherwise wedge the
+        // readout at its default forever).
+        if (
+          Number.isNaN(lastYawDeg) ||
+          Math.abs(yawDeg - lastYawDeg) >= 0.1 ||
+          Math.abs(pitchDeg - lastPitchDeg) >= 0.1
+        ) {
+          if (hudYawEl) hudYawEl.textContent = `${yawDeg >= 0 ? '+' : '−'}${Math.abs(yawDeg).toFixed(1)}°`;
+          if (hudPitchEl) hudPitchEl.textContent = `${pitchDeg >= 0 ? '+' : '−'}${Math.abs(pitchDeg).toFixed(1)}°`;
+          lastYawDeg = yawDeg;
+          lastPitchDeg = pitchDeg;
+        }
+      }
     }
 
     // Mobile ambient breathing. Layered on top of whatever the rig already

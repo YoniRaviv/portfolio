@@ -14,11 +14,15 @@ import { WHAT_RIG_MOBILE_START } from './what';
 //   * fogDensity        — atmospheric falloff
 //   * accentBeamPos     — light direction (the beam points at target 1.5,1.8,-0.5)
 //   * accentBeamIntensity — how strongly the orange key light hits the mask
+// pitchBias is POSITIVE here (mask tilts its face down) so that as the visitor
+// scrolls out of Hero (which looks up, -0.5) into Who, the mask drops its gaze
+// to "watch" the section sliding up into view. START dips a touch deeper — the
+// arrival beat — then eases back to a gentler downward hold at END.
 export const WHO_RIG_START: Rig = {
   pos: { x: 0, y: 0.5, z: 0 },
   scale: 0.6,
   yawBias: 0,
-  pitchBias: -0.35,
+  pitchBias: -0.12,
   exposure: 0.6,
   fogDensity: 0.05,
   alpha: 1,
@@ -39,7 +43,7 @@ export const WHO_RIG_END: Rig = {
   pos: { x: 0, y: 0.5, z: 0 },
   scale: 0.6,
   yawBias: 0,
-  pitchBias: -0.5,
+  pitchBias: -1,
   exposure: 0.85,
   fogDensity: 0.04,
   alpha: 1,

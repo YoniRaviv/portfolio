@@ -65,7 +65,7 @@ export const HOW_RIG_END: Rig = {
 export const HOW_RIG_MOBILE_START: Rig = {
   ...WHERE_RIG_MOBILE_END,
   pos: { x: 0, y: -0.2, z: 0 },
-  scale: 0.85,
+  scale: 0.75,
   // 2π (not 0) so the held spin from What→Where doesn't unwind across the
   // Where→How transition zone. Visually identical to 0 for the sword
   // (which uses its own swordGroup.rotation.y), but keeps the mask's
