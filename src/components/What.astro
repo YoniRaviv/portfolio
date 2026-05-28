@@ -84,6 +84,11 @@ import { what, projects } from "@/content";
         color: var(--text-bright);
         position: relative;
         text-transform: uppercase;
+        /* Treat hyphenated names like SHI-SHI as one unit so the dash isn't
+           used as a soft-break point on narrow columns. */
+        overflow-wrap: normal;
+        word-break: keep-all;
+        hyphens: manual;
         transition:
             color 0.4s,
             transform 0.5s cubic-bezier(0.2, 0.7, 0.2, 1);
@@ -179,7 +184,9 @@ import { what, projects } from "@/content";
         background-size: 8px 8px;
     }
 
-    @media (max-width: 1100px) {
+    /* True tablets only — phones drop straight to the single-column layout
+       below at <=900px so the title isn't squeezed by a sibling column. */
+    @media (max-width: 1100px) and (min-width: 901px) {
         .what .proj {
             grid-template-columns: 80px 1fr 100px;
             gap: 24px;
@@ -191,7 +198,7 @@ import { what, projects } from "@/content";
             display: none;
         }
     }
-    @media (max-width: 720px) {
+    @media (max-width: 900px) {
         .what {
             padding-top: 100px;
             padding-bottom: 96px;
@@ -205,12 +212,19 @@ import { what, projects } from "@/content";
             padding: 40px 0;
         }
         .what .proj .idx,
-        .what .proj .arrow {
+        .what .proj .arrow,
+        .what .proj .thumb {
             display: none;
         }
         .what .proj .name {
-            font-size: clamp(56px, 16vw, 88px);
+            /* 13vw at 375px ≈ 49px; Bebas-Neue "SHI-SHI" fits one line. */
+            font-size: clamp(48px, 13vw, 84px);
             line-height: 1;
+        }
+        .what .proj:hover .name {
+            /* Disable the desktop hover slide on touch widths where it pushes
+               the long title off-screen. */
+            transform: none;
         }
         .what .proj .desc {
             max-width: none;

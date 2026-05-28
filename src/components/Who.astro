@@ -122,26 +122,52 @@ import { who } from "@/content";
         display: grid;
         grid-template-columns: repeat(4, 1fr);
         gap: 1px;
-        background: rgba(191, 178, 155, 0.12);
-        border-top: 1px solid rgba(191, 178, 155, 0.12);
-        border-bottom: 1px solid rgba(191, 178, 155, 0.12);
+        background: rgba(191, 178, 155, 0.16);
+        border-top: 1px solid rgba(191, 178, 155, 0.16);
+        border-bottom: 1px solid rgba(191, 178, 155, 0.16);
     }
     .who .meta-grid .cell {
         background: var(--main);
         padding: 32px 28px;
         display: flex;
         flex-direction: column;
-        gap: 12px;
-        min-height: 180px;
+        gap: 14px;
+        min-height: 200px;
         position: relative;
+        overflow: hidden;
+    }
+    /* Scanline overlay — same recipe as the nav overlay. mix-blend keeps it
+       hovering over the cell colour without being harsh, and `pointer-events:
+       none` ensures it never blocks reveal or focus. */
+    .who .meta-grid .cell::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        background: repeating-linear-gradient(
+            to bottom,
+            rgba(255, 255, 255, 0.045) 0 1px,
+            transparent 1px 3px
+        );
+        mix-blend-mode: overlay;
+        opacity: 0.55;
+        z-index: 0;
+    }
+    .who .meta-grid .cell > * {
+        position: relative;
+        z-index: 1;
     }
     .who .meta-grid .cell .k {
         font-family: var(--mono);
         font-size: 10px;
-        letter-spacing: 0.2em;
+        letter-spacing: 0.22em;
         text-transform: uppercase;
-        color: var(--text-dim);
+        color: var(--accent);
     }
+    /* `[ KEY ]` brackets framed in accent at slightly reduced opacity so the
+       label still reads first, the brackets are decoration. */
+    .who .meta-grid .cell .k::before { content: "[ "; opacity: 0.65; }
+    .who .meta-grid .cell .k::after  { content: " ]"; opacity: 0.65; }
     .who .meta-grid .cell .v {
         font-family: var(--display);
         font-weight: 400;
@@ -157,10 +183,12 @@ import { who } from "@/content";
         overflow: hidden;
     }
     .who .meta-grid .cell .vs {
-        font-family: var(--sans);
-        font-size: 14px;
+        font-family: var(--mono);
+        font-size: 11px;
+        letter-spacing: 0.02em;
         color: var(--text);
-        line-height: 1.5;
+        line-height: 1.6;
+        margin-top: auto;
     }
 
     /* ─── meta-cell reveal: accent outline sweeps in, then content fills ─── */
@@ -171,7 +199,9 @@ import { who } from "@/content";
     .who .reveal-cells:not(.in) .cell .vs {
         opacity: 0;
     }
-    /* The drawing outline — sweeps across each cell, then fades as content lands. */
+    /* The drawing outline — sweeps across each cell, then fades as content lands.
+       Sits at z-index 2 so it draws above both the scanline ::before (0) and
+       the content layer (1). */
     .who .meta-grid .cell::after {
         content: "";
         position: absolute;
@@ -180,7 +210,7 @@ import { who } from "@/content";
         clip-path: inset(0 100% 0 0);
         opacity: 0;
         pointer-events: none;
-        z-index: 1;
+        z-index: 2;
     }
     @keyframes cellDraw {
         0% {
@@ -226,7 +256,8 @@ import { who } from "@/content";
             opacity: 1;
             animation: none;
         }
-        .who .meta-grid .cell::after {
+        .who .meta-grid .cell::after,
+        .who .meta-grid .cell::before {
             display: none;
         }
     }
