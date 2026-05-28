@@ -38,8 +38,8 @@ Modifications:
 
 | File | Change |
 | --- | --- |
-| `src/content/nav.ts` | `Blog → Thoughts`, `href: '/thoughts'`. Replace the misleading `external: true` flag with a new `highlighted?: boolean` field on `NavLink` (the link is now internal but should still get the accent + ↗ treatment). `NavLink` shape changes in `src/content/_types.ts`. |
-| `src/components/Nav.astro` | The `.blog` class becomes `.thoughts` (CSS rename only); selector logic switches from `link.external` to `link.highlighted`; add `data-thought-link` to the Thoughts anchor. |
+| `src/content/nav.ts` | `Blog → Thoughts`, `href: '/thoughts'`. Keep `external: true` — it now means "leaves the home single-page flow" rather than "off-site", which is still correct intent for the ↗ glyph + accent treatment. |
+| `src/components/Nav.astro` | The `.blog` class becomes `.thoughts` (CSS rename only); add `data-thought-link` to the Thoughts anchor. Existing `link.external` selector logic stays. |
 | `src/components/SEO.astro` | New optional props: `ogType` (default `profile`, posts pass `article`), `articlePublished`, `articleModified`, `jsonLd` (extra schema arrays). |
 | `src/content/seo.ts` | New helpers: `blogPostingSchema(post, slug)`, `blogIndexSchema(posts)`. |
 | `src/layouts/Base.astro` | Accepts a `route?: 'home' \| 'thoughts'` prop. Renders `<ThoughtsTransition />`. Calls `mountThoughtsTransition()` and (on post pages only) `mountReadingProgress()`. |
