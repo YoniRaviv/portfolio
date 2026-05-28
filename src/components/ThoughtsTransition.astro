@@ -1,0 +1,147 @@
+---
+// Blade-sweep page transition overlay. Inert by default; styled responses
+// are driven by data-tx-state on this element and a `tx-arriving` class on
+// <html> set by an inline head script when arriving via the transition.
+---
+<div class="tx" id="tx" aria-hidden="true" data-tx-state="idle">
+  <div class="tx-panel"></div>
+  <div class="tx-edge"></div>
+  <div class="tx-scan"></div>
+</div>
+
+<style is:global>
+  /* z-index: above everything — nav is 50, cursor 9998, hero stage ~6.
+     We sit at 9999. pointer-events:none so we never block clicks. */
+  .tx {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    pointer-events: none;
+    overflow: hidden;
+    /* idle state is invisible */
+    opacity: 1;
+  }
+  .tx[data-tx-state="idle"] .tx-panel,
+  .tx[data-tx-state="idle"] .tx-edge,
+  .tx[data-tx-state="idle"] .tx-scan {
+    opacity: 0;
+  }
+
+  /* Panel: the dark wedge that follows the blade. */
+  .tx-panel {
+    position: absolute;
+    inset: 0;
+    background: #0a0a0a;
+    /* default off-screen wedge */
+    clip-path: polygon(-30% -30%, -30% -30%, -30% -30%, -30% -30%);
+    will-change: clip-path, opacity;
+  }
+
+  /* Scan texture layered on the panel — quiet, on-brand. */
+  .tx-scan {
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(
+      to bottom,
+      rgba(255, 111, 89, 0.06) 0 2px,
+      transparent 2px 5px
+    );
+    /* same clip as panel during animation — controlled via JS sibling state */
+    clip-path: polygon(-30% -30%, -30% -30%, -30% -30%, -30% -30%);
+    will-change: clip-path, opacity;
+    mix-blend-mode: overlay;
+  }
+
+  /* Edge: the glowing blade line. 220% wide so it always overshoots. */
+  .tx-edge {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 220%;
+    height: 6px;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      var(--accent) 30%,
+      #fff 50%,
+      var(--accent) 70%,
+      transparent
+    );
+    box-shadow:
+      0 0 20px var(--accent),
+      0 0 40px var(--accent);
+    transform: rotate(-22deg) translate(-80%, -20%);
+    opacity: 0;
+    will-change: transform, opacity;
+  }
+
+  /* ─── ENTER (forward sweep, top-left → bottom-right) ─── */
+  .tx[data-tx-state="enter"] .tx-panel,
+  .tx[data-tx-state="enter"] .tx-scan {
+    animation: tx-panel-enter 620ms cubic-bezier(0.7, 0, 0.2, 1) forwards;
+  }
+  .tx[data-tx-state="enter"] .tx-edge {
+    animation: tx-edge-enter 620ms cubic-bezier(0.7, 0, 0.2, 1) forwards;
+  }
+  @keyframes tx-panel-enter {
+    0%   { clip-path: polygon(-30% -30%, -30% -30%, -30% -30%, -30% -30%); opacity: 1; }
+    100% { clip-path: polygon(-30% -30%, 130% -30%, 130% 130%, -30% 130%); opacity: 1; }
+  }
+  @keyframes tx-edge-enter {
+    0%   { transform: rotate(-22deg) translate(-80%, -20%); opacity: 0; }
+    15%  { opacity: 1; }
+    100% { transform: rotate(-22deg) translate(20%, 90%); opacity: 1; }
+  }
+
+  /* ─── HOLD (panel fully covers) ─── */
+  .tx[data-tx-state="hold"] .tx-panel,
+  .tx[data-tx-state="hold"] .tx-scan {
+    clip-path: polygon(-30% -30%, 130% -30%, 130% 130%, -30% 130%);
+    opacity: 1;
+  }
+  .tx[data-tx-state="hold"] .tx-edge {
+    transform: rotate(-22deg) translate(20%, 90%);
+    opacity: 1;
+  }
+
+  /* ─── EXIT (arrival sweep, top-right → bottom-left) ─── */
+  .tx[data-tx-state="exit"] .tx-panel,
+  .tx[data-tx-state="exit"] .tx-scan {
+    animation: tx-panel-exit 700ms cubic-bezier(0.7, 0, 0.2, 1) forwards;
+  }
+  .tx[data-tx-state="exit"] .tx-edge {
+    animation: tx-edge-exit 700ms cubic-bezier(0.7, 0, 0.2, 1) forwards;
+  }
+  @keyframes tx-panel-exit {
+    0%   { clip-path: polygon(-30% -30%, 130% -30%, 130% 130%, -30% 130%); opacity: 1; }
+    100% { clip-path: polygon(130% 130%, 130% 130%, 130% 130%, 130% 130%); opacity: 1; }
+  }
+  @keyframes tx-edge-exit {
+    0%   { transform: rotate(22deg) translate(80%, -20%); opacity: 0; }
+    15%  { opacity: 1; }
+    100% { transform: rotate(22deg) translate(-20%, 90%); opacity: 1; }
+  }
+
+  /* FOUC-prevention: when arriving via transition, the overlay
+     covers the page from the very first paint. This is the state that
+     the exit animation animates *away from*. */
+  html.tx-arriving .tx {
+    pointer-events: auto; /* block stray clicks during exit */
+  }
+  html.tx-arriving .tx .tx-panel,
+  html.tx-arriving .tx .tx-scan {
+    clip-path: polygon(-30% -30%, 130% -30%, 130% 130%, -30% 130%);
+    opacity: 1;
+  }
+  html.tx-arriving .tx .tx-edge {
+    /* mirror of the enter end-state, ready to start the exit sweep */
+    transform: rotate(22deg) translate(80%, -20%);
+    opacity: 0;
+  }
+
+  /* Reduced motion: no overlay animations at all. global.css already
+     reduces all transition/animation durations to 0.001ms under reduce. */
+  @media (prefers-reduced-motion: reduce) {
+    .tx { display: none !important; }
+  }
+</style>
