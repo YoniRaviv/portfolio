@@ -1,0 +1,76 @@
+---
+import Base from '@/layouts/Base.astro';
+---
+<Base title="404 — Yonathan Raviv" description="Page not found." route="home">
+  <main class="not-found" aria-labelledby="nf-title">
+    <p class="kicker">N° 404 — Off the map</p>
+    <h1 id="nf-title" class="code">404</h1>
+    <p class="line">The page isn't here.</p>
+    <p class="line sub">Most things on this site aren't either —<br />the rest takes about three minutes.</p>
+    <a href="/" class="back">← Back to the start</a>
+  </main>
+</Base>
+
+<style>
+  .not-found {
+    min-height: 100svh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    gap: 18px;
+    padding: 80px var(--pad-x);
+  }
+  .not-found .kicker {
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin: 0;
+  }
+  .not-found .code {
+    font-family: var(--display);
+    font-weight: 400;
+    font-size: clamp(140px, 24vw, 360px);
+    line-height: 0.9;
+    letter-spacing: 0.005em;
+    color: var(--text-bright);
+    margin: 0;
+  }
+  .not-found .line {
+    font-family: var(--sans);
+    font-size: clamp(20px, 2.4vw, 32px);
+    line-height: 1.4;
+    color: var(--text);
+    margin: 0;
+    max-width: 600px;
+  }
+  .not-found .line.sub {
+    color: var(--text-dim);
+    font-size: clamp(16px, 1.8vw, 22px);
+  }
+  .not-found .back {
+    margin-top: 32px;
+    font-family: var(--mono);
+    font-size: 14px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--accent);
+    text-decoration: none;
+    border-bottom: 1px solid currentColor;
+    padding-bottom: 4px;
+    transition: opacity 0.25s ease;
+  }
+  .not-found .back:hover {
+    opacity: 0.7;
+  }
+
+  @media (max-width: 720px) {
+    .not-found {
+      padding: 60px var(--pad-x);
+      gap: 14px;
+    }
+  }
+</style>

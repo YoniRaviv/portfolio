@@ -1,0 +1,12 @@
+/* TEAM */
+  Engineer:  Yonathan Raviv
+  Site:      https://yonathanraviv.dev
+  Contact:   hello@yonathanraviv.com
+  GitHub:    https://github.com/YoniRaviv
+  LinkedIn:  https://www.linkedin.com/in/yonathan-raviv/
+  Location:  Tel Aviv, IL
+
+/* SITE */
+  Last update:  2026-05
+  Stack:        Astro · TypeScript · Three.js
+  Built:        by hand
