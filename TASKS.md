@@ -3,7 +3,6 @@
 1. fix mask direction on top left
 
 ## global
-2. content refinment
 6. more hidden text in copy later
 - analytics
 

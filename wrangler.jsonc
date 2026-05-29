@@ -1,0 +1,22 @@
+/**
+ * Cloudflare Workers (Static Assets) config for the portfolio.
+ *
+ * Astro builds a pure static site to ./dist; this Worker just serves those
+ * assets from Cloudflare's edge — no Worker script, no SSR, no bindings.
+ *
+ * Docs: https://developers.cloudflare.com/workers/static-assets/
+ *       https://docs.astro.build/en/guides/deploy/cloudflare/
+ */
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "yonathan-raviv-dev",
+  "compatibility_date": "2026-05-29",
+  "assets": {
+    "directory": "./dist",
+    // Serve dist/404.html for unmatched paths (Astro generates it from src/pages/404.astro).
+    "not_found_handling": "404-page"
+  },
+  "observability": {
+    "enabled": true
+  }
+}
