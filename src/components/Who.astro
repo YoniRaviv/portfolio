@@ -100,22 +100,29 @@ import { who } from "@/content";
         display: inline-block;
         font-variant-numeric: tabular-nums;
     }
-    .who .quote-stack:hover .quote-alt {
-        opacity: 1;
-    }
-    .who .quote-stack:hover .quote {
-        -webkit-mask-image: radial-gradient(
-            circle var(--reveal-radius) at var(--qx) var(--qy),
-            transparent 0%,
-            transparent 92%,
-            black 100%
-        );
-        mask-image: radial-gradient(
-            circle var(--reveal-radius) at var(--qx) var(--qy),
-            transparent 0%,
-            transparent 92%,
-            black 100%
-        );
+    /* The cursor-spotlight reveal is a pointer-only interaction: on touch a tap
+       triggers :hover and the alt paragraph flashes in fully with no usable
+       cursor position behind the mask. Gate the whole effect behind the same
+       media query the rest of the site uses for pointer-only behavior
+       (cursor.ts uses the same one) so it only runs on real mice/trackpads. */
+    @media (hover: hover) and (pointer: fine) {
+        .who .quote-stack:hover .quote-alt {
+            opacity: 1;
+        }
+        .who .quote-stack:hover .quote {
+            -webkit-mask-image: radial-gradient(
+                circle var(--reveal-radius) at var(--qx) var(--qy),
+                transparent 0%,
+                transparent 92%,
+                black 100%
+            );
+            mask-image: radial-gradient(
+                circle var(--reveal-radius) at var(--qx) var(--qy),
+                transparent 0%,
+                transparent 92%,
+                black 100%
+            );
+        }
     }
     .who .meta-grid {
         margin-top: 120px;

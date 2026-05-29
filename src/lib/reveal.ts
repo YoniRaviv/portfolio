@@ -119,6 +119,11 @@ function mountQuoteReveal(): void {
   // expose it as --qx / --qy CSS variables. Used by the Who section's
   // spotlight mask that punches the cream fill out within a circle around the
   // cursor (revealing the mask + accent stroke beneath).
+  //
+  // Skip entirely on touch / coarse-pointer devices: the reveal is gated to
+  // `(hover: hover) and (pointer: fine)` in CSS, so attaching pointermove
+  // here would just be dead work.
+  if (!window.matchMedia('(hover: hover) and (pointer: fine)').matches) return;
   const stacks = document.querySelectorAll<HTMLElement>('[data-quote-reveal]');
   stacks.forEach((stack) => {
     const reset = (): void => {
