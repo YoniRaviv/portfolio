@@ -75,6 +75,15 @@ export function bindHoverScramble(trigger: Element | null, target: HTMLElement |
     target.style.textAlign = 'left';
   };
   lockSize();
+  // Re-measure once web fonts have loaded. Bebas Neue (the display font used
+  // for .company and the hero scramble target) is much narrower than the
+  // system fallback; measuring before it swaps in locks a width that's too
+  // wide, which on the Where rows pushes the adjacent "● NOW" badge into the
+  // middle of the row. document.fonts.ready resolves immediately on cached
+  // loads, so this is cheap.
+  if ('fonts' in document) {
+    document.fonts.ready.then(lockSize);
+  }
   window.addEventListener('resize', lockSize);
   let scrambling = false;
   trigger.addEventListener('mouseenter', () => {
