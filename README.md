@@ -1,6 +1,6 @@
 # portfolio2026
 
-Personal portfolio for [yonathanraviv.dev](https://yonathanraviv.dev) — a single-page, scroll-driven site with a persistent Three.js scene that travels through every section.
+Personal portfolio for [yonathan-raviv.dev](https://yonathan-raviv.dev) — a single-page, scroll-driven site with a persistent Three.js scene that travels through every section.
 
 ## Stack
 

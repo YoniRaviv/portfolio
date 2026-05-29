@@ -2,7 +2,7 @@ import { defineConfig } from 'astro/config';
 import sitemap from '@astrojs/sitemap';
 
 export default defineConfig({
-  site: 'https://yonathanraviv.dev',
+  site: 'https://yonathan-raviv.dev',
   output: 'static',
   compressHTML: true,
   integrations: [sitemap()],

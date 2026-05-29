@@ -15,7 +15,7 @@ There is no linter, test runner, or CI config in the repo. `npm run typecheck` i
 
 - **Astro 6**, static output (`output: 'static'`), TypeScript `strict` (extends `astro/tsconfigs/strict`).
 - Import alias: **`@/*` → `./src/*`** (e.g. `import { who } from '@/content'`). Use it everywhere instead of relative paths.
-- CSS is minified with **lightningcss**, images via **sharp**; `@astrojs/sitemap` generates the sitemap. `site` is `https://yonathanraviv.dev`.
+- CSS is minified with **lightningcss**, images via **sharp**; `@astrojs/sitemap` generates the sitemap. `site` is `https://yonathan-raviv.dev`.
 - The whole site is a **single page** (`src/pages/index.astro`) — there is no router. A blog is planned (see `TASKS.md`) but not built.
 
 ## Architecture
