@@ -202,7 +202,9 @@ const toHref = (href: string) => (isHome || !href.startsWith('#') ? href : `/${h
         opacity: 1;
     }
     nav.top ul a.blog::after {
-        content: "↗";
+        /* \FE0E (Variation Selector-15) forces text presentation of U+2197;
+           without it iOS Safari renders it as the blue emoji glyph. */
+        content: "\2197\FE0E";
         margin-left: 4px;
         display: inline-block;
     }
@@ -413,7 +415,7 @@ const toHref = (href: string) => (isHome || !href.startsWith('#') ? href : `/${h
         align-items: center;
     }
     .ov-blog::after {
-        content: " ↗";
+        content: " \2197\FE0E";
     }
     .ov-status {
         font-family: var(--mono);

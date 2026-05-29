@@ -1,3 +1,5 @@
+import type { ImageMetadata } from 'astro';
+
 export type SkillLevel = 'daily' | 'fluent' | 'core' | 'shipped' | 'working' | 'occasional' | '2 yr' | '3 yr' | '4 yr' | '5 yr';
 
 export interface Chip {
@@ -21,6 +23,9 @@ export interface Project {
   desc: string;
   href: string;
   slug: string;
+  /** Hero shot shown in the hover thumb (What section). Optional so unreleased
+   *  projects can ship without one and gracefully fall back to the placeholder. */
+  image?: ImageMetadata;
 }
 
 export interface Role {
