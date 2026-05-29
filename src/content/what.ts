@@ -1,4 +1,6 @@
 import type { Project } from './_types';
+import relayImage from '@/assets/projects/relay.png';
+import shishiImage from '@/assets/projects/shi-shi.png';
 
 export const what = {
   label: { num: '02 / ', text: "What I've built" },
@@ -13,6 +15,7 @@ export const projects: Project[] = [
     tags: ['Active', 'AI'],
     desc: "Specs-first autonomous development. Describe a feature, review the plan, watch agents ship it task by task — with the review gates and evals they won't add themselves.",
     href: 'https://github.com/YoniRaviv/Relay',
+    image: relayImage,
   },
   {
     idx:  '02 — 2022',
@@ -22,6 +25,7 @@ export const projects: Project[] = [
     tags: ['Web', 'Brand'],
     desc: "Asian-fusion brand and site for a Tel Aviv kitchen. Bilingual, motion-led, ordering wired in — the kind of marketing surface that has to behave on a Friday night rush.",
     href: 'https://www.shi-shi.co.il',
+    image: shishiImage,
   },
   // 03 — reserved for next project. Uncomment and fill when ready.
   // {

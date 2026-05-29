@@ -1,4 +1,5 @@
 ---
+import { Image } from "astro:assets";
 import { what, projects } from "@/content";
 ---
 
@@ -25,7 +26,19 @@ import { what, projects } from "@/content";
                     </span>
                     <span class="arrow">→</span>
                     <span class="thumb">
-                        <span class="placeholder">Drop hero shot ↗</span>
+                        {p.image ? (
+                            <Image
+                                src={p.image}
+                                alt={`${p.name} preview`}
+                                width={560}
+                                height={360}
+                                loading="lazy"
+                                decoding="async"
+                                class="thumb-img"
+                            />
+                        ) : (
+                            <span class="placeholder">Drop hero shot ↗</span>
+                        )}
                     </span>
                 </a>
             ))
@@ -162,6 +175,16 @@ import { what, projects } from "@/content";
         letter-spacing: 0.16em;
         text-transform: uppercase;
     }
+    /* Project hero shot fills the thumb; cover so non-14:9 sources crop
+       cleanly. Sits above the checker ::before via z-index. */
+    .what .proj .thumb .thumb-img {
+        position: relative;
+        z-index: 1;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+    }
     .what .proj .thumb::before {
         content: "";
         position: absolute;
@@ -182,6 +205,11 @@ import { what, projects } from "@/content";
                 transparent 51%
             );
         background-size: 8px 8px;
+    }
+    /* Suppress the checker pattern when a real image is rendered — it's an
+       empty-state texture, not chrome. */
+    .what .proj .thumb:has(.thumb-img)::before {
+        display: none;
     }
 
     /* True tablets only — phones drop straight to the single-column layout
