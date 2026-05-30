@@ -561,12 +561,34 @@ export function init(mount: HTMLElement): HeroSceneHandle {
         const contactEl = document.getElementById('contact');
         if (!contactEl) return null;
         const vh = getStableVh();
-        const socialsEl = state.isMobile
-            ? null
-            : contactEl.querySelector('.socials') as HTMLElement | null;
+        // Anchor formula: pin the sword's frozen viewport spot relative to
+        // the socials grid's position in the document. We want the blade
+        // sitting `gap` px above the top of the social cards once the
+        // canvas releases — that's where it reads as an embedded blade
+        // instead of floating in the headline area.
+        //
+        // `swordViewportY` is the sword's projected canvas Y as a fraction
+        // of vh. It differs by breakpoint because the sword's WORLD y is
+        // also different per breakpoint (SWORD_LANDING_POS_*): desktop's
+        // y=-1.4 projects to ~60% of canvas; mobile's y=-0.8 to ~53%. If
+        // these don't match the actual projection, the sticky release
+        // point will be off and the blade will land too high or too low
+        // relative to the social cards.
+        //
+        // gap also differs: desktop has tall side-by-side social cards
+        // and wants 340 px of breathing room; mobile stacks them
+        // vertically with shorter visible cards and wants a tighter
+        // 60 px gap so the blade reads as sitting just on top of them.
+        const socialsEl = contactEl.querySelector('.socials') as HTMLElement | null;
         if (socialsEl) {
-            return contactEl.offsetTop + socialsEl.offsetTop - vh * 0.6 - 340;
+            const socialsDocTop = contactEl.offsetTop + socialsEl.offsetTop;
+            const swordViewportY = vh * (state.isMobile ? 0.53 : 0.6);
+            const gap = state.isMobile ? 60 : 340;
+            return socialsDocTop - swordViewportY - gap;
         }
+        // DOM-not-ready fallback: original mobile formula. Phones have shorter
+        // sections; this approximates the socials-anchored position before
+        // layout settles.
         return contactEl.offsetTop - vh / 1.5 + vh * 0.5;
     }
     function computeOverscroll(): number {
@@ -614,7 +636,13 @@ export function init(mount: HTMLElement): HeroSceneHandle {
     // bottom social strip (desktop) / top of the GitHub block (mobile). Tilt
     // is a Z rotation (hilt to upper-right, tip into the surface).
     const SWORD_LANDING_POS_DESKTOP = { x: 0, y: -1.4, z: 0.5 };
-    const SWORD_LANDING_POS_MOBILE = { x: 0, y: -0.3, z: 0.5 };
+    // y=-0.8 pulls the embedded blade down into the social-cards area on
+    // mobile. The previous value (-0.3) projected the sword to roughly 41%
+    // of the canvas — visually that put the tip above the section header
+    // and the moon halo overflowing past the top of Contact. -0.8 brings
+    // the projection to about 53% of the canvas, so the blade sits just
+    // above the GitHub/LinkedIn cards instead of in the headline area.
+    const SWORD_LANDING_POS_MOBILE = { x: 0, y: -0.8, z: 0.5 };
     const SWORD_LANDING_TILT_Z = -0.42;
     // Reorientation ("swing into the planted pose") timing. The Y-spin is frozen
     // by the time howProgress saturates at the Contact boundary (see
