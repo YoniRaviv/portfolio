@@ -60,25 +60,29 @@ export const WHO_RIG_END: Rig = {
   keyIntensity: 1.6,
 };
 
-// Who (mobile): mask sits centred behind the quote. Pose is intentionally
-// static — the section's life comes from a time-based accent-beam arc
-// driven in HeroScene.ts's animate() block (mirrors Contact's live beam
-// orbit pattern). Rig-level params here just establish the starting
-// light pose; the orbit overrides accentBeam.position once the visitor
-// enters Who.
+// Who (mobile): mask sits centred behind the quote. Lighting (exposure,
+// fog, ambient/hemi/key, accent beam pos+target+intensity, particle
+// alpha) mirrors WHO_RIG_START exactly so the arrival pose reads the
+// same on phone and desktop. Mobile-only retained knobs: pos (centred),
+// scale (0.4 fits the portrait viewport), pitchBias (-0.6 — steeper
+// downward gaze tuned to the mobile camera), and the pointer/parallax
+// block (zeroed; touch viewers don't drive cursor reactivity).
+// The section's life on mobile still comes from the time-based accent-
+// beam arc driven in HeroScene.ts's animate() block; that overrides
+// accentBeam.position once the visitor enters Who.
 export const WHO_RIG_MOBILE_START: Rig = {
   pos: { x: 0, y: 0.5, z: 0 },
   scale: 0.4,
   yawBias: 0,
   pitchBias: -0.6,
-  exposure: 0.7,
+  exposure: 0.6,
   fogDensity: 0.05,
   alpha: 1,
-  accentBeamIntensity: 14,
-  accentBeamPos: { x: -3, y: -2, z: 2.5 },
-  accentBeamTarget: { x: 0, y: 0.5, z: 0 },
+  accentBeamIntensity: 12,
+  accentBeamPos: { x: -3, y: -2.5, z: 2.5 },
+  accentBeamTarget: { x: 0, y: 0.8, z: -0.5 },
   beamYawOffset: 0,
-  particleAlpha: 0.4,
+  particleAlpha: 0.5,
   pointerYaw: 0,
   pointerPitch: 0,
   parallaxStrength: 0,
