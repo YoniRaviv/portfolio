@@ -59,32 +59,31 @@ export const HERO_RIG: Rig = {
 // On mobile the camera aspect goes portrait (~0.5), shrinking the
 // horizontal world-units in view to ~2.3 (vs ~7.4 on desktop 16:9). Every
 // mobile pos.x is recentered toward 0 so the mask stays on-screen.
-// Mobile mirrors desktop's lighting recipe exactly — ambient is held HIGH
-// (1.28) so the dark side stays readable on small screens (phones are often
-// viewed in bright rooms where deep shadows just look muddy), while the
-// hemi/key cut + accent beam climb (to 28) preserve the warm-beam dominance.
-// Mobile-only knobs kept: exposure 1.3 (slightly brighter than desktop's
-// 1.15 — phones tend to be viewed at lower brightness), fogDensity 0 (no fog;
-// the model is already small in frame, fog would just murk it up), pitchBias
-// -0.30 (the mobile-original upward look, matching desktop's -0.5 intent on
-// the mobile camera).
+// Lighting (ambient/hemi/key/accent/exposure/fog, beam pos+target, particle
+// alpha) mirrors HERO_RIG exactly so the mask reads identically on phone
+// and desktop. Mobile-only retained knobs: pos (centred), scale (0.6,
+// fits the portrait viewport), pitchBias (-0.30 vs desktop -0.5 — the
+// mobile camera lands the -0.5 intent at a different apparent tilt, so
+// the gentler value preserves the desktop look), and the
+// pointer/parallax block (touch viewers don't drive a cursor, so the
+// values are reduced to keep ambient device-tilt sway subtle).
 export const HERO_RIG_MOBILE: Rig = {
   pos: { x: 0, y: 0.8, z: 0 },
   scale: 0.6,
   yawBias: 0,
   pitchBias: -0.30,
-  exposure: 1.3,
+  exposure: 1.15,
   fogDensity: 0.06,
   alpha: 1,
   accentBeamIntensity: 28,
-  accentBeamPos: { x: -3.5, y: -3, z: 3.5 },
+  accentBeamPos: { x: -3.5, y: -3, z: 2.5 },
   accentBeamTarget: { x: 1.5, y: 1.8, z: -0.5 },
   beamYawOffset: 0,
-  particleAlpha: 0.6,
+  particleAlpha: 0.8,
   pointerYaw: 0.2,
   pointerPitch: -0.5,
   parallaxStrength: 0.3,
-  ambientIntensity: 1,
+  ambientIntensity: 0.9,
   hemiIntensity: 0.22,
   keyIntensity: 0.55,
 };
