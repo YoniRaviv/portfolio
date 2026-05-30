@@ -1,7 +1,14 @@
 // Smooth scrolling powered by Lenis (lenis.dev).
-//   - Buttery smooth wheel/touch scrolling with lerp-based easing.
-//   - anchors: true intercepts <a href="#id"> clicks (nav + logo)
-//     and animates the scroll to the target section.
+//   - Smooth wheel scrolling on desktop via lerp-based easing.
+//   - Touch scrolling is left to the native OS: syncTouch is intentionally
+//     OFF so iOS keeps its real momentum + rubber-band. Turning syncTouch
+//     on hijacks touchmove with a JS lerp, which iOS Safari throttles and
+//     never matches native inertia — it's the standard cause of "weird"
+//     mobile scrolling with Lenis. window.scrollY still updates natively,
+//     so the HeroScene scroll probe and active-nav scroll-spy keep working.
+//   - anchors: true intercepts <a href="#id"> clicks (nav + logo) and
+//     animates the scroll to the target section (click handler, not
+//     touch — works regardless of syncTouch).
 //
 // Section snapping is intentionally NOT enabled here — the page reads as a
 // normal smooth-scrolling site. Revisit lenis/snap once final content is in
@@ -19,12 +26,9 @@ export function mountSmoothScroll(): void {
     autoRaf: true,
     anchors: { offset: 0, duration: 1.0 },
     smoothWheel: !reduced,
-    syncTouch: !reduced,
-    syncTouchLerp: 0.1,
-    touchInertiaExponent: 1.7,
+    syncTouch: false,
     lerp: 0.12,
     wheelMultiplier: 1.1,
-    touchMultiplier: 1.2,
     autoToggle: true,
     allowNestedScroll: true,
   });
