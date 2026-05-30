@@ -91,7 +91,15 @@ export const CONTACT_RIG_MOBILE_START: Rig = {
   particleAlpha: 0.4,
   pointerYaw: 0.15,
   pointerPitch: 0.1,
-  parallaxStrength: 0.3,
+  // 0, NOT 0.3. The mobile ambient "cursor" is a pair of sine waves
+  // (HeroScene.ts), and parallaxStrength multiplies that into root.position
+  // — which contains the SWORD as well as the (hidden) mask. With a non-zero
+  // value the embedded blade inherits ±2-3 px of horizontal sine-wave
+  // wobble in Contact, reading as a jitter on an otherwise planted sword.
+  // The mask is invisible here anyway (modelGroup.visible = false once
+  // swordOpacity > 0.5), so nothing on screen actually needs the parallax;
+  // keep it off so the blade stays still. Matches Contact desktop.
+  parallaxStrength: 0,
   ambientIntensity: 0.7,
   hemiIntensity: 0.55,
   keyIntensity: 1.3,

@@ -71,10 +71,41 @@ export function init(mount: HTMLElement): HeroSceneHandle {
     };
     mql.addEventListener('change', onBreakpointChange);
 
+    // Stable viewport height. iOS Safari shrinks/grows window.innerHeight when
+    // the URL bar shows/hides during scroll — and the scene's anchor, probe,
+    // landing and moon math all read innerHeight every frame. Without locking
+    // it the canvas teleports ~120px the moment the URL bar transitions
+    // (verified: |Δanchor| tracks |Δh| in Contact). We pin to the height that
+    // was current at scene init and only re-read it on an actual orientation
+    // change (width also changes). All in-loop reads go through getStableVh().
+    let stableVh = window.innerHeight;
+    let stableVw = window.innerWidth;
+    const getStableVh = (): number => stableVh;
+    // Forward reference: resize() is defined below; this lets onWindowResize
+    // re-run it after a real layout change updates stableVh, so the camera
+    // aspect picks up the new height in the same tick (instead of waiting on
+    // the ResizeObserver, which may already have fired with the OLD stableVh).
+    let resyncOnVhChange: () => void = () => {};
+    const onWindowResize = (): void => {
+        // Desktop: trust every resize (dragging the window's bottom edge is a
+        // legitimate height change with no width delta, and there's no URL bar
+        // to confuse us). Mobile: only refresh if the width also changed —
+        // that's the orientation-or-real-resize signal; a width-stable
+        // height change is the iOS URL bar or the soft-keyboard, which we
+        // don't want propagated into the scene math.
+        if (!state.isMobile || Math.abs(window.innerWidth - stableVw) > 1) {
+            const changed = stableVw !== window.innerWidth || stableVh !== window.innerHeight;
+            stableVw = window.innerWidth;
+            stableVh = window.innerHeight;
+            if (changed) resyncOnVhChange();
+        }
+    };
+    window.addEventListener('resize', onWindowResize, { passive: true });
+
     const getActiveRigs = (): Record<SectionKey, SectionRig> =>
         state.isMobile ? SECTION_RIGS_MOBILE : SECTION_RIGS_DESKTOP;
 
-    const computeTargetRig = createTargetRigComputer(getActiveRigs);
+    const computeTargetRig = createTargetRigComputer(getActiveRigs, getStableVh);
 
     const scene = new THREE.Scene();
     scene.background = null;
@@ -450,6 +481,17 @@ export function init(mount: HTMLElement): HeroSceneHandle {
     scene.add(sparkFlare);
 
     // resize handling
+    //
+    // Buffer size matches the canvas DOM (`mount.clientHeight`). The #stage
+    // CSS is locked to `100lvh` — the largest viewport size, stable through
+    // iOS URL bar transitions — so the canvas DOM does NOT resize on those
+    // transitions and ResizeObserver does NOT fire. Real orientation changes
+    // and desktop window resizes still flow through normally.
+    //
+    // We keep `getStableVh()` as the source of truth for the in-loop math
+    // (anchor, probe, landing, moon) — those calculations would jump if they
+    // used the visual viewport (window.innerHeight) on iOS, even though the
+    // canvas itself is stable.
     function resize(): void {
         const w = mount.clientWidth;
         const h = mount.clientHeight;
@@ -475,8 +517,73 @@ export function init(mount: HTMLElement): HeroSceneHandle {
         }
     }
     resize();
+    // On a real layout change (orientation, desktop resize), refresh both
+    // the camera and the sticky host's height. resize() handles the camera;
+    // sizeHost() handles the host. Both read from getStableVh()/getActiveRigs.
+    resyncOnVhChange = () => {
+        resize();
+        sizeHost();
+    };
     const resizeObserver = new ResizeObserver(resize);
     resizeObserver.observe(mount);
+
+    // Anchor mechanic, compositor-driven version.
+    //
+    // What we want: the canvas stays pinned to the viewport's top during
+    // Hero through Contact-embed. Once the user scrolls past the "anchor"
+    // (the doc-y at which the embedded sword should start scrolling up
+    // with the page), the canvas naturally scrolls up with the page so the
+    // blade reads as embedded in the document.
+    //
+    // Old implementation: canvas was `position: fixed` and JS wrote
+    // `--anchor-y` every scroll frame to translate it. The moon (also
+    // `position: fixed`) read the same variable. Worked, BUT — on iOS
+    // native momentum scroll the compositor scrolls the page on its own
+    // thread while JS runs on the main thread, and the two never line up
+    // perfectly. Even with a passive scroll listener and fresh scrollY
+    // reads, the canvas's CSS transform consistently lagged or led the
+    // page content by 1-3 px. That tiny but persistent mismatch was the
+    // "sword and moon jitter up and down" the user kept seeing.
+    //
+    // New implementation: #stage is `position: sticky; top: 0` inside an
+    // absolutely-positioned host (.hero-scene-host) whose height we set
+    // here in JS. The host extends from doc-y 0 to `anchor + 100lvh`. While
+    // the user scrolls within the host, sticky keeps #stage pinned to
+    // viewport top. Once the host's bottom edge reaches viewport top:0 +
+    // sticky.height (i.e. scrollY = host.height - 100lvh = anchor),
+    // sticky releases and the canvas naturally scrolls up with the host —
+    // ALL on the compositor, ZERO JS during scroll. No race possible.
+    //
+    // computeOverscroll() is kept (it's still read by the cursor-rotation
+    // NDC correction below) but no longer drives any CSS write.
+    const hostEl = document.getElementById('hero-scene-host');
+    function computeAnchor(): number | null {
+        const contactEl = document.getElementById('contact');
+        if (!contactEl) return null;
+        const vh = getStableVh();
+        const socialsEl = state.isMobile
+            ? null
+            : contactEl.querySelector('.socials') as HTMLElement | null;
+        if (socialsEl) {
+            return contactEl.offsetTop + socialsEl.offsetTop - vh * 0.6 - 340;
+        }
+        return contactEl.offsetTop - vh / 1.5 + vh * 0.5;
+    }
+    function computeOverscroll(): number {
+        const anchor = computeAnchor();
+        if (anchor === null) return 0;
+        return Math.max(0, window.scrollY - anchor);
+    }
+    function sizeHost(): void {
+        if (!hostEl) return;
+        const anchor = computeAnchor();
+        const vh = getStableVh();
+        // No contact yet (or 404 page) → just give the host one viewport so
+        // the sticky canvas stays pinned forever (no release point reachable).
+        const target = anchor === null ? vh : anchor + vh;
+        hostEl.style.height = `${target}px`;
+    }
+    sizeHost();
 
     // pointer parallax
     const pointer = { x: 0, y: 0, tx: 0, ty: 0, px: -1, py: -1 };
@@ -580,37 +687,12 @@ export function init(mount: HTMLElement): HeroSceneHandle {
         // the footer. (The mask, which the original cap was designed to keep
         // from leaking through the social grid, is hidden throughout Contact
         // because the sword is at full opacity here.)
-        let overscroll = 0;
+        // Desktop anchor formula (sword frozen above socials grid) and mobile
+        // fallback (original `contactTop - 0.17·vh` tuning) both live in
+        // computeOverscroll() — defined alongside the scroll listener so the
+        // two writers stay in sync. See that block for tuning notes.
         const contactElForAnchor = document.getElementById('contact');
-        if (contactElForAnchor) {
-            let anchor: number;
-            // Desktop: tie the anchor to the social grid's doc position so the
-            // sword's frozen viewport spot lands just above the socials on any
-            // viewport height. The headline is clamp(64px, 10vw, 200px), so on
-            // wide laptops it grows and pushes the social grid further from
-            // contactTop — a fixed `contactTop - 0.17·vh` anchor (the previous
-            // formula, still used on mobile below) left a visible gap between
-            // the moon halo and the social cards on tall screens. The sword
-            // projects to roughly 60% down the canvas; freezing the canvas so
-            // that point lands SWORD_SOCIALS_GAP_PX above socials top closes
-            // the gap without overlapping the cards.
-            const socialsEl = state.isMobile
-                ? null
-                : contactElForAnchor.querySelector('.socials') as HTMLElement | null;
-            if (socialsEl) {
-                const socialsDocTop = contactElForAnchor.offsetTop + socialsEl.offsetTop;
-                const swordViewportY = window.innerHeight * 0.6; // sword's approx Y in the canvas
-                const SWORD_SOCIALS_GAP_PX = 340; // breathing room above the social cards
-                anchor = socialsDocTop - swordViewportY - SWORD_SOCIALS_GAP_PX;
-            } else {
-                // Mobile (and DOM-not-ready fallback): original formula. Phones
-                // have shorter sections and a stacked socials grid; the old
-                // tuning still feels right there.
-                const ANCHOR_DELAY = window.innerHeight * 0.5;
-                anchor = contactElForAnchor.offsetTop - window.innerHeight / 1.5 + ANCHOR_DELAY;
-            }
-            overscroll = Math.max(0, window.scrollY - anchor);
-        }
+        const overscroll = computeOverscroll();
 
         // Drive target rig from scroll position and smoothly lerp current toward it.
         const target = computeTargetRig();
@@ -637,7 +719,7 @@ export function init(mount: HTMLElement): HeroSceneHandle {
         const whereElForSword = document.getElementById('where');
         const howEl = document.getElementById('how');
         const contactElForSword = document.getElementById('contact');
-        const swordProbe = window.scrollY + window.innerHeight / 2;
+        const swordProbe = window.scrollY + getStableVh() / 2;
         let howProgress = 0;
         let swordOpacity = 0;
         if (howEl) {
@@ -678,7 +760,7 @@ export function init(mount: HTMLElement): HeroSceneHandle {
             const howTop = howEl.offsetTop;
             const contactTop = contactElForSword.offsetTop;
             const startZone = howTop + (contactTop - howTop) * 0.7;
-            const endZone = contactTop + window.innerHeight * 0.15;
+            const endZone = contactTop + getStableVh() * 0.15;
             const raw = (swordProbe - startZone) / Math.max(1, endZone - startZone);
             landingProgress = Math.max(0, Math.min(1, raw));
         }
@@ -710,7 +792,7 @@ export function init(mount: HTMLElement): HeroSceneHandle {
             if (contactElForSword) {
                 const re = Math.max(0, Math.min(1,
                     (swordProbe - contactElForSword.offsetTop) /
-                    Math.max(1, window.innerHeight * REORIENT_SPAN_VH)));
+                    Math.max(1, getStableVh() * REORIENT_SPAN_VH)));
                 embedEase = re * re * (3 - 2 * re);
             }
 
@@ -929,7 +1011,7 @@ export function init(mount: HTMLElement): HeroSceneHandle {
             // near the top of the viewport, throwing pitch off by tens of
             // degrees once you've scrolled into Contact.
             maskNdc.set(currentRig.pos.x, currentRig.pos.y, currentRig.pos.z).project(camera);
-            const overscrollNdc = 2 * overscroll / window.innerHeight;
+            const overscrollNdc = 2 * overscroll / getStableVh();
             const cursorX = pointer.x - maskNdc.x;
             const cursorY = pointer.y + maskNdc.y + overscrollNdc;
             const yaw = cursorX * currentRig.pointerYaw + currentRig.yawBias;
@@ -942,7 +1024,7 @@ export function init(mount: HTMLElement): HeroSceneHandle {
             // (the HUD scrolls away after the first viewport), and only on a real
             // change — same "don't thrash the DOM every frame" discipline as the
             // moon writes. The minus glyph is U+2212 to sit cleanly in the mono row.
-            if ((hudYawEl || hudPitchEl) && window.scrollY < window.innerHeight) {
+            if ((hudYawEl || hudPitchEl) && window.scrollY < getStableVh()) {
                 const yawDeg = yaw * (180 / Math.PI);
                 const pitchDeg = pitch * (180 / Math.PI);
                 // NaN guard forces the first write (last* start NaN, and NaN
@@ -969,11 +1051,25 @@ export function init(mount: HTMLElement): HeroSceneHandle {
         // rather than "looping". Amplitudes are intentionally small (±1.2%
         // scale, ±0.025 rad pitch, ±0.03 rad yaw) so they don't fight the
         // rig's per-section gestures (e.g. What's 2π spin, Where's flash).
+        //
+        // Scale-breath is on `modelGroup`, NOT `stageGroup`, on purpose: the
+        // sword shares stageGroup, so a stage-level ±1.2% scale pulse made
+        // the embedded blade visibly wobble (~±2 px) as you scrolled through
+        // Contact. Putting the scale on modelGroup means the breath only
+        // touches the mask — and Contact already hides modelGroup
+        // (`modelGroup.visible = false` once swordOpacity > 0.5), so the
+        // pulse goes silent exactly where it was a problem. The mask still
+        // breathes in Hero / Who / What / Where unchanged.
         if (state.isMobile && modelLoaded) {
             const t = clock.elapsedTime;
-            stageGroup.scale.multiplyScalar(1 + 0.012 * Math.sin(t * 0.6));
+            modelGroup.scale.setScalar(1 + 0.012 * Math.sin(t * 0.6));
             modelGroup.rotation.x += 0.025 * Math.sin(t * 0.4);
             modelGroup.rotation.y += 0.03 * Math.sin(t * 0.33 + 0.7);
+        } else if (modelLoaded) {
+            // Desktop or post-mobile breakpoint flip: keep modelGroup at the
+            // canonical unit scale so nothing carries over a stale breath
+            // value from the last frame the mobile branch ran.
+            modelGroup.scale.setScalar(1);
         }
 
         // Lights, fog, exposure from rig.
@@ -1017,9 +1113,10 @@ export function init(mount: HTMLElement): HeroSceneHandle {
         // chiaroscuro shifting around the mask.
         let liveLightFactor = 0;
         if (contactElForAnchor) {
-            const probe = window.scrollY + window.innerHeight / 2;
+            const vh = getStableVh();
+            const probe = window.scrollY + vh / 2;
             const fadeStart = contactElForAnchor.offsetTop;
-            const fadeEnd = contactElForAnchor.offsetTop + window.innerHeight * 0.4;
+            const fadeEnd = contactElForAnchor.offsetTop + vh * 0.4;
             const raw = Math.max(0, Math.min(1, (probe - fadeStart) / (fadeEnd - fadeStart)));
             liveLightFactor = raw * raw * (3 - 2 * raw); // smoothstep
         }
@@ -1051,7 +1148,7 @@ export function init(mount: HTMLElement): HeroSceneHandle {
             if (whoEl) {
                 const top = whoEl.offsetTop;
                 const bottom = whatEl ? whatEl.offsetTop : top + whoEl.clientHeight;
-                const probe = window.scrollY + window.innerHeight / 2;
+                const probe = window.scrollY + getStableVh() / 2;
                 const raw = Math.max(0, Math.min(1, (probe - top) / Math.max(1, bottom - top)));
                 const tent = raw < 0.3 ? raw / 0.3 : raw > 0.7 ? (1 - raw) / 0.3 : 1;
                 whoLiveFactor = Math.max(0, Math.min(1, tent));
@@ -1090,7 +1187,7 @@ export function init(mount: HTMLElement): HeroSceneHandle {
             if (whatEl) {
                 const top = whatEl.offsetTop;
                 const bottom = whereEl ? whereEl.offsetTop : top + whatEl.clientHeight;
-                const probe = window.scrollY + window.innerHeight / 2;
+                const probe = window.scrollY + getStableVh() / 2;
                 const raw = Math.max(0, Math.min(1, (probe - top) / Math.max(1, bottom - top)));
                 const tent = raw < 0.3 ? raw / 0.3 : raw > 0.7 ? (1 - raw) / 0.3 : 1;
                 whatLiveFactor = Math.max(0, Math.min(1, tent));
@@ -1195,23 +1292,27 @@ export function init(mount: HTMLElement): HeroSceneHandle {
             renderer.domElement.style.opacity = String(currentRig.alpha);
         }
 
-        // Apply the Contact anchor translation (overscroll was already computed
-        // at the top of animate() so the rotation block could correct for it).
-        // Drives a CSS variable rather than inline transform — the stage
-        // element's entry animation uses `both` fill, which would otherwise
-        // hold `transform: none` over our inline write. See index.astro
-        // keyframes.
-        mount.style.setProperty('--anchor-y', `${-overscroll}px`);
+        // No more JS-driven --anchor-y. The canvas's scroll-lock is handled
+        // entirely by position:sticky inside .hero-scene-host (sized in
+        // sizeHost()). The compositor does the translation on its own thread
+        // in lockstep with the page scroll — no race possible.
+        //
+        // `overscroll` is still computed above for the cursor-rotation NDC
+        // correction (desktop only), which has to know how far the canvas
+        // has been translated up by sticky release to keep the mask's
+        // angular target aligned with the cursor.
 
         // Contact moon backdrop. Centred on the sword: project a point along the
-        // blade (MOON_CENTER_T between handle end and tip) to overscroll-corrected
-        // screen px — the same transform the sparks use — so the moon sits on the
-        // sword wherever it lands and the moon covers it. Scroll-lock is automatic:
-        // the projection's -overscroll term carries the moon up with the blade
-        // through Contact. The entrance is held back until just after the blade
-        // plants (see the moonStart calc below), then it rises from below and fades
-        // in — a "moonrise" revealed a beat after the sword settles (nothing
-        // through How or the descent).
+        // blade (MOON_CENTER_T between handle end and tip) to CANVAS-coordinate
+        // screen px (overscroll=0) — the moon's CSS then composes the shared
+        // `var(--anchor-y)` translate3d onto these values, exactly the same
+        // translate the canvas itself uses, so moon and sword scroll-lock to
+        // the page with ONE source of truth instead of two desyncable JS
+        // calculations. (Previously this passed `overscroll` to subtract it
+        // from c.y in JS, while #stage's transform applied --anchor-y in
+        // parallel — two different mechanisms reading window.scrollY at
+        // different times, drifting per-frame on iOS native scroll. The
+        // visible symptom: "sword and moon jitter up and down".)
         if (moonEl && bladeLocalA && bladeLocalB) {
             const MOON_CENTER_T = 0.4; // 0 = handle end, 1 = tip; <0.5 frames the visible upper blade
             // Sample the blade with the sword's residual Y spin removed so the moon
@@ -1226,24 +1327,31 @@ export function init(mount: HTMLElement): HeroSceneHandle {
             moonMidWorld.lerpVectors(bladeLocalA, bladeLocalB, MOON_CENTER_T);
             swordPivot.localToWorld(moonMidWorld);
             swordGroup.rotation.y = spinY;
-            const c = projectBladePoint(moonMidWorld, camera, mount.clientWidth, mount.clientHeight, overscroll);
+            const c = projectBladePoint(moonMidWorld, camera, mount.clientWidth, mount.clientHeight, 0);
             // "Moonrise" that trails the sword's swing and settles WITH it: it starts
             // a small MOON_DELAY_VH beat past the Contact boundary (blade leads) and
             // eases up over the rest of the swing window, reaching its place exactly
             // as the sword finishes settling at REORIENT_SPAN_VH. smoothstep + a short
             // travel keep the motion slow and gentle; nothing shows through descent.
             let eased = 0;
+            const vh = getStableVh();
             if (contactElForSword) {
-                const moonStart = contactElForSword.offsetTop + window.innerHeight * MOON_DELAY_VH;
-                const moonEnd = contactElForSword.offsetTop + window.innerHeight * REORIENT_SPAN_VH;
+                const moonStart = contactElForSword.offsetTop + vh * MOON_DELAY_VH;
+                const moonEnd = contactElForSword.offsetTop + vh * REORIENT_SPAN_VH;
                 const mp = Math.max(0, Math.min(1, (swordProbe - moonStart) / Math.max(1, moonEnd - moonStart)));
                 eased = mp * mp * (3 - 2 * mp); // smoothstep — slow start & gentle settle
             }
-            const rise = (1 - eased) * window.innerHeight * MOON_RISE_TRAVEL_VH; // px below final spot
-            // Round + dedupe writes: once settled the values stop changing, so the
-            // moon truly stops updating (no sub-pixel rig-lerp thrash either).
-            const cx = Math.round(c.x);
-            const cy = Math.round(c.y + rise);
+            const rise = (1 - eased) * vh * MOON_RISE_TRAVEL_VH; // px below final spot
+            // Sub-pixel writes — no Math.round. Once eased saturates at 1, c.x/c.y
+            // are constant (sword is fully static post-embed) so the values
+            // genuinely stop changing and we don't thrash the DOM. During the
+            // entrance (eased < 1) the rise term varies smoothly. Sub-pixel CSS
+            // pixel values render smoothly on the compositor; integer-rounding
+            // them was flipping between adjacent pixels at half-pixel boundaries
+            // during iOS momentum scroll (because window.scrollY has sub-pixel
+            // precision there), which read as 1-px-period up/down jitter.
+            const cx = c.x;
+            const cy = c.y + rise;
             if (cx !== lastMoonCx) { moonEl.style.setProperty('--moon-cx', `${cx}px`); lastMoonCx = cx; }
             if (cy !== lastMoonCy) { moonEl.style.setProperty('--moon-cy', `${cy}px`); lastMoonCy = cy; }
             if (eased !== lastMoonOp) { moonEl.style.opacity = String(eased); lastMoonOp = eased; }
@@ -1262,6 +1370,7 @@ export function init(mount: HTMLElement): HeroSceneHandle {
         destroy(): void {
             cancelAnimationFrame(raf);
             window.removeEventListener('pointermove', onPointer);
+            window.removeEventListener('resize', onWindowResize);
             mql.removeEventListener('change', onBreakpointChange);
             resizeObserver.disconnect();
             sparkSystem.dispose();

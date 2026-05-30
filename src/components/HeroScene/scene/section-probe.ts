@@ -18,10 +18,16 @@ function resolveSectionRig(rigs: RigsByBreakpoint, key: SectionKey, p: number): 
 // section element layout and returns the rig the scene should be aiming at.
 // Section elements are looked up by id each call so the function tolerates
 // late-mounted DOM without needing an external invalidation hook.
-export function createTargetRigComputer(getActiveRigs: () => RigsByBreakpoint) {
+// getVh returns the viewport height the probe should use. The caller passes a
+// "stable" reading that doesn't shift on iOS URL bar transitions — otherwise
+// the probe jumps mid-scroll every time the URL bar shows/hides.
+export function createTargetRigComputer(
+  getActiveRigs: () => RigsByBreakpoint,
+  getVh: () => number = () => window.innerHeight,
+) {
   return function computeTargetRig(): Rig {
     const sections = SECTION_KEYS.map((k) => document.getElementById(k));
-    const probeY = window.scrollY + window.innerHeight * 0.5;
+    const probeY = window.scrollY + getVh() * 0.5;
 
     // Find the section the probe falls into (last section whose top is <= probe).
     let i = 0;

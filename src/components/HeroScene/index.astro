@@ -4,70 +4,129 @@
 // HUD framing visually aligned.
 ---
 
-<div class="stage" id="stage"></div>
-<div class="moon" id="moon" aria-hidden="true"></div>
+<div class="hero-scene-host" id="hero-scene-host">
+    <div class="stage" id="stage">
+        <div class="moon" id="moon" aria-hidden="true"></div>
+    </div>
+</div>
 
 <style>
-    /* Persistent canvas: now full-viewport so particles aren't clipped to a
-     visible right-side frame. The mask itself sits in the right portion of
-     the scene via stageGroup.position.x (HERO_RIG), so the visual is the
-     same as the old right-70% framing — just without the hard edge. */
-    .stage {
-        position: fixed;
-        inset: 0;
-        z-index: 6;
+    /* hero-scene-host is the SCROLL CONTAINER for the canvas. It's an
+     absolutely-positioned block that extends from doc-y 0 down to the
+     "anchor point" (where we want the sword to start scrolling up with the
+     page) PLUS one viewport height. HeroScene.ts sets the actual height in
+     JS once layout settles; the CSS fallback (100lvh) just keeps the canvas
+     present before JS runs.
+
+     Why this exists: previously the canvas was `position: fixed` and
+     translated via a JS-updated `--anchor-y` CSS variable every scroll
+     frame. On iOS native momentum scroll the compositor moves page content
+     on its own thread at the device refresh rate, while JS reads scrollY
+     and writes the CSS variable from the main thread. Those two threads
+     are NEVER perfectly in phase — even with a passive scroll listener and
+     fresh scrollY reads, every frame the canvas's transform lagged or led
+     the page content by 1-3 px. That's what was reading as "sword and
+     moon jitter up and down" during scroll.
+
+     Sticky positioning solves this at the architectural level: the
+     compositor itself handles the "stay at viewport top while inside the
+     host, then scroll up with the host's bottom" logic. ZERO JS during
+     scroll. No race possible. */
+    .hero-scene-host {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 100lvh; /* fallback — JS sets the real height */
         pointer-events: none;
+        z-index: 6;
+    }
+
+    /* Persistent canvas. position: sticky pins it to viewport top:0 as long
+     as we're inside .hero-scene-host; once the host's bottom passes the
+     viewport's stage-height mark, the canvas naturally scrolls up with the
+     host (compositor-driven). That release point is set by host.height —
+     specifically, release happens when scrollY = host.height - 100lvh.
+     HeroScene.ts sizes the host so release = the desired anchor point.
+
+     Height is locked to 100lvh (large viewport height). On iOS Safari the
+     bottom-anchored layout viewport shrinks/grows as the URL bar shows/hides
+     during scroll — `100lvh` is the largest stable viewport size on iOS
+     15.4+ and is the only one that doesn't change on URL bar transitions.
+     (Desktop: `100lvh` == `100vh`, no behavioural change.)
+
+     will-change: transform keeps the element on its own GPU compositor
+     layer — the standard mitigation for iOS scroll/transform interactions. */
+    .stage {
+        position: sticky;
+        top: 0;
+        height: 100lvh;
+        width: 100%;
+        pointer-events: none;
+        will-change: transform;
         animation: stageIn 1.8s cubic-bezier(0.2, 0.7, 0.2, 1) both;
         animation-delay: 0.4s;
     }
-    /* --anchor-y is driven by JS once the scroll probe reaches Contact, so the
-     canvas stops following the viewport and scrolls with the page. It lives in
-     the keyframes (not just on .stage) because animation fill states sit above
-     inline styles in the cascade — without var() inside the keyframes, the JS
-     transform write would be clobbered by `transform: none` from the `to`
-     state. */
+
+    /* Entry animation — no `--anchor-y` here anymore: sticky handles the
+     scroll-lock, so the transform only needs to do the scale + blur fade-in. */
     @keyframes stageIn {
         from {
             opacity: 0;
-            transform: translate3d(0, var(--anchor-y, 0px), 0) scale(1.08);
+            transform: scale(1.08);
             filter: blur(20px);
         }
         to {
             opacity: 1;
-            transform: translate3d(0, var(--anchor-y, 0px), 0) scale(1);
+            transform: scale(1);
             filter: none;
         }
     }
+
+    /* The WebGL canvas is appended by HeroScene.ts as the LAST child of
+     #stage. Moon is the FIRST child (in the source HTML). We want the
+     canvas on TOP visually (the moon backdrop sits behind the rendered
+     sword). z-index requires `position: relative` (or other non-static) to
+     take effect — otherwise the moon's z-index:5 would win against the
+     canvas's z-index:auto. */
     .stage :global(canvas) {
         display: block;
         width: 100%;
         height: 100%;
+        position: relative;
+        z-index: 2;
     }
 
-    /* Contact moon backdrop. Sits at z-index 5 — below the canvas (z-index 6,
-     where the sword renders) and below the sections (z-index 10), so it reads
-     as the backmost layer: moon < sword < text. An editorial outline ring with
-     a faint accent glow that backlights the embedded blade. opacity starts at 0
-     and is raised only by HeroScene.ts as the sword lands (landingProgress), so
-     reduced-motion visitors — who never load the scene — never see it, exactly
-     as there's no sword for them either. --moon-y mirrors the canvas's
-     --anchor-y so the moon scroll-locks to the sword through Contact. */
-    .moon {
-        position: fixed;
-        /* --moon-cx/--moon-cy: blade center, screen px, written by HeroScene.ts so
-       the moon stays on the sword. --moon-cy also carries the rise-from-below
-       offset that eases to 0 as it lands. Falls back to viewport centre until
-       the scene drives them. */
-        top: var(--moon-cy, 50%);
-        left: var(--moon-cx, 50%);
+    /* Contact moon backdrop. Now a CHILD of #stage instead of a sibling —
+     this means it automatically inherits #stage's sticky scroll behaviour
+     (stays at viewport top while sticky, scrolls up with #stage when
+     sticky releases). No more JS-driven translation needed on the moon:
+     the browser positions both moon and canvas as a single unit, on the
+     compositor. */
+    .stage > .moon {
+        position: absolute;
+        /* Pin to stage's top-left corner; positioning is done entirely by
+           transform so changing --moon-cx/--moon-cy doesn't trigger layout. */
+        top: 0;
+        left: 0;
         width: min(76vh, 82vw);
         aspect-ratio: 1;
         border-radius: 50%;
-        z-index: 5;
+        z-index: 1; /* below canvas (z-index:2), still inside #stage's stacking context */
         pointer-events: none;
         opacity: 0;
-        will-change: opacity, top, left;
-        transform: translate(-50%, -45%);
+        will-change: opacity, transform;
+        /* Transform:
+           1. translate3d(--moon-cx, --moon-cy): position the moon's top-left
+              corner at the blade-centre pixel (HeroScene.ts writes these in
+              CANVAS coordinates — no scroll offset, since sticky handles
+              scroll-lock).
+           2. translate(-50%, -45%): centre the moon on that point.
+           Fallback values (50vw / 50vh) just centre the moon if JS hasn't
+           written cx/cy yet. */
+        transform:
+            translate3d(var(--moon-cx, 50vw), var(--moon-cy, 50vh), 0)
+            translate(-50%, -45%);
         border: 1.5px solid color-mix(in srgb, var(--accent) 50%, transparent);
         background: radial-gradient(
             circle,
@@ -81,10 +140,11 @@
     }
     /* Mobile: keep it centred but a touch smaller so it doesn't overflow. */
     @media (max-width: 720px) {
-        .moon {
+        .stage > .moon {
             width: min(72vh, 94vw);
         }
     }
+
 </style>
 
 <script>
