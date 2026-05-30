@@ -75,7 +75,7 @@ export const HERO_RIG_MOBILE: Rig = {
   exposure: 1.15,
   fogDensity: 0.06,
   alpha: 1,
-  accentBeamIntensity: 28,
+  accentBeamIntensity: 32,
   accentBeamPos: { x: -3.5, y: -3, z: 2.5 },
   accentBeamTarget: { x: 1.5, y: 1.8, z: -0.5 },
   beamYawOffset: 0,
@@ -85,7 +85,7 @@ export const HERO_RIG_MOBILE: Rig = {
   parallaxStrength: 0.3,
   ambientIntensity: 0.9,
   hemiIntensity: 0.22,
-  keyIntensity: 0.55,
+  keyIntensity: 0.65,
 };
 export const heroDesktop: SectionRig = { start: HERO_RIG };
 export const heroMobile: SectionRig = { start: HERO_RIG_MOBILE };

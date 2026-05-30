@@ -582,7 +582,7 @@ export function init(mount: HTMLElement): HeroSceneHandle {
         const socialsEl = contactEl.querySelector('.socials') as HTMLElement | null;
         if (socialsEl) {
             const socialsDocTop = contactEl.offsetTop + socialsEl.offsetTop;
-            const swordViewportY = vh * (state.isMobile ? 0.53 : 0.6);
+            const swordViewportY = vh * (state.isMobile ? 0.63 : 0.6);
             const gap = state.isMobile ? 60 : 340;
             return socialsDocTop - swordViewportY - gap;
         }
@@ -642,7 +642,7 @@ export function init(mount: HTMLElement): HeroSceneHandle {
     // and the moon halo overflowing past the top of Contact. -0.8 brings
     // the projection to about 53% of the canvas, so the blade sits just
     // above the GitHub/LinkedIn cards instead of in the headline area.
-    const SWORD_LANDING_POS_MOBILE = { x: 0, y: -0.8, z: 0.5 };
+    const SWORD_LANDING_POS_MOBILE = { x: 0, y: -0.3, z: 0.5 };
     const SWORD_LANDING_TILT_Z = -0.42;
     // Reorientation ("swing into the planted pose") timing. The Y-spin is frozen
     // by the time howProgress saturates at the Contact boundary (see
