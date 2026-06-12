@@ -1,5 +1,6 @@
 import type { Project } from './_types';
 import relayImage from '@/assets/projects/relay.png';
+import docpulseImage from '@/assets/projects/docpulse.png';
 import shishiImage from '@/assets/projects/shi-shi.png';
 
 export const what = {
@@ -12,13 +13,23 @@ export const projects: Project[] = [
     year: '2026',
     name: 'Relay',
     slug: 'relay',
-    tags: ['Active', 'AI'],
+    tags: ['Autonomous', 'AI'],
     desc: "Specs-first autonomous development. Describe a feature, review the plan, watch agents ship it task by task — with the review gates and evals they won't add themselves.",
     href: 'https://github.com/YoniRaviv/Relay',
     image: relayImage,
   },
   {
-    idx:  '02 — 2022',
+    idx:  '02 — 2026',
+    year: '2026',
+    name: 'DocPulse',
+    slug: 'docpulse',
+    tags: ['Agent', 'CI'],
+    desc: "A GitHub Action that keeps docs honest. It spots the documentation a PR just invalidated — a tree-sitter link graph picks the suspects, an agentic LLM verifies and repairs — then commits style-preserving fixes straight onto the branch.",
+    href: 'https://github.com/YoniRaviv/DocPulse',
+    image: docpulseImage,
+  },
+  {
+    idx:  '03 — 2022',
     year: '2022',
     name: 'Shi-Shi',
     slug: 'shishi',
