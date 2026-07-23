@@ -4,7 +4,7 @@ export const site: SiteInfo = {
   url: 'https://yonathan-raviv.dev',
   name: 'Yonathan Raviv',
   shortName: 'YR',
-  email: 'hello@yonathanraviv.com',
+  email: 'hello@yonathan-raviv.dev',
   jobTitle: 'AI Engineer',
   location: 'Tel Aviv',
   coords: '32.0853° N · 34.7818° E',

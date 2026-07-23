@@ -174,12 +174,12 @@ If the idea has a soft edge worth pressing on, `/grill-me` is an optional next p
 
 Once the idea exists, I test it against reality.
 
-This phase produces `01-research.md`, usually with the help of a research skill that can perform multi-round web search and write out a landscape review with an honest verdict. That is an important detail: I do not want research that merely collects links. I want research that helps decide whether the idea is still worth building after seeing the market, the adjacent tools, the likely gaps, and the parts of the idea that are weaker than they first looked.
+This phase produces `01-research.md`, usually with the help of `/idea-deep-research`[^5] — a skill that performs multi-round web search and writes out a landscape review with an honest verdict. That is an important detail: I do not want research that merely collects links. I want research that helps decide whether the idea is still worth building after seeing the market, the adjacent tools, the likely gaps, and the parts of the idea that are weaker than they first looked.
 
 Good research changes the spec. It narrows scope, exposes false novelty, and forces better questions. By the end of this phase, the project should feel more grounded and less aspirational.
 
 ```text
-> /wiki-research raw/projects/repolens/00-idea.md
+> /idea-deep-research raw/projects/repolens/00-idea.md
 > Produce 01-research.md: market landscape, adjacent tools, likely
   gaps, and a verdict on whether to continue. Cite every claim.
 ```
@@ -192,12 +192,12 @@ This is where `02-prd.md` gets written. The PRD defines the problem, the target 
 
 This phase is where speculation becomes commitment. Once the PRD is written, I can stop asking "what are we even building?" and start asking "what is the cleanest path to the first correct version?"
 
-Which tool I reach for depends on size. For larger projects I lean on `/to-prd`, which walks a structured PRD template and asks the questions I'd otherwise miss. For smaller, well-defined features I open Claude Code's plan mode (Shift+Tab) and let the PRD settle there.
+Here the tool depends on size. For larger projects I run `/grill-me` first — it interviews me on the assumptions I'd otherwise miss — then draft the PRD from the answers. For smaller, well-defined features I open Claude Code's plan mode (Shift+Tab) and let the PRD settle there.
 
 ```text
-> /to-prd
-> From 00-idea.md and 01-research.md, draft 02-prd.md. Be explicit
-  about v1 non-goals — I'd rather cut scope than carry it.
+> /grill-me   (press on the open questions before committing)
+> Then, from 00-idea.md and 01-research.md, draft 02-prd.md. Be
+  explicit about v1 non-goals — I'd rather cut scope than carry it.
 ```
 
 ### Frame
@@ -208,7 +208,13 @@ At this point the work moves into the actual code repo, and the main task is to 
 
 This is the most important transition in the workflow. The PRD answers what and why. The plan answers how. Once a feature has its own plan, dependencies, acceptance criteria, and scope boundaries, Claude is no longer guessing what success looks like. It is working against a defined artifact.
 
-Same size call as Architect. For substantial features I run `/superpowers:brainstorming` — it forces the question-by-question shape a plan needs before any code is touched. For smaller, more obvious features, plan mode is enough.
+Which tool I reach for here depends on how much of the path I already know:
+
+- **A small, well-defined feature** — Claude Code's plan mode (Shift+Tab). The *what* and the rough *how* are already clear, so plan mode just sequences the steps before any file is touched.
+- **Work inside an existing repo where I know more or less what I want** — `/grill-with-docs`. It stress-tests the plan against the repo's existing domain model and documented decisions, so the plan speaks the system's language instead of quietly reinventing it.
+- **A known end result but an unknown path** — `/superpowers:brainstorming`. It forces the question-by-question exploration a plan needs when the approach itself is still open.
+
+The tool changes; the artifact it produces does not. RepoLens is greenfield with an open path, so it takes the brainstorming branch.
 
 ```text
 > /superpowers:brainstorming
@@ -217,19 +223,21 @@ Same size call as Architect. For substantial features I run `/superpowers:brains
   dependencies, acceptance criteria, and a phased build order.
 ```
 
+Once `03-plan.md` exists, `/visualize-plan`[^5] renders it as a self-contained HTML artifact — the plan shown landing in the repo it targets — which makes the shape easier to review and share before any code is written.
+
 ### Try
 
 Try is the implementation phase.
 
 This is where the code gets written in the project repo: features are built, branches move, commits accumulate, and the project starts to take real shape. But in a spec-driven workflow, implementation is never supposed to drift too far from the feature document that led to it. The point is not just to write code. The point is to execute against the planned shape of the work.
 
-This is also where I want the system to preserve context from the development cycle itself. My repo includes a history-ingest skill designed to mine Claude sessions, update project state, advance feature statuses, and surface blockers or decisions back into the vault. That means the implementation trail can become part of the project record instead of staying trapped in ephemeral terminal sessions.
+This is also where I want the system to preserve context from the development cycle itself. An end-of-day routine mines the day's Claude sessions automatically — updating project state, advancing feature statuses, and surfacing blockers and decisions into the vault's journal. That means the implementation trail becomes part of the project record instead of staying trapped in ephemeral terminal sessions.
 
 ```text
 > Implement features/repository-ingestion.md, phase 1 only. Stop
   before moving to phase 2 so I can review.
-> /claude-history-ingest
-  → log this session, advance the feature status, surface decisions.
+  → later, unprompted, the daily routine logs the session, advances
+    the feature status, and records decisions into the journal.
 ```
 
 ### Evaluate
@@ -241,9 +249,9 @@ This includes tests, debugging, validation against acceptance criteria, and the 
 That second question matters a lot. Good evaluation does not just catch bugs. It improves the next version of the spec. If the implementation drifted, maybe the code was wrong. But sometimes the more interesting answer is that the plan was incomplete, overconfident, or blind to some constraint the build exposed.
 
 ```text
-> /wiki-query "symbol resolution drift in monorepos"
+> Consult the brain on "symbol resolution drift in monorepos".
   → if it's been hit before, link the prior notes. If not, write
-  today's investigation into raw/decisions/.
+  today's investigation into wiki/projects/repolens/decisions/.
 ```
 
 ### Deliver
@@ -255,7 +263,7 @@ Once a feature is done, it gets promoted from the working feature doc in `raw/pr
 At this point the project has completed a full development cycle. An idea became a research artifact, then a PRD, then a plan, then an implementation, then a validated result, and finally a durable reference. That is the loop I care about: not one perfect prompt, but a system where each cycle leaves the next one in a stronger position.
 
 ```text
-> /wiki-promote-feature repository-ingestion
+> Promote repository-ingestion into wiki/projects/repolens/features/.
   → carry through the decision about chunking strategy. If the
   shape is reusable, add a pattern page for "codebase-to-knowledge
   transformation".
@@ -345,7 +353,7 @@ module map, data flow, key boundaries.
 
 **Try — implementation in the repo**
 
-The work happens against `features/architecture-summarizer.md`, not against a free-form conversation. Phase 1 lands, gets reviewed, then phase 2 starts. `claude-history-ingest` runs in the background and writes session summaries back into `wiki/projects/repolens/sessions/`.
+The work happens against `features/architecture-summarizer.md`, not against a free-form conversation. Phase 1 lands, gets reviewed, then phase 2 starts. The end-of-day routine runs automatically, writing session summaries into `wiki/journal/` and updating the RepoLens project pages as it goes.
 
 **Evaluate — testing against the spec**
 
@@ -407,3 +415,4 @@ That is what this workflow is trying to do. It turns rough ideas into executable
 [^2]: Claude Code — *Common workflows.* <https://code.claude.com/docs/en/common-workflows>
 [^3]: Agentpedia — *Karpathy's LLM wiki "idea file" pattern.* <https://agentpedia.codes/blog/karpathy-llm-wiki-idea-file>
 [^4]: Martin Fowler — *Exploring Gen AI: spec-driven development tools.* <https://martinfowler.com/articles/exploring-gen-ai/sdd-3-tools.html>
+[^5]: `claude-skills` — my custom slash commands, including `/idea-deep-research` and `/visualize-plan`. <https://github.com/YoniRaviv/claude-skills>

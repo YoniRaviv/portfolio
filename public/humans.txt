@@ -1,7 +1,7 @@
 /* TEAM */
   Engineer:  Yonathan Raviv
   Site:      https://yonathan-raviv.dev
-  Contact:   hello@yonathanraviv.com
+  Contact:   hello@yonathan-raviv.dev
   GitHub:    https://github.com/YoniRaviv
   LinkedIn:  https://www.linkedin.com/in/yonathan-raviv/
   Location:  Tel Aviv, IL

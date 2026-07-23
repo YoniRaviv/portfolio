@@ -19,6 +19,22 @@ export const skillGroups: SkillGroup[] = [
     },
     {
         idx: 'ii.',
+        label: 'AI & ML',
+        blurb: 'Agents, retrieval, eval. Specs over guesses.',
+        chips: [
+            { name: 'LLM agents', level: '1 yr', hero: true },
+            { name: 'RAG', level: 'shipped', hero: true },
+            { name: 'Langfuse', level: 'daily', hero: true },
+            { name: 'Anthropic SDK', level: 'shipped', hero: true },
+            { name: 'MCP', level: 'shipped' },
+            { name: 'Embeddings', level: 'shipped' },
+            { name: 'Eval & guardrails', level: 'shipped' },
+            { name: 'LangGraph', level: 'working' },
+            { name: 'CrewAI', level: 'working' },
+        ],
+    },
+    {
+        idx: 'iii.',
         label: 'Frontend',
         blurb: 'Pixels, motion, state. The half users actually touch.',
         chips: [
@@ -32,7 +48,7 @@ export const skillGroups: SkillGroup[] = [
         ],
     },
     {
-        idx: 'iii.',
+        idx: 'iv.',
         label: 'Backend & Data',
         blurb: 'APIs, stores, queues. Where the work actually happens.',
         chips: [
@@ -44,28 +60,12 @@ export const skillGroups: SkillGroup[] = [
         ],
     },
     {
-        idx: 'iv.',
-        label: 'AI & ML',
-        blurb: 'Agents, retrieval, eval. Specs over guesses.',
-        chips: [
-            { name: 'LLM agents', level: '1 yr', hero: true },
-            { name: 'RAG', level: 'shipped', hero: true },
-            { name: 'Langfuse', level: 'daily', hero: true },
-            { name: 'Anthropic SDK', level: 'shipped', hero: true },
-            { name: 'OpenAI SDK', level: 'shipped' },
-            { name: 'Embeddings', level: 'shipped' },
-            { name: 'Eval & guardrails', level: 'shipped' },
-            { name: 'LangChain', level: 'working' },
-            { name: 'CrewAI', level: 'working' },
-        ],
-    },
-    {
         idx: 'v.',
         label: 'Infra',
         blurb: 'Ship it, watch it, scale it, page on it.',
         chips: [
             { name: 'Docker', level: 'daily', hero: true },
-            { name: 'AWS', level: 'shipped' },
+            { name: 'AWS AgentCore', level: 'shipped' },
             { name: 'GitHub Actions', level: 'daily' },
             { name: 'Terraform', level: 'working' },
         ],
