@@ -2,7 +2,7 @@ export const hero = {
   firstName: 'Yonathan',
   lastName: 'Raviv',
   backName: 'Raviv',
-  role: "Fullstack and AI engineer. Six years shipping the parts that don't get to fail.",
+  role: "AI Engineer, fullstack roots. Six years shipping the parts that don't get to fail.",
   topMeta: {
     left: {
       label: '// Index',

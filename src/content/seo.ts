@@ -43,7 +43,7 @@ export const personSchema = {
     'AI Agents',
     'Evaluation & Guardrails',
     'Anthropic SDK',
-    'OpenAI SDK',
+    'MCP',
     'PostgreSQL',
   ],
 };
