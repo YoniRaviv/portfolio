@@ -4,7 +4,7 @@ import { site } from './site';
 export const defaultSEO = {
   title: `${site.name} — ${site.jobTitle}`,
   description:
-    'Yonathan Raviv — fullstack and AI engineer in Tel Aviv. Six years shipping production systems; now treating AI as engineering: specs, evals, guardrails.',
+    'Yonathan Raviv — AI Engineer in Tel Aviv. Seven years shipping production systems; now treating AI as engineering: specs, evals, guardrails.',
   ogImage: '/og.png',
 };
 
@@ -22,6 +22,14 @@ export const personSchema = {
   givenName: 'Yonathan',
   familyName: 'Raviv',
   jobTitle: site.jobTitle,
+  worksFor: {
+    '@type': 'Organization',
+    name: 'Tenengroup',
+  },
+  alumniOf: {
+    '@type': 'CollegeOrUniversity',
+    name: 'Holon Institute of Technology',
+  },
   email: `mailto:${site.email}`,
   url: site.url,
   image: `${site.url}/og.png`,
