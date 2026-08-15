@@ -324,6 +324,16 @@ const isoUpdated = (post.data.updated ?? post.data.date).toISOString();
     margin: 18px 0 6px;
     display: block;
   }
+
+  /* Inline SVG diagrams authored in the markdown. They carry their own
+     viewBox and scoped styles, so this only gives them the same block
+     rhythm as the other figures — no border, since they draw their own. */
+  .prose :global(svg) {
+    display: block;
+    width: 100%;
+    height: auto;
+    margin: 22px 0 10px;
+  }
   .prose :global(img + em) {
     display: block;
     font-family: var(--mono);

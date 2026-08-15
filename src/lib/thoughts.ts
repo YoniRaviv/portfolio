@@ -11,7 +11,10 @@ export async function getPublishedThoughts(): Promise<CollectionEntry<'thoughts'
 }
 
 export function readingTimeMinutes(body: string): number {
-  const words = body.trim().split(/\s+/).filter(Boolean).length;
+  // Inline SVG diagrams are markup, not reading — counting their coordinates and
+  // attributes inflates the estimate badly on diagram-heavy posts.
+  const prose = body.replace(/<svg[\s\S]*?<\/svg>/g, '');
+  const words = prose.trim().split(/\s+/).filter(Boolean).length;
   return Math.max(1, Math.round(words / 220));
 }
 
